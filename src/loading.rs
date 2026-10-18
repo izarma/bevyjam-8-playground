@@ -12,8 +12,9 @@ impl Plugin for LoadingPlugin {
     fn build(&self, app: &mut App) {
         app.add_loading_state(
             LoadingState::new(GameState::Loading)
-                .continue_to_state(GameState::Menu)
+                .continue_to_state(GameState::Title)
                 .load_collection::<AudioAssets>()
+                .load_collection::<InteractionAssets>()
                 .load_collection::<TextureAssets>(),
         );
     }
@@ -26,6 +27,14 @@ impl Plugin for LoadingPlugin {
 pub struct AudioAssets {
     #[asset(path = "audio/flying.ogg")]
     pub flying: Handle<AudioSource>,
+}
+
+#[derive(AssetCollection, Resource)]
+pub struct InteractionAssets {
+    #[asset(path = "audio/sfx/button_hover.ogg")]
+    pub button_hover: Handle<AudioSource>,
+    #[asset(path = "audio/sfx/button_click.ogg")]
+    pub button_click: Handle<AudioSource>,
 }
 
 #[derive(AssetCollection, Resource)]

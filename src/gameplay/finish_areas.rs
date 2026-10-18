@@ -108,7 +108,7 @@ fn end_game_on_player_touch(
                         commands.insert_resource(GameResult::Lost);
                     }
                 }
-                next_state.set(GameState::Menu);
+                next_state.set(GameState::Title);
                 return;
             }
         }

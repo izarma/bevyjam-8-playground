@@ -2,11 +2,10 @@
 
 mod gameplay;
 mod loading;
-mod menu;
+mod ui;
 
 use crate::gameplay::GameplayPlugin;
 use crate::loading::LoadingPlugin;
-use crate::menu::MenuPlugin;
 
 use bevy::app::App;
 #[cfg(debug_assertions)]
@@ -24,7 +23,7 @@ enum GameState {
     // During this State the actual game logic is executed
     Playing,
     // Here the menu is drawn and waiting for player interaction
-    Menu,
+    Title,
 }
 
 // The outcome of the last round of gameplay. Only available after the player won or lost once.
@@ -39,7 +38,7 @@ pub struct GamePlugin;
 impl Plugin for GamePlugin {
     fn build(&self, app: &mut App) {
         app.init_state::<GameState>()
-            .add_plugins((LoadingPlugin, MenuPlugin, GameplayPlugin));
+            .add_plugins((LoadingPlugin, GameplayPlugin, ui::plugin));
 
         #[cfg(debug_assertions)]
         {
@@ -48,5 +47,31 @@ impl Plugin for GamePlugin {
                 LogDiagnosticsPlugin::default(),
             ));
         }
+
+        app.add_systems(Startup, setup_camera);
     }
+}
+
+fn setup_camera(mut commands: Commands) {
+    commands.spawn((
+        Camera3d::default(),
+        Camera {
+            // Use the global ClearColor resource so splash/title/gameplay can control the background.
+            clear_color: ClearColorConfig::Default,
+            ..default()
+        },
+        //Hdr,
+        Msaa::Off,
+        // Bloom {
+        //     intensity: 0.3,
+        //     ..default()
+        // },
+        bevy::prelude::Projection::Perspective(PerspectiveProjection {
+            fov: std::f32::consts::PI / 6.0,
+            ..default()
+        }),
+        // ScreenSpaceAmbientOcclusion::default(),
+        // TemporalAntiAliasing::default(),
+        // Tonemapping::AcesFitted,
+    ));
 }

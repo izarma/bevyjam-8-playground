@@ -871,6 +871,7 @@ dependencies = [
  "indexmap",
  "log",
  "nonmax",
+ "rand 0.10.1",
  "serde",
  "slotmap",
  "smallvec",
@@ -982,6 +983,7 @@ dependencies = [
  "bevy",
  "bevy_asset_loader",
  "bevy_kira_audio",
+ "bevy_sprite3d",
  "embed-resource",
  "getrandom 0.3.4",
  "image",
@@ -1735,6 +1737,15 @@ dependencies = [
  "radsort",
  "tracing",
  "wgpu-types",
+]
+
+[[package]]
+name = "bevy_sprite3d"
+version = "10.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b9fa58843a93fa2fdc970c36dbfbaec183019e49cbc8c90c41ebdfa8134a2878"
+dependencies = [
+ "bevy",
 ]
 
 [[package]]
