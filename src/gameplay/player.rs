@@ -11,17 +11,17 @@ pub struct PlayerPlugin;
 pub struct Player;
 
 /// This plugin handles player related stuff like movement
-/// Player logic is only active during the State `GameState::Playing`
+/// Player logic is only active during the State `GameState::Gameplay`
 impl Plugin for PlayerPlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(
-            OnEnter(GameState::Playing),
+            OnEnter(GameState::Gameplay),
             (
                 spawn_player
                 //, spawn_game_camera
             ),
         )
-        .add_systems(Update, move_player.run_if(in_state(GameState::Playing)));
+        .add_systems(Update, move_player.run_if(in_state(GameState::Gameplay)));
     }
 }
 

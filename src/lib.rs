@@ -21,7 +21,7 @@ enum GameState {
     #[default]
     Loading,
     // During this State the actual game logic is executed
-    Playing,
+    Gameplay,
     // Here the menu is drawn and waiting for player interaction
     Title,
     // Game over state with `GameResult`
@@ -50,30 +50,65 @@ impl Plugin for GamePlugin {
             ));
         }
 
-        app.add_systems(Startup, setup_camera);
+        app.add_systems(Startup, setup_camera.spawn());
+
+        // Order new `AppSystems` variants by adding them here:
+        app.configure_sets(
+            Update,
+            (
+                AppSystems::TickTimers,
+                AppSystems::RecordInput,
+                AppSystems::Update,
+            )
+                .chain(),
+        );
+
+        // Set up the `Pause` state.
+        app.init_state::<Pause>();
+        app.configure_sets(Update, PausableSystems.run_if(in_state(Pause(false))));
     }
 }
 
-fn setup_camera(mut commands: Commands) {
-    commands.spawn((
-        Camera3d::default(),
+fn setup_camera() -> impl Scene {
+    bsn! {
+        #Camera
+        Camera3d
         Camera {
             // Use the global ClearColor resource so splash/title/gameplay can control the background.
             clear_color: ClearColorConfig::Default,
-            ..default()
-        },
+        }
         //Hdr,
-        Msaa::Off,
+        Msaa::Off
         // Bloom {
         //     intensity: 0.3,
         //     ..default()
         // },
         bevy::prelude::Projection::Perspective(PerspectiveProjection {
-            fov: std::f32::consts::PI / 6.0,
-            ..default()
-        }),
+            fov: { std::f32::consts::PI / 6.0 },
+        })
         // ScreenSpaceAmbientOcclusion::default(),
         // TemporalAntiAliasing::default(),
         // Tonemapping::AcesFitted,
-    ));
+    }
 }
+
+/// High-level groupings of systems for the app in the `Update` schedule.
+/// When adding a new variant, make sure to order it in the `configure_sets`
+/// call above.
+#[derive(SystemSet, Debug, Clone, Copy, Eq, PartialEq, Hash, PartialOrd, Ord)]
+enum AppSystems {
+    /// Tick timers.
+    TickTimers,
+    /// Record player input.
+    RecordInput,
+    /// Do everything else (consider splitting this into further variants).
+    Update,
+}
+
+/// Whether or not the game is paused.
+#[derive(States, Copy, Clone, Eq, PartialEq, Hash, Debug, Default)]
+struct Pause(pub bool);
+
+/// A system set for systems that shouldn't run while the game is paused.
+#[derive(SystemSet, Copy, Clone, Eq, PartialEq, Hash, Debug)]
+struct PausableSystems;

@@ -31,7 +31,7 @@ fn spawn_main_menu() -> impl Scene {
 }
 
 fn enter_gameplay_state(_: On<PointerClick>, mut next_screen: ResMut<NextState<GameState>>) {
-    next_screen.set(GameState::Playing);
+    next_screen.set(GameState::Gameplay);
 }
 
 fn open_credits_menu(_: On<PointerClick>, mut next_menu: ResMut<NextState<Menu>>) {

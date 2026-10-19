@@ -38,5 +38,5 @@ fn gameover_menu(title: &'static str, color: Color) -> impl Scene {
 }
 
 fn play_again(_: On<PointerClick>, mut next_screen: ResMut<NextState<GameState>>) {
-    next_screen.set(GameState::Playing);
+    next_screen.set(GameState::Gameplay);
 }

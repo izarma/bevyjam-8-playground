@@ -5,7 +5,7 @@ pub struct GameObjectPlugin;
 
 impl Plugin for GameObjectPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(OnExit(GameState::Playing), cleanup_game_objects);
+        app.add_systems(OnExit(GameState::Gameplay), cleanup_game_objects);
     }
 }
 

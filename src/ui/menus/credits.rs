@@ -44,7 +44,7 @@ fn created_by() -> impl Scene {
         (
             "Junemotif",
             Some("https://soundcloud.com/junemotif"),
-            "Music/SFX",
+            "Sound Design/Programming",
         ),
         ("izarma", Some("https://izarma.itch.io/"), "Programming"),
     ])

@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 
 mod interaction;
-mod menus;
+pub(crate) mod menus;
 pub(crate) mod palette;
 mod widget;
 

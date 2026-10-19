@@ -15,10 +15,10 @@ pub enum FinishArea {
 /// This plugin handles finish_areas - when the player touches a finish area the game is over.
 impl Plugin for FinishAreaPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(OnEnter(GameState::Playing), spawn_finish_areas)
+        app.add_systems(OnEnter(GameState::Gameplay), spawn_finish_areas)
             .add_systems(
                 Update,
-                end_game_on_player_touch.run_if(in_state(GameState::Playing)),
+                end_game_on_player_touch.run_if(in_state(GameState::Gameplay)),
             );
     }
 }
