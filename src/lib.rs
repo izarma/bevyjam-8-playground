@@ -24,6 +24,8 @@ enum GameState {
     Playing,
     // Here the menu is drawn and waiting for player interaction
     Title,
+    // Game over state with `GameResult`
+    GameOver,
 }
 
 // The outcome of the last round of gameplay. Only available after the player won or lost once.

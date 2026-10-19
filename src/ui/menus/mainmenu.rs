@@ -5,7 +5,11 @@ use crate::{
     ui::{menus::Menu, widget},
 };
 
+use super::{close_menu, open_main_menu, open_settings_menu};
+
 pub(super) fn plugin(app: &mut App) {
+    app.add_systems(OnEnter(GameState::Title), open_main_menu);
+    app.add_systems(OnExit(GameState::Title), close_menu);
     app.add_systems(OnEnter(Menu::Main), spawn_main_menu.spawn());
 }
 
@@ -28,10 +32,6 @@ fn spawn_main_menu() -> impl Scene {
 
 fn enter_gameplay_state(_: On<PointerClick>, mut next_screen: ResMut<NextState<GameState>>) {
     next_screen.set(GameState::Playing);
-}
-
-fn open_settings_menu(_: On<PointerClick>, mut next_menu: ResMut<NextState<Menu>>) {
-    next_menu.set(Menu::Settings);
 }
 
 fn open_credits_menu(_: On<PointerClick>, mut next_menu: ResMut<NextState<Menu>>) {

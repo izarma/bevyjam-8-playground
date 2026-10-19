@@ -3,14 +3,18 @@ use bevy::prelude::*;
 use crate::GameState;
 
 mod credits;
+mod gameover;
 mod mainmenu;
 mod pause;
 
 pub(super) fn plugin(app: &mut App) {
     app.init_state::<Menu>();
-    app.add_plugins((mainmenu::plugin, pause::plugin, credits::plugin));
-    app.add_systems(OnEnter(GameState::Title), open_main_menu);
-    app.add_systems(OnExit(GameState::Title), close_menu);
+    app.add_plugins((
+        mainmenu::plugin,
+        pause::plugin,
+        credits::plugin,
+        gameover::plugin,
+    ));
 }
 
 #[derive(States, Copy, Clone, Eq, PartialEq, Hash, Debug, Default)]
@@ -21,12 +25,25 @@ pub enum Menu {
     Credits,
     Settings,
     Pause,
+    GameOver,
 }
 
-fn open_main_menu(mut next_menu: ResMut<NextState<Menu>>) {
+pub(super) fn open_main_menu(mut next_menu: ResMut<NextState<Menu>>) {
     next_menu.set(Menu::Main);
 }
 
-fn close_menu(mut next_menu: ResMut<NextState<Menu>>) {
+pub(super) fn open_game_over_menu(mut next_menu: ResMut<NextState<Menu>>) {
+    next_menu.set(Menu::GameOver);
+}
+
+pub(super) fn close_menu(mut next_menu: ResMut<NextState<Menu>>) {
     next_menu.set(Menu::None);
+}
+
+pub(super) fn open_settings_menu(_: On<PointerClick>, mut next_menu: ResMut<NextState<Menu>>) {
+    next_menu.set(Menu::Settings);
+}
+
+pub(super) fn quit_to_title(_: On<PointerClick>, mut next_screen: ResMut<NextState<GameState>>) {
+    next_screen.set(GameState::Title);
 }

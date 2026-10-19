@@ -14,7 +14,7 @@ impl Plugin for LoadingPlugin {
             LoadingState::new(GameState::Loading)
                 .continue_to_state(GameState::Title)
                 .load_collection::<AudioAssets>()
-                .load_collection::<InteractionAssets>()
+                .load_collection::<MenuAssets>()
                 .load_collection::<TextureAssets>(),
         );
     }
@@ -30,7 +30,7 @@ pub struct AudioAssets {
 }
 
 #[derive(AssetCollection, Resource)]
-pub struct InteractionAssets {
+pub struct MenuAssets {
     #[asset(path = "audio/sfx/button_hover.ogg")]
     pub button_hover: Handle<AudioSource>,
     #[asset(path = "audio/sfx/button_click.ogg")]

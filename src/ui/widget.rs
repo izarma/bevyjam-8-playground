@@ -43,6 +43,50 @@ pub fn label(text: impl Into<String>) -> impl Scene {
     }
 }
 
+/// A label that opens `url` in the browser when clicked. Rendered as an
+/// underlined link in [`LINK_TEXT`] to distinguish it from a plain [`label`].
+pub fn link_label(text: impl Into<String>, url: &'static str) -> impl Scene {
+    let text = text.into();
+    bsn! {
+        #Label
+        Text(text)
+        TextFont { font_size: px(24.0) }
+        TextColor(LINK_TEXT)
+        Underline
+        OpenLink(url)
+        @on(open_link)
+        @on(hover_link)
+        @on(unhover_link)
+    }
+}
+
+/// The URL opened by a [`link_label`](self::link_label) when clicked.
+#[derive(Component, Clone, Default)]
+pub struct OpenLink(pub &'static str);
+
+fn open_link(click: On<PointerClick>, links: Query<&OpenLink>) {
+    let Ok(link) = links.get(click.entity) else {
+        return;
+    };
+    if let Err(error) = webbrowser::open(link.0) {
+        warn!("Failed to open link {error:?}");
+    }
+}
+
+fn hover_link(over: On<PointerOver>, mut links: Query<&mut TextColor, With<OpenLink>>) {
+    let Ok(mut color) = links.get_mut(over.entity) else {
+        return;
+    };
+    *color = LINK_TEXT_HOVERED.into();
+}
+
+fn unhover_link(out: On<PointerOut>, mut links: Query<&mut TextColor, With<OpenLink>>) {
+    let Ok(mut color) = links.get_mut(out.entity) else {
+        return;
+    };
+    *color = LINK_TEXT.into();
+}
+
 /// A large rounded button with text and an action defined as an [`Observer`].
 pub fn button<E, M, I>(text: impl Into<String>, action: I) -> impl Scene
 where

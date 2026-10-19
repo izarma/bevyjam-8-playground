@@ -1,9 +1,8 @@
 use bevy::{input::common_conditions::input_just_pressed, prelude::*};
 
-use crate::{
-    GameState,
-    ui::{menus::Menu, widget},
-};
+use crate::ui::{menus::Menu, widget};
+
+use super::{open_settings_menu, quit_to_title};
 
 pub(super) fn plugin(app: &mut App) {
     app.add_systems(OnEnter(Menu::Pause), spawn_pause_menu.spawn());
@@ -30,16 +29,8 @@ fn spawn_pause_menu() -> impl Scene {
     }
 }
 
-fn open_settings_menu(_: On<PointerClick>, mut next_menu: ResMut<NextState<Menu>>) {
-    next_menu.set(Menu::Settings);
-}
-
 fn close_menu(_: On<PointerClick>, mut next_menu: ResMut<NextState<Menu>>) {
     next_menu.set(Menu::None);
-}
-
-fn quit_to_title(_: On<PointerClick>, mut next_screen: ResMut<NextState<GameState>>) {
-    next_screen.set(GameState::Title);
 }
 
 fn go_back(mut next_menu: ResMut<NextState<Menu>>) {
