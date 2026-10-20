@@ -2,7 +2,7 @@
 name = "bevy_game" # ToDo
 version = "0.1.0"
 publish = false
-authors = ["izarma"]
+authors = ["izarma"] # ToDo
 edition = "2024"
 exclude = ["dist", "build", "assets", "credits"]
 
@@ -44,6 +44,8 @@ bevy = { version = "0.20.0", default-features = false, features = [
     "3d",
     "ui",
     "debug",
+    "bevy_dev_tools",
+    "bevy_ui_debug",
 ] }
 bevy_kira_audio = { version = "0.27" }
 bevy_asset_loader = { version = "0.28.0" }
@@ -56,6 +58,8 @@ image = { version = "0.25", default-features = false }
 ## This greatly improves WGPU's performance due to its heavy use of trace! calls
 log = { version = "0.4", features = ["max_level_debug", "release_max_level_warn"] }
 bevy_sprite3d = "10.1.0"
+# bevy-inspector-egui = "0.38.0"
+# bevy_enhanced_input = "0.27.0"
 
 # Required to make `rand`/`getrandom` work on wasm.
 # Backend is selected via `.cargo/config.toml` rustflags for the wasm32-unknown-unknown target.

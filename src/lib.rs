@@ -1,5 +1,7 @@
 #![allow(clippy::type_complexity)]
 
+#[cfg(debug_assertions)]
+mod dev_tooling;
 mod gameplay;
 mod loading;
 mod ui;
@@ -47,6 +49,7 @@ impl Plugin for GamePlugin {
             app.add_plugins((
                 FrameTimeDiagnosticsPlugin::default(),
                 LogDiagnosticsPlugin::default(),
+                dev_tooling::plugin,
             ));
         }
 

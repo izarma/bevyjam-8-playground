@@ -2,7 +2,7 @@ use crate::GameState;
 use crate::gameplay::actions::Actions;
 use crate::gameplay::collision::CircleCollider;
 use crate::gameplay::game_object::GameObject;
-use crate::loading::TextureAssets;
+use crate::loading::MenuAssets;
 use bevy::prelude::*;
 
 pub struct PlayerPlugin;
@@ -29,7 +29,7 @@ impl Plugin for PlayerPlugin {
 //     commands.spawn((Camera2d, Msaa::Off, GameObject));
 // }
 
-fn spawn_player(mut commands: Commands, textures: Res<TextureAssets>) {
+fn spawn_player(mut commands: Commands, textures: Res<MenuAssets>) {
     commands.spawn((
         Sprite::from_image(textures.bevy.clone()),
         Transform::from_translation(Vec3::new(0., 0., 2.)),

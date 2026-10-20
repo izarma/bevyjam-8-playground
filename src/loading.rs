@@ -14,8 +14,7 @@ impl Plugin for LoadingPlugin {
             LoadingState::new(GameState::Loading)
                 .continue_to_state(GameState::Title)
                 .load_collection::<AudioAssets>()
-                .load_collection::<MenuAssets>()
-                .load_collection::<TextureAssets>(),
+                .load_collection::<MenuAssets>(),
         );
     }
 }
@@ -35,12 +34,6 @@ pub struct MenuAssets {
     pub button_hover: Handle<AudioSource>,
     #[asset(path = "audio/sfx/button_click.ogg")]
     pub button_click: Handle<AudioSource>,
-}
-
-#[derive(AssetCollection, Resource)]
-pub struct TextureAssets {
     #[asset(path = "textures/bevy.png")]
     pub bevy: Handle<Image>,
-    #[asset(path = "textures/github.png")]
-    pub github: Handle<Image>,
 }
