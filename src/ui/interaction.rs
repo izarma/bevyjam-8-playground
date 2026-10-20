@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 use bevy_kira_audio::prelude::{Audio, AudioControl};
 
-use crate::loading::MenuAssets;
+use crate::engine::loading::MenuAssets;
 
 pub(super) fn plugin(app: &mut App) {
     app.add_observer(apply_interaction_palette_on_click);

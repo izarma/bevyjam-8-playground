@@ -1,17 +1,12 @@
 #![allow(clippy::type_complexity)]
 
-#[cfg(debug_assertions)]
-mod dev_tooling;
+pub(crate) mod engine;
 mod gameplay;
-mod loading;
 mod ui;
 
 use crate::gameplay::GameplayPlugin;
-use crate::loading::LoadingPlugin;
 
 use bevy::app::App;
-#[cfg(debug_assertions)]
-use bevy::diagnostic::{FrameTimeDiagnosticsPlugin, LogDiagnosticsPlugin};
 use bevy::prelude::*;
 
 // This example game uses States to separate logic
@@ -42,76 +37,6 @@ pub struct GamePlugin;
 impl Plugin for GamePlugin {
     fn build(&self, app: &mut App) {
         app.init_state::<GameState>()
-            .add_plugins((LoadingPlugin, GameplayPlugin, ui::plugin));
-
-        #[cfg(debug_assertions)]
-        {
-            app.add_plugins((
-                FrameTimeDiagnosticsPlugin::default(),
-                LogDiagnosticsPlugin::default(),
-                dev_tooling::plugin,
-            ));
-        }
-
-        app.add_systems(Startup, setup_camera.spawn());
-
-        // Order new `AppSystems` variants by adding them here:
-        app.configure_sets(
-            Update,
-            (
-                AppSystems::TickTimers,
-                AppSystems::RecordInput,
-                AppSystems::Update,
-            )
-                .chain(),
-        );
-
-        // Set up the `Pause` state.
-        app.init_state::<Pause>();
-        app.configure_sets(Update, PausableSystems.run_if(in_state(Pause(false))));
+            .add_plugins((engine::plugin, ui::plugin, GameplayPlugin));
     }
 }
-
-fn setup_camera() -> impl Scene {
-    bsn! {
-        #Camera
-        Camera3d
-        Camera {
-            // Use the global ClearColor resource so splash/title/gameplay can control the background.
-            clear_color: ClearColorConfig::Default,
-        }
-        //Hdr,
-        Msaa::Off
-        // Bloom {
-        //     intensity: 0.3,
-        //     ..default()
-        // },
-        bevy::prelude::Projection::Perspective(PerspectiveProjection {
-            fov: { std::f32::consts::PI / 6.0 },
-        })
-        // ScreenSpaceAmbientOcclusion::default(),
-        // TemporalAntiAliasing::default(),
-        // Tonemapping::AcesFitted,
-    }
-}
-
-/// High-level groupings of systems for the app in the `Update` schedule.
-/// When adding a new variant, make sure to order it in the `configure_sets`
-/// call above.
-#[derive(SystemSet, Debug, Clone, Copy, Eq, PartialEq, Hash, PartialOrd, Ord)]
-enum AppSystems {
-    /// Tick timers.
-    TickTimers,
-    /// Record player input.
-    RecordInput,
-    /// Do everything else (consider splitting this into further variants).
-    Update,
-}
-
-/// Whether or not the game is paused.
-#[derive(States, Copy, Clone, Eq, PartialEq, Hash, Debug, Default)]
-struct Pause(pub bool);
-
-/// A system set for systems that shouldn't run while the game is paused.
-#[derive(SystemSet, Copy, Clone, Eq, PartialEq, Hash, Debug)]
-struct PausableSystems;
