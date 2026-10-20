@@ -8,9 +8,10 @@ pub(crate) mod camera;
 #[cfg(debug_assertions)]
 mod dev_tooling;
 pub(crate) mod loading;
+pub(crate) mod music;
 
 pub(super) fn plugin(app: &mut App) {
-    app.add_plugins((LoadingPlugin, camera::plugin));
+    app.add_plugins((LoadingPlugin, music::plugin, camera::plugin));
     #[cfg(debug_assertions)]
     {
         app.add_plugins((

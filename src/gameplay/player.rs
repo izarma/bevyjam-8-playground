@@ -1,5 +1,5 @@
 use crate::GameState;
-use crate::engine::loading::MenuAssets;
+use crate::engine::loading::UIAssets;
 use crate::gameplay::actions::Actions;
 use crate::gameplay::collision::CircleCollider;
 use crate::gameplay::game_object::GameObject;
@@ -19,7 +19,7 @@ impl Plugin for PlayerPlugin {
     }
 }
 
-fn spawn_player(mut commands: Commands, textures: Res<MenuAssets>) {
+fn spawn_player(mut commands: Commands, textures: Res<UIAssets>) {
     commands.spawn((
         Sprite::from_image(textures.bevy.clone()),
         Transform::from_translation(Vec3::new(0., 0., 2.)),

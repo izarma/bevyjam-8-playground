@@ -1,7 +1,7 @@
 use bevy::{input::common_conditions::input_just_pressed, prelude::*};
 
 use crate::{
-    engine::loading::MenuAssets,
+    engine::loading::UIAssets,
     ui::{menus::Menu, widget},
 };
 
@@ -13,7 +13,7 @@ pub(super) fn plugin(app: &mut App) {
     );
 }
 
-fn spawn_credits_menu(mut commands: Commands, textures: Res<MenuAssets>) {
+fn spawn_credits_menu(mut commands: Commands, textures: Res<UIAssets>) {
     commands.spawn_scene(credits_menu(textures.bevy.clone()));
 }
 

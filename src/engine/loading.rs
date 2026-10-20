@@ -14,7 +14,8 @@ impl Plugin for LoadingPlugin {
             LoadingState::new(GameState::Loading)
                 .continue_to_state(GameState::Title)
                 .load_collection::<AudioAssets>()
-                .load_collection::<MenuAssets>(),
+                .load_collection::<UIAssets>()
+                .load_collection::<LevelAssets>(),
         );
     }
 }
@@ -29,11 +30,37 @@ pub struct AudioAssets {
 }
 
 #[derive(AssetCollection, Resource)]
-pub struct MenuAssets {
+pub struct UIAssets {
     #[asset(path = "audio/sfx/button_hover.ogg")]
     pub button_hover: Handle<AudioSource>,
     #[asset(path = "audio/sfx/button_click.ogg")]
     pub button_click: Handle<AudioSource>,
     #[asset(path = "textures/bevy.png")]
     pub bevy: Handle<Image>,
+    #[asset(path = "audio/music/Monkeys Spinning Monkeys.ogg")]
+    pub title_theme: Handle<AudioSource>,
+    #[asset(path = "audio/music/Allegories.ogg")]
+    pub game_over_bg: Handle<AudioSource>,
+}
+
+#[derive(AssetCollection, Resource)]
+pub struct PlayerAssets {
+    #[asset(path = "textures/character/16x32char-sheet-template.png")]
+    pub player_sheet: Handle<Image>,
+    #[asset(path = "audio/sfx/step1.ogg")]
+    pub step1: Handle<AudioSource>,
+    #[asset(path = "audio/sfx/step2.ogg")]
+    pub step2: Handle<AudioSource>,
+    #[asset(path = "audio/sfx/step3.ogg")]
+    pub step3: Handle<AudioSource>,
+    #[asset(path = "audio/sfx/step4.ogg")]
+    pub step4: Handle<AudioSource>,
+}
+
+#[derive(AssetCollection, Resource)]
+pub struct LevelAssets {
+    #[asset(path = "audio/music/Fluffing A Duck.ogg")]
+    pub game_bg1: Handle<AudioSource>,
+    #[asset(path = "textures/tileset/tileset_padded.png")]
+    pub level_tilemap: Handle<Image>,
 }

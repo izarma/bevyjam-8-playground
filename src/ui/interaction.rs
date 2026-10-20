@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 use bevy_kira_audio::prelude::{Audio, AudioControl};
 
-use crate::engine::loading::MenuAssets;
+use crate::engine::loading::UIAssets;
 
 pub(super) fn plugin(app: &mut App) {
     app.add_observer(apply_interaction_palette_on_click);
@@ -70,7 +70,7 @@ fn apply_interaction_palette_on_out(
 
 fn play_sound_effect_on_click(
     on: On<PointerClick>,
-    ui_asset: If<Res<MenuAssets>>,
+    ui_asset: If<Res<UIAssets>>,
     audio: Res<Audio>,
     interaction_entities: Query<Entity, With<InteractionPalette>>,
 ) {
@@ -81,7 +81,7 @@ fn play_sound_effect_on_click(
 
 fn play_sound_effect_on_over(
     on: On<PointerOver>,
-    ui_asset: If<Res<MenuAssets>>,
+    ui_asset: If<Res<UIAssets>>,
     audio: Res<Audio>,
     interaction_entities: Query<Entity, With<InteractionPalette>>,
 ) {
