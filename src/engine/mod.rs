@@ -1,9 +1,9 @@
 #[cfg(debug_assertions)]
 use bevy::diagnostic::{FrameTimeDiagnosticsPlugin, LogDiagnosticsPlugin};
 use bevy::prelude::*;
+use bevy_sprite3d::Sprite3dPlugin;
 
-use crate::engine::loading::LoadingPlugin;
-
+pub(crate) mod animation;
 pub(crate) mod camera;
 #[cfg(debug_assertions)]
 mod dev_tooling;
@@ -11,7 +11,14 @@ pub(crate) mod loading;
 pub(crate) mod music;
 
 pub(super) fn plugin(app: &mut App) {
-    app.add_plugins((LoadingPlugin, music::plugin, camera::plugin));
+    app.add_plugins((
+        Sprite3dPlugin,
+        loading::plugin,
+        music::plugin,
+        camera::plugin,
+        animation::plugin,
+    ));
+
     #[cfg(debug_assertions)]
     {
         app.add_plugins((

@@ -49,7 +49,7 @@ bevy = { version = "0.20.0", default-features = false, features = [
 ] }
 bevy_kira_audio = { version = "0.27" }
 bevy_asset_loader = { version = "0.28.0" }
-rand = { version = "0.9" }
+rand = { version = "0.10.3" }
 webbrowser = { version = "1", features = ["hardened"] }
 
 # keep the following in sync with Bevy's dependencies

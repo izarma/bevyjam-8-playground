@@ -13,11 +13,16 @@ use winit::window::Icon;
 
 fn main() {
     App::new()
-        .insert_resource(ClearColor(Color::linear_rgb(0.4, 0.4, 0.4)))
-        .add_plugins(DefaultPlugins.set(set_window_plug()).set(AssetPlugin {
-            meta_check: AssetMetaCheck::Never,
-            ..default()
-        }))
+        .insert_resource(ClearColor(Color::linear_rgb(0.0, 0.0, 0.0)))
+        .add_plugins(
+            DefaultPlugins
+                .set(set_window_plug())
+                .set(ImagePlugin::default_nearest()) // fot pixel art
+                .set(AssetPlugin {
+                    meta_check: AssetMetaCheck::Never,
+                    ..default()
+                }),
+        )
         .add_plugins(GamePlugin)
         .add_systems(Startup, set_window_icon)
         .run();
