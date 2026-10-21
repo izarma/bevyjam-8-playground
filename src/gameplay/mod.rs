@@ -3,6 +3,7 @@ mod audio;
 mod collision;
 mod finish_areas;
 mod game_object;
+mod map;
 mod player;
 
 use bevy::prelude::*;
@@ -23,6 +24,7 @@ impl Plugin for GameplayPlugin {
             FinishAreaPlugin,
             GameObjectPlugin,
             PlayerPlugin,
+            map::plugin,
         ));
     }
 }

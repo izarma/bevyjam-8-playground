@@ -17,7 +17,7 @@ impl Plugin for ActionsPlugin {
     fn build(&self, app: &mut App) {
         app.init_resource::<Actions>().add_systems(
             Update,
-            set_movement_actions.run_if(in_state(GameState::Playing)),
+            set_movement_actions.run_if(in_state(GameState::Gameplay)),
         );
     }
 }
