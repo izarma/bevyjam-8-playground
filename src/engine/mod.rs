@@ -5,6 +5,7 @@ use bevy_sprite3d::Sprite3dPlugin;
 
 pub(crate) mod animation;
 pub(crate) mod camera;
+pub(crate) mod char_controller;
 #[cfg(debug_assertions)]
 mod dev_tooling;
 pub(crate) mod loading;
@@ -17,6 +18,7 @@ pub(super) fn plugin(app: &mut App) {
         music::plugin,
         camera::plugin,
         animation::plugin,
+        char_controller::plugin,
     ));
 
     #[cfg(debug_assertions)]

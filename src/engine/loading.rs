@@ -12,7 +12,8 @@ pub(super) fn plugin(app: &mut App) {
             .continue_to_state(GameState::Title)
             .load_collection::<AudioAssets>()
             .load_collection::<UIAssets>()
-            .load_collection::<LevelAssets>(),
+            .load_collection::<LevelAssets>()
+            .load_collection::<PlayerAssets>(),
     );
 }
 

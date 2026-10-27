@@ -12,7 +12,6 @@ use actions::ActionsPlugin;
 use audio::InternalAudioPlugin;
 use finish_areas::FinishAreaPlugin;
 use game_object::GameObjectPlugin;
-use player::PlayerPlugin;
 
 pub struct GameplayPlugin;
 
@@ -23,8 +22,8 @@ impl Plugin for GameplayPlugin {
             InternalAudioPlugin,
             FinishAreaPlugin,
             GameObjectPlugin,
-            PlayerPlugin,
             map::plugin,
+            player::plugin,
         ));
     }
 }
