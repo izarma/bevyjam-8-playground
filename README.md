@@ -2,6 +2,13 @@
 
 Template for a Game using the awesome [Bevy engine][bevy] featuring out of the box builds for Windows, Linux, macOS, Web (Wasm), Android, and iOS.
 
+# First time setup
+
+0. `rustup update stable` 
+1. Install Jackdaw by following [its install guide](https://jbuehler23.github.io/jackdaw/getting-started/installation.html).
+2. `cargo run` to play
+3. `jd open .` to open the editor
+
 # What does this template give you?
 
 * small example ["game"](https://niklasei.github.io/bevy_game_template/)

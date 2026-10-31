@@ -1,0 +1,14 @@
+package = "bevy_game"
+
+[jackdaw]
+version = "0.20.0"
+bevy = "0.20"
+channel = "stable"
+
+[modules]
+physics = false
+navmesh = false
+multiplayer = false
+
+[[run]]
+name = "Play"

@@ -60,6 +60,7 @@ log = { version = "0.4", features = ["max_level_debug", "release_max_level_warn"
 bevy_sprite3d = "10.1.0"
 # bevy-inspector-egui = "0.38.0"
 bevy_enhanced_input = "0.27"
+jackdaw_runtime = { version = "0.20", features = ["pie"] }
 
 # Required to make `rand`/`getrandom` work on wasm.
 # Backend is selected via `.cargo/config.toml` rustflags for the wasm32-unknown-unknown target.
