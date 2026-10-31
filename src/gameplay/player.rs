@@ -68,7 +68,7 @@ fn spawn_player(
             ))
         })
         .clone();
-    let spawn_translation = Vec3::new(0.0, 0.5, 0.0);
+    let spawn_translation = Vec3::new(0.0, 0.5, 7.0);
     let animation = PlayerAnimation::default();
     let sprite = Sprite {
         image: player_assets.player_sheet.clone(),
@@ -327,7 +327,7 @@ fn tick_player_animation(time: Res<Time>, mut query: Query<&mut PlayerAnimation>
     }
 }
 
-fn update_player_animation_state(
+pub(crate) fn update_player_animation_state(
     camera: Single<&Transform, With<Camera>>,
     run: Query<&Action<Run>>,
     mut query: Query<(&Velocity, &Grounded, &mut PlayerAnimation), With<Player>>,

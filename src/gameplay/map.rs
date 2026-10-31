@@ -7,6 +7,7 @@ use rand::{RngExt, seq::IndexedRandom};
 use crate::{
     GameState,
     engine::{animation::Animation, camera::FaceCamera, loading::LevelAssets},
+    gameplay::game_object::GameObject,
     gameplay::player::FRAME_INTERVAL,
 };
 
@@ -130,6 +131,7 @@ fn level(
                 },
                 Transform::from_xyz(x, 0.0, y)
                     .with_rotation(Quat::from_rotation_x(-std::f32::consts::PI / 2.0)),
+                GameObject,
             ));
         }
     }
@@ -207,6 +209,7 @@ fn level(
                     },
                     Transform::from_xyz(x + 0.5, i as f32 + 0.499, y)
                         .with_rotation(Quat::from_rotation_y(dir * std::f32::consts::PI / 2.0)),
+                    GameObject,
                 ));
             }
         }
@@ -262,6 +265,7 @@ fn level(
                     Transform::from_xyz(x, i as f32 + 0.499, y + 0.5).with_rotation(
                         Quat::from_rotation_y((dir - 1.0) * std::f32::consts::PI / 2.0),
                     ),
+                    GameObject,
                 ));
             }
         }
@@ -293,6 +297,7 @@ fn level(
                 },
                 FaceCamera,
                 Transform::from_xyz(x as f32, i as f32 + 0.498, y),
+                GameObject,
             ));
 
             if frames > 1 {
@@ -347,6 +352,7 @@ fn level(
             timer: Timer::new(FRAME_INTERVAL, TimerMode::Repeating),
         },
         FaceCamera,
+        GameObject,
     ));
     commands.spawn((
         PointLight {
@@ -356,6 +362,7 @@ fn level(
             ..default()
         },
         Transform::from_xyz(2.0, 1.8, -5.5),
+        GameObject,
     ));
 
     // glowy book
@@ -378,6 +385,7 @@ fn level(
         },
         Transform::from_xyz(-5., 0.7, 6.5),
         FaceCamera,
+        GameObject,
     ));
     commands.spawn((
         PointLight {
@@ -387,5 +395,6 @@ fn level(
             ..default()
         },
         Transform::from_xyz(-5., 1.1, 6.5),
+        GameObject,
     ));
 }

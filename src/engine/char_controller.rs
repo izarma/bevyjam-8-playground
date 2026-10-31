@@ -41,7 +41,6 @@ use crate::{
 };
 
 pub(crate) fn plugin(app: &mut App) {
-    app.init_resource::<DidFixedTimestepRunThisFrame>();
     // `FixedUpdate` and `RunFixedMainLoop` run regardless of our game states,
     // so gate them on `Pause` in addition to `GameState` below.
     app.configure_sets(FixedUpdate, PausableSystems.run_if(in_state(Pause(false))))
@@ -49,22 +48,22 @@ pub(crate) fn plugin(app: &mut App) {
             RunFixedMainLoop,
             PausableSystems.run_if(in_state(Pause(false))),
         );
-    // At the beginning of each frame, clear the flag that indicates whether the fixed timestep has run this frame.
-    app.add_systems(PreUpdate, clear_fixed_timestep_flag)
-        // At the beginning of each fixed timestep, set the flag that indicates whether the fixed timestep has run this frame.
-        .add_systems(FixedPreUpdate, set_fixed_time_step_flag)
-        // Advance the physics simulation using a fixed timestep.
-        .add_systems(
-            FixedUpdate,
-            advance_physics
-                .in_set(PausableSystems)
-                .run_if(in_state(GameState::Gameplay)),
-        );
+    // Advance the physics simulation using a fixed timestep.
+    app.add_systems(
+        FixedUpdate,
+        advance_physics
+            .in_set(PausableSystems)
+            .run_if(in_state(GameState::Gameplay)),
+    );
+    // Drop pending one-shot requests when pausing so they don't fire on resume.
+    // (`Pause` is a substate of `GameState::Gameplay`; exiting gameplay despawns
+    // the player, which clears its `AccumulatedInput` along with it.)
+    app.add_systems(OnEnter(Pause(true)), clear_pending_requests);
     app.add_systems(
         // The `RunFixedMainLoop` schedule allows us to schedule systems to run before and after the fixed timestep loop.
         RunFixedMainLoop,
         (
-            // Accumulate our input before the fixed timestep loop to tell the physics simulation what it should do during the fixed timestep.
+            // Read held movement input before the fixed timestep loop to tell the physics simulation what it should do during the fixed timestep.
             // It reads the camera's rotation, so it must run after `camera::rotate_camera`
             // (which also runs before the fixed timestep loop).
             apply_movement_input
@@ -72,31 +71,24 @@ pub(crate) fn plugin(app: &mut App) {
                 .in_set(PausableSystems)
                 .in_set(RunFixedMainLoopSystems::BeforeFixedMainLoop)
                 .run_if(in_state(GameState::Gameplay)),
-            (
-                // Clear our accumulated input after it was processed during the fixed timestep.
-                // By clearing the input *after* the fixed timestep, we can still use `AccumulatedInput` inside `FixedUpdate` if we need it.
-                clear_accumulated_input
-                    .run_if(did_fixed_timestep_run_this_frame)
-                    .run_if(in_state(GameState::Gameplay)),
-                // The player's visual representation needs to be updated after the physics simulation has been advanced.
-                // This could be run in `Update`, but if we run it here instead, the systems in `Update`
-                // will be working with the `Transform` that will actually be shown on screen.
-                // The camera's position is then synced with the interpolated transform in `Update`
-                // by `camera::follow_target`.
-                interpolate_rendered_transform,
-            )
-                .chain()
-                .in_set(RunFixedMainLoopSystems::AfterFixedMainLoop),
+            // The player's visual representation needs to be updated after the physics simulation has been advanced.
+            // This could be run in `Update`, but if we run it here instead, the systems in `Update`
+            // will be working with the `Transform` that will actually be shown on screen.
+            // The camera's position is then synced with the interpolated transform in `Update`
+            // by `camera::follow_target`.
+            interpolate_rendered_transform
+                .in_set(RunFixedMainLoopSystems::AfterFixedMainLoop)
+                .in_set(PausableSystems),
         ),
     );
 }
 
-/// A simple resource that tells us whether the fixed timestep ran this frame.
-#[derive(Resource, Debug, Deref, DerefMut, Default)]
-pub(crate) struct DidFixedTimestepRunThisFrame(bool);
-
-/// Instantaneous inputs accumulated over all frames that ran since the last time
-/// the physics simulation was advanced.
+/// One-shot input requests buffered by action observers in `PreUpdate`.
+///
+/// A press during a frame with zero fixed ticks stays buffered until a tick
+/// consumes it, and a request consumed by one tick is not visible to later
+/// catch-up ticks in the same frame. `jump` is consumed by `advance_physics`;
+/// `interact` and `attack` are buffered here but not yet consumed.
 #[derive(Debug, Component, Clone, Copy, PartialEq, Default)]
 pub(crate) struct AccumulatedInput {
     pub(crate) jump: bool,
@@ -136,28 +128,10 @@ pub(crate) struct PhysicalTranslation(pub(crate) Vec3);
 #[derive(Debug, Component, Clone, Copy, PartialEq, Default, Deref, DerefMut)]
 pub(crate) struct PreviousPhysicalTranslation(pub(crate) Vec3);
 
-/// Reset the flag at the start of every frame.
-fn clear_fixed_timestep_flag(
-    mut did_fixed_timestep_run_this_frame: ResMut<DidFixedTimestepRunThisFrame>,
-) {
-    did_fixed_timestep_run_this_frame.0 = false;
-}
-
-/// Set the flag during each fixed timestep.
-fn set_fixed_time_step_flag(
-    mut did_fixed_timestep_run_this_frame: ResMut<DidFixedTimestepRunThisFrame>,
-) {
-    did_fixed_timestep_run_this_frame.0 = true;
-}
-
-fn did_fixed_timestep_run_this_frame(
-    did_fixed_timestep_run_this_frame: Res<DidFixedTimestepRunThisFrame>,
-) -> bool {
-    did_fixed_timestep_run_this_frame.0
-}
-
-fn clear_accumulated_input(mut input: Single<&mut AccumulatedInput>) {
-    **input = AccumulatedInput::default();
+fn clear_pending_requests(mut query: Query<&mut AccumulatedInput>) {
+    for mut input in &mut query {
+        *input = AccumulatedInput::default();
+    }
 }
 
 /// Advance the physics simulation by one fixed timestep. This may run zero or multiple times per frame.
@@ -171,7 +145,7 @@ fn advance_physics(
         &mut PreviousPhysicalTranslation,
         &mut Velocity,
         &mut Grounded,
-        &AccumulatedInput,
+        &mut AccumulatedInput,
     )>,
 ) {
     for (
@@ -179,12 +153,16 @@ fn advance_physics(
         mut previous_physical_translation,
         mut velocity,
         mut grounded,
-        input,
+        mut input,
     ) in query.iter_mut()
     {
-        // Jump only from the ground; the accumulated input is cleared after the
-        // fixed timestep loop, so a press is consumed exactly once.
-        if input.jump && grounded.0 {
+        // Consume the jump request in this tick so it is not visible to
+        // subsequent catch-up ticks in the same frame.
+        let jump = input.jump;
+        input.jump = false;
+
+        // Jump only from the ground
+        if jump && grounded.0 {
             velocity.y = JUMP_VELOCITY;
             grounded.0 = false;
         }

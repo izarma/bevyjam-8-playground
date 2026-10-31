@@ -1,7 +1,7 @@
 use crate::GameState;
 use crate::engine::PausableSystems;
 use crate::engine::loading::PlayerAssets;
-use crate::gameplay::player::PlayerAnimation;
+use crate::gameplay::player::{PlayerAnimation, update_player_animation_state};
 use bevy::prelude::*;
 use bevy_kira_audio::prelude::*;
 use rand::prelude::*;
@@ -14,6 +14,7 @@ impl Plugin for InternalAudioPlugin {
         app.add_plugins(AudioPlugin).add_systems(
             Update,
             trigger_step_sound
+                .after(update_player_animation_state)
                 .in_set(PausableSystems)
                 .run_if(in_state(GameState::Gameplay)),
         );
