@@ -1,28 +1,20 @@
-mod audio;
+mod animation;
 mod collision;
-mod finish_areas;
 mod game_object;
-pub(crate) mod input;
-mod map;
 mod player;
+mod world;
+
+pub(crate) use player::{PlayerAnimation, update_player_animation_state};
 
 use bevy::prelude::*;
+use bevy_sprite3d::Sprite3dPlugin;
 
-use audio::InternalAudioPlugin;
-use finish_areas::FinishAreaPlugin;
-use game_object::GameObjectPlugin;
-
-pub struct GameplayPlugin;
-
-impl Plugin for GameplayPlugin {
-    fn build(&self, app: &mut App) {
-        app.add_plugins((
-            input::plugin,
-            InternalAudioPlugin,
-            FinishAreaPlugin,
-            GameObjectPlugin,
-            map::plugin,
-            player::plugin,
-        ));
-    }
+pub(super) fn plugin(app: &mut App) {
+    app.add_plugins((
+        Sprite3dPlugin,
+        animation::plugin,
+        game_object::plugin,
+        player::plugin,
+        world::plugin,
+    ));
 }

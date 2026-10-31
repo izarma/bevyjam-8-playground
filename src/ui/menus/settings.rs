@@ -2,7 +2,7 @@ use bevy::{input::common_conditions::input_just_pressed, prelude::*};
 
 use crate::{
     GameState,
-    engine::camera::{
+    camera::{
         CAMERA_SENSITIVITY_STEP, CameraSensitivity, DEFAULT_CAMERA_SENSITIVITY,
         MAX_CAMERA_SENSITIVITY, MIN_CAMERA_SENSITIVITY,
     },

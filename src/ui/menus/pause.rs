@@ -1,8 +1,7 @@
 use bevy::{input::common_conditions::input_just_pressed, prelude::*};
 
 use crate::{
-    GameState,
-    engine::Pause,
+    GameState, Pause,
     ui::{menus::Menu, widget},
 };
 

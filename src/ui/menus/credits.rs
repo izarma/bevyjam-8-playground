@@ -1,7 +1,7 @@
 use bevy::{input::common_conditions::input_just_pressed, prelude::*};
 
 use crate::{
-    engine::loading::UIAssets,
+    loading::UIAssets,
     ui::{menus::Menu, widget},
 };
 

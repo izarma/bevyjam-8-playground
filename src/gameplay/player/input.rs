@@ -1,10 +1,9 @@
 use bevy::prelude::*;
 use bevy_enhanced_input::prelude::*;
 
-use crate::{
-    engine::{Pause, char_controller::AccumulatedInput},
-    gameplay::player::Player,
-};
+use crate::Pause;
+
+use super::{Player, controller::AccumulatedInput};
 
 #[derive(Debug, InputAction)]
 #[action_output(Vec2)]
@@ -26,12 +25,11 @@ pub(crate) struct Interact;
 #[action_output(bool)]
 pub(crate) struct Attack;
 
-pub(crate) fn plugin(app: &mut App) {
+pub(super) fn plugin(app: &mut App) {
     app.add_plugins(EnhancedInputPlugin)
         .add_input_context::<Player>()
-        // Keep the `Player` context active only while the `Pause` substate is
-        // `Pause(false)` (the player can act). The substate exists only during
-        // `GameState::Gameplay`, so this also encodes the "in gameplay" condition.
+        // Keep the `Player` context active only while the `Pause` substate of `GameState::Gameplay`
+        // is `Pause(false)` (the player can act).
         .sync_context_to_state::<Player, Pause>()
         .add_observer(on_jump_start)
         .add_observer(on_interact_start)

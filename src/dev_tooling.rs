@@ -16,7 +16,7 @@ pub(super) fn plugin(app: &mut App) {
         toggle_debug_ui.run_if(input_just_pressed(TOGGLE_KEY)),
     );
 
-    // Debug-only win/lose triggers (stand-in for the real finish-area mechanic).
+    // Debug-only win/lose triggers
     app.add_systems(
         Update,
         win.run_if(in_state(GameState::Gameplay).and_then(input_just_pressed(KeyCode::F1))),

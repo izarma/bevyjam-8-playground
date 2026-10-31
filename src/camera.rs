@@ -11,11 +11,7 @@ use bevy::{
     window::{CursorGrabMode, CursorOptions, PrimaryWindow},
 };
 
-use crate::{
-    GameState,
-    engine::{AppSystems, PausableSystems},
-    ui::menus::Menu,
-};
+use crate::{GameState, PausableSystems, ui::menus::Menu};
 
 // Third-person follow: distance behind the player, and the point above the player the camera looks at.
 const CAM_RADIUS: f32 = 5.0;
@@ -29,7 +25,6 @@ pub(super) fn plugin(app: &mut App) {
             Update,
             (
                 follow_target
-                    .in_set(AppSystems::Update)
                     .in_set(PausableSystems)
                     .run_if(in_state(GameState::Gameplay)),
                 toggle_cursor.run_if(in_state(GameState::Gameplay).and_then(in_state(Menu::None))),
@@ -38,13 +33,12 @@ pub(super) fn plugin(app: &mut App) {
         .add_systems(
             Update,
             face_camera
-                .in_set(AppSystems::Update)
                 .in_set(PausableSystems)
                 .after(follow_target)
                 .run_if(in_state(GameState::Gameplay)),
         )
         // The camera needs to be rotated before the fixed timestep loop, so that the physics
-        // simulation (see `char_controller`) can use the current rotation.
+        // simulation (see `player::controller`) can use the current rotation.
         // Note that if we ran it in `Update`, it would be too late, as the physics simulation would already have been advanced.
         // If we ran this in `FixedUpdate`, it would sometimes not register player input, as that schedule may run zero times per frame.
         .add_systems(

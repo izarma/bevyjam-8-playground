@@ -1,114 +1,18 @@
 use std::time::Duration;
 
 use bevy::prelude::*;
-use bevy_enhanced_input::prelude::{Action, Actions, ActiveInStates};
-use bevy_sprite3d::Sprite3d;
+use bevy_enhanced_input::prelude::Action;
 
-use crate::GameState;
-use crate::engine::camera::{self, CameraTarget, FaceCamera};
-use crate::engine::char_controller::{
-    AccumulatedInput, Grounded, PhysicalTranslation, PreviousPhysicalTranslation, Velocity,
+use crate::{GameState, PausableSystems, camera::face_camera};
+
+use super::{
+    FRAME_INTERVAL, Player,
+    controller::{Grounded, Velocity},
+    input::Run,
 };
-use crate::engine::loading::PlayerAssets;
-use crate::engine::{AppSystems, PausableSystems, Pause};
-use crate::gameplay::game_object::GameObject;
-use crate::gameplay::input::{Run, player_input_scenes};
-
-#[derive(Component, Clone, Default)]
-pub struct Player;
-
-/// Interval between animation frames for every sprite animation.
-pub(crate) const FRAME_INTERVAL: Duration = Duration::from_millis(125);
 
 /// Squared horizontal speed below which the character counts as idle: (0.1 m/s)².
 const MOVING_SPEED_SQ: f32 = 0.01;
-
-/// This plugin handles player related stuff like movement
-/// Player logic is only active during the State `GameState::Gameplay`
-
-pub(super) fn plugin(app: &mut App) {
-    app.init_resource::<PlayerAtlasLayouts>()
-        .add_systems(OnEnter(GameState::Gameplay), spawn_player)
-        .add_systems(
-            Update,
-            (
-                tick_player_animation.in_set(AppSystems::TickTimers),
-                update_player_animation_state.in_set(AppSystems::Update),
-                apply_player_animation
-                    .in_set(AppSystems::Update)
-                    .after(camera::face_camera),
-            )
-                .chain()
-                .in_set(PausableSystems)
-                .run_if(in_state(GameState::Gameplay)),
-        );
-}
-
-/// Cache of texture atlas layouts created at runtime.
-#[derive(Resource, Default)]
-struct PlayerAtlasLayouts {
-    sheet: Option<Handle<TextureAtlasLayout>>,
-}
-
-fn spawn_player(
-    mut commands: Commands,
-    player_assets: Res<PlayerAssets>,
-    mut layouts: ResMut<PlayerAtlasLayouts>,
-    mut texture_atlas_layouts: ResMut<Assets<TextureAtlasLayout>>,
-) {
-    let layout = layouts
-        .sheet
-        .get_or_insert_with(|| {
-            texture_atlas_layouts.add(TextureAtlasLayout::from_grid(
-                UVec2::splat(32),
-                35,
-                7,
-                None,
-                None,
-            ))
-        })
-        .clone();
-    let spawn_translation = Vec3::new(0.0, 0.5, 7.0);
-    let animation = PlayerAnimation::default();
-    let sprite = Sprite {
-        image: player_assets.player_sheet.clone(),
-        texture_atlas: Some(TextureAtlas {
-            layout,
-            index: animation.frame_index(),
-        }),
-        ..default()
-    };
-
-    commands
-        .spawn_scene(bsn! {
-            #Player
-            Player
-            ~ActiveInStates::<Player, Pause>::single(Pause(false))
-            Transform::from_translation(spawn_translation)
-            PhysicalTranslation(spawn_translation)
-            PreviousPhysicalTranslation(spawn_translation)
-            Velocity::default()
-            Grounded(true)
-            // Half the sprite height (32px @ 32px/m = 1m tall, pivot at center) keeps feet on the ground.
-            AccumulatedInput::default()
-            animation
-            CameraTarget
-            FaceCamera
-            GameObject
-        })
-        // `Sprite` and `Sprite3d` can't be part of a BSN scene
-        // so both are inserted directly.
-        .insert((
-            sprite,
-            Sprite3d {
-                pixels_per_metre: 32.0,
-                double_sided: true,
-                ..default()
-            },
-        ))
-        // Attach the input actions as related entities, declared in BSN (see `player_input_scenes`).
-        .queue_spawn_related_scenes::<Actions<Player>>(player_input_scenes());
-}
 
 /// Animation state for the player character.
 ///
@@ -200,11 +104,11 @@ impl Facing {
     /// Returns `(facing, mirrored)`.
     ///
     /// ```text
-    ///          away
-    ///       3   2   1
-    ///     4    ·    0     → right
-    ///       5   6   7
-    ///         toward
+    ///       away
+    ///      3  2  1
+    ///     4   ·   0     → right
+    ///      5  6  7
+    ///       toward
     /// ```
     /// Left-hand octants (3, 4, 5) reuse the right-hand art, mirrored.
     fn from_camera_relative(right: f32, away: f32) -> (Self, bool) {
@@ -239,7 +143,7 @@ impl Default for PlayerAnimation {
 
 impl PlayerAnimation {
     /// Current atlas index for the animation.
-    fn frame_index(&self) -> usize {
+    pub(crate) fn frame_index(&self) -> usize {
         let frame_count = self.state.frame_count();
         // Rotate is a single eight-frame sequence, not five directional groups.
         let start_column = if self.state == PlayerAnimationState::Rotate {
@@ -319,6 +223,20 @@ impl PlayerAnimation {
             self.timer.reset();
         }
     }
+}
+
+pub(super) fn plugin(app: &mut App) {
+    app.add_systems(
+        Update,
+        (
+            tick_player_animation,
+            update_player_animation_state,
+            apply_player_animation.after(face_camera),
+        )
+            .chain()
+            .in_set(PausableSystems)
+            .run_if(in_state(GameState::Gameplay)),
+    );
 }
 
 fn tick_player_animation(time: Res<Time>, mut query: Query<&mut PlayerAnimation>) {

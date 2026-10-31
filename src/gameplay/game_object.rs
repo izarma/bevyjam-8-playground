@@ -1,16 +1,13 @@
-use crate::GameState;
 use bevy::prelude::*;
 
-pub struct GameObjectPlugin;
-
-impl Plugin for GameObjectPlugin {
-    fn build(&self, app: &mut App) {
-        app.add_systems(OnExit(GameState::Gameplay), cleanup_game_objects);
-    }
-}
+use crate::GameState;
 
 #[derive(Component, Clone, Default)]
 pub struct GameObject;
+
+pub(super) fn plugin(app: &mut App) {
+    app.add_systems(OnExit(GameState::Gameplay), cleanup_game_objects);
+}
 
 fn cleanup_game_objects(mut commands: Commands, menu: Query<Entity, With<GameObject>>) {
     for entity in menu.iter() {

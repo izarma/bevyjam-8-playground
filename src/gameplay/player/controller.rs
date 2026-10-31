@@ -34,20 +34,11 @@
 use bevy::prelude::*;
 use bevy_enhanced_input::prelude::Action;
 
-use crate::{
-    GameState,
-    engine::{PausableSystems, Pause, camera::rotate_camera},
-    gameplay::input::{Move, Run},
-};
+use crate::{GameState, PausableSystems, Pause, camera::rotate_camera};
 
-pub(crate) fn plugin(app: &mut App) {
-    // `FixedUpdate` and `RunFixedMainLoop` run regardless of our game states,
-    // so gate them on `Pause` in addition to `GameState` below.
-    app.configure_sets(FixedUpdate, PausableSystems.run_if(in_state(Pause(false))))
-        .configure_sets(
-            RunFixedMainLoop,
-            PausableSystems.run_if(in_state(Pause(false))),
-        );
+use super::input::{Move, Run};
+
+pub(super) fn plugin(app: &mut App) {
     // Advance the physics simulation using a fixed timestep.
     app.add_systems(
         FixedUpdate,

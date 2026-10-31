@@ -6,9 +6,9 @@ use rand::{RngExt, seq::IndexedRandom};
 
 use crate::{
     GameState,
-    engine::{animation::Animation, camera::FaceCamera, loading::LevelAssets},
-    gameplay::game_object::GameObject,
-    gameplay::player::FRAME_INTERVAL,
+    camera::FaceCamera,
+    gameplay::{animation::Animation, game_object::GameObject, player::FRAME_INTERVAL},
+    loading::LevelAssets,
 };
 
 pub(super) fn plugin(app: &mut App) {
