@@ -21,6 +21,8 @@ fn spawn_main_menu() -> impl Scene {
         Children [
             @widget::button("Play", enter_gameplay_state)
             --
+            @widget::button("Example Scene", enter_example_scene)
+            --
             @widget::button("Settings", open_settings_menu)
             --
             @widget::button("Credits", open_credits_menu)
@@ -32,6 +34,10 @@ fn spawn_main_menu() -> impl Scene {
 
 fn enter_gameplay_state(_: On<PointerClick>, mut next_screen: ResMut<NextState<GameState>>) {
     next_screen.set(GameState::Gameplay);
+}
+
+fn enter_example_scene(_: On<PointerClick>, mut next_screen: ResMut<NextState<GameState>>) {
+    next_screen.set(GameState::ExampleScene);
 }
 
 fn open_credits_menu(_: On<PointerClick>, mut next_menu: ResMut<NextState<Menu>>) {

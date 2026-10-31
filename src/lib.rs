@@ -8,6 +8,7 @@ mod audio;
 mod camera;
 #[cfg(debug_assertions)]
 mod dev_tooling;
+mod example_scene;
 mod gameplay;
 mod loading;
 mod ui;
@@ -24,6 +25,7 @@ enum GameState {
     Title,
     /// Game over state with `GameResult`
     GameOver,
+    ExampleScene,
 }
 
 /// The outcome of the last round of gameplay. Only available after the player won or lost once.
@@ -53,6 +55,7 @@ pub fn plugin(app: &mut App) {
         audio::plugin,
         ui::plugin,
         gameplay::plugin,
+        example_scene::plugin,
         jackdaw_runtime::JackdawPlugin,
     ));
 
