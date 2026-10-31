@@ -1,10 +1,9 @@
-use crate::gameplay::collision::CircleCollider;
-use crate::gameplay::game_object::GameObject;
-use crate::gameplay::player::Player;
-use crate::{GameResult, GameState};
 use bevy::prelude::*;
 
-pub struct FinishAreaPlugin;
+use crate::{
+    GameResult, GameState,
+    gameplay::{collision::CircleCollider, game_object::GameObject, player::Player},
+};
 
 #[derive(Component, Debug, PartialEq, Eq)]
 pub enum FinishArea {
@@ -13,14 +12,12 @@ pub enum FinishArea {
 }
 
 /// This plugin handles finish_areas - when the player touches a finish area the game is over.
-impl Plugin for FinishAreaPlugin {
-    fn build(&self, app: &mut App) {
-        app.add_systems(OnEnter(GameState::Playing), spawn_finish_areas)
-            .add_systems(
-                Update,
-                end_game_on_player_touch.run_if(in_state(GameState::Playing)),
-            );
-    }
+pub(super) fn plugin(app: &mut App) {
+    app.add_systems(OnEnter(GameState::Gameplay), spawn_finish_areas)
+        .add_systems(
+            Update,
+            end_game_on_player_touch.run_if(in_state(GameState::Gameplay)),
+        );
 }
 
 fn spawn_finish_areas(
@@ -108,7 +105,7 @@ fn end_game_on_player_touch(
                         commands.insert_resource(GameResult::Lost);
                     }
                 }
-                next_state.set(GameState::Menu);
+                next_state.set(GameState::GameOver);
                 return;
             }
         }
