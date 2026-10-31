@@ -53,6 +53,7 @@ pub fn plugin(app: &mut App) {
         audio::plugin,
         ui::plugin,
         gameplay::plugin,
+        jackdaw_runtime::JackdawPlugin,
     ));
 
     // Gameplay simulation runs across several schedules, and all of them must
