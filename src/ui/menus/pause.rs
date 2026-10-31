@@ -30,7 +30,7 @@ pub(super) fn plugin(app: &mut App) {
             close_menu.run_if(in_state(Menu::Pause).and_then(input_just_pressed(KeyCode::Escape))),
         ),
     );
-    app.add_systems(OnExit(GameState::Gameplay), (close_menu, unpause));
+    app.add_systems(OnExit(GameState::Gameplay), close_menu);
     app.add_systems(
         OnEnter(Menu::None),
         unpause.run_if(in_state(GameState::Gameplay)),

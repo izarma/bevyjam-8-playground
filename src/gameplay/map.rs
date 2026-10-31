@@ -7,6 +7,7 @@ use rand::{RngExt, seq::IndexedRandom};
 use crate::{
     GameState,
     engine::{animation::Animation, camera::FaceCamera, loading::LevelAssets},
+    gameplay::player::FRAME_INTERVAL,
 };
 
 pub(super) fn plugin(app: &mut App) {
@@ -269,8 +270,10 @@ fn level(
     // --------------------- characters, enemies, props ---------------------
 
     let mut entity = |(x, y), tile_x, tile_y, height, frames| {
-        let mut timer = Timer::from_seconds(0.4, TimerMode::Repeating);
-        timer.set_elapsed(Duration::from_secs_f32(rng.random_range(0.0..0.4)));
+        let mut timer = Timer::new(FRAME_INTERVAL, TimerMode::Repeating);
+        timer.set_elapsed(Duration::from_secs_f32(
+            rng.random_range(0.0..FRAME_INTERVAL.as_secs_f32()),
+        ));
 
         for i in 0usize..height {
             let atlas = TextureAtlas {
@@ -341,7 +344,7 @@ fn level(
         Animation {
             frames: vec![30 * 32 + 14, 30 * 32 + 15, 30 * 32 + 16],
             current: 0,
-            timer: Timer::from_seconds(0.2, TimerMode::Repeating),
+            timer: Timer::new(FRAME_INTERVAL, TimerMode::Repeating),
         },
         FaceCamera,
     ));

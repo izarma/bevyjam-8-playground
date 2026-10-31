@@ -68,11 +68,12 @@ pub(super) fn plugin(app: &mut App) {
         );
 }
 
-#[derive(Component)]
+// `Clone` + `Default` are required for these tokens in BSN spawn scenes.
+#[derive(Component, Clone, Default)]
 pub(crate) struct FaceCamera; // tag entity to make it always face the camera
 
 /// Tag an entity the gameplay camera should follow.
-#[derive(Component)]
+#[derive(Component, Clone, Default)]
 pub struct CameraTarget;
 
 /// Third-person gameplay camera settings.
@@ -240,7 +241,7 @@ pub(crate) fn rotate_camera(
     }
 }
 
-fn face_camera(
+pub(crate) fn face_camera(
     cam_transform: Single<&Transform, With<Camera>>,
     mut query: Query<&mut Transform, (With<FaceCamera>, Without<Camera>)>,
 ) {
@@ -249,5 +250,8 @@ fn face_camera(
         delta.y = 0.0;
         delta += transform.translation;
         transform.look_at(delta, Vec3::Y);
+        // `look_at` points the entity's forward (-Z) at the camera, but `Sprite3d`
+        // quads face +Z
+        transform.rotate_y(std::f32::consts::PI);
     }
 }

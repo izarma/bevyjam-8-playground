@@ -3,6 +3,8 @@ use bevy::diagnostic::{FrameTimeDiagnosticsPlugin, LogDiagnosticsPlugin};
 use bevy::prelude::*;
 use bevy_sprite3d::Sprite3dPlugin;
 
+use crate::GameState;
+
 pub(crate) mod animation;
 pub(crate) mod camera;
 pub(crate) mod char_controller;
@@ -41,8 +43,7 @@ pub(super) fn plugin(app: &mut App) {
             .chain(),
     );
 
-    // Set up the `Pause` state.
-    app.init_state::<Pause>();
+    app.add_sub_state::<Pause>();
     app.configure_sets(Update, PausableSystems.run_if(in_state(Pause(false))));
 }
 
@@ -60,7 +61,8 @@ pub(crate) enum AppSystems {
 }
 
 /// Whether or not the game is paused.
-#[derive(States, Copy, Clone, Eq, PartialEq, Hash, Debug, Default)]
+#[derive(SubStates, Copy, Clone, Eq, PartialEq, Hash, Debug, Default)]
+#[source(GameState = GameState::Gameplay)]
 pub(crate) struct Pause(pub bool);
 
 /// A system set for systems that shouldn't run while the game is paused.

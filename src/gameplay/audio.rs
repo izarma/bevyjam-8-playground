@@ -1,64 +1,42 @@
 use crate::GameState;
-use crate::engine::loading::AudioAssets;
-use crate::gameplay::actions::{Actions, set_movement_actions};
+use crate::engine::PausableSystems;
+use crate::engine::loading::PlayerAssets;
+use crate::gameplay::player::PlayerAnimation;
 use bevy::prelude::*;
 use bevy_kira_audio::prelude::*;
+use rand::prelude::*;
 
 pub struct InternalAudioPlugin;
 
 // This plugin is responsible to control the game audio
 impl Plugin for InternalAudioPlugin {
     fn build(&self, app: &mut App) {
-        app.add_plugins(AudioPlugin)
-            .add_systems(OnEnter(GameState::Gameplay), start_audio)
-            .add_systems(
-                Update,
-                control_flying_sound
-                    .after(set_movement_actions)
-                    .run_if(in_state(GameState::Gameplay)),
-            )
-            .add_systems(OnExit(GameState::Gameplay), stop_audio);
+        app.add_plugins(AudioPlugin).add_systems(
+            Update,
+            trigger_step_sound
+                .in_set(PausableSystems)
+                .run_if(in_state(GameState::Gameplay)),
+        );
     }
 }
 
-#[derive(Resource)]
-struct FlyingAudio(Handle<AudioInstance>);
-
-fn start_audio(mut commands: Commands, audio_assets: Res<AudioAssets>, audio: Res<Audio>) {
-    audio.pause();
-    let handle = audio
-        .play(audio_assets.flying.clone())
-        .looped()
-        .with_volume(0.3)
-        .handle();
-    commands.insert_resource(FlyingAudio(handle));
-}
-
-fn stop_audio(
-    mut commands: Commands,
-    audio: Res<FlyingAudio>,
-    mut audio_instances: ResMut<Assets<AudioInstance>>,
+/// If the player is moving, play a random step sound effect synchronized with
+/// the walk/run animation.
+fn trigger_step_sound(
+    player_assets: Res<PlayerAssets>,
+    audio: Res<Audio>,
+    mut step_query: Query<&PlayerAnimation>,
 ) {
-    if let Some(mut instance) = audio_instances.get_mut(&audio.0) {
-        instance.stop(AudioTween::default());
-    }
-    commands.remove_resource::<FlyingAudio>();
-}
-
-fn control_flying_sound(
-    actions: Res<Actions>,
-    audio: Res<FlyingAudio>,
-    mut audio_instances: ResMut<Assets<AudioInstance>>,
-) {
-    if let Some(mut instance) = audio_instances.get_mut(&audio.0) {
-        match instance.state() {
-            PlaybackState::Paused { .. } if actions.player_movement.is_some() => {
-                instance.resume(AudioTween::default());
-            }
-            PlaybackState::Playing { .. } if actions.player_movement.is_none() => {
-                instance.pause(AudioTween::default());
-            }
-            _ => {}
+    for animation in &mut step_query {
+        if animation.step_frame() {
+            let rng = &mut rand::rng();
+            let steps = [
+                &player_assets.step1,
+                &player_assets.step2,
+                &player_assets.step3,
+                &player_assets.step4,
+            ];
+            audio.play(steps.choose(rng).copied().unwrap().clone());
         }
     }
 }

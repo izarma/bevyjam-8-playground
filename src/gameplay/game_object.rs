@@ -9,7 +9,7 @@ impl Plugin for GameObjectPlugin {
     }
 }
 
-#[derive(Component)]
+#[derive(Component, Clone, Default)]
 pub struct GameObject;
 
 fn cleanup_game_objects(mut commands: Commands, menu: Query<Entity, With<GameObject>>) {

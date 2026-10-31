@@ -32,10 +32,12 @@
 //! we can get smooth movement by simply using the interpolated player translation for the camera as well.
 
 use bevy::prelude::*;
+use bevy_enhanced_input::prelude::Action;
 
 use crate::{
     GameState,
     engine::{PausableSystems, Pause, camera::rotate_camera},
+    gameplay::input::{Move, Run},
 };
 
 pub(crate) fn plugin(app: &mut App) {
@@ -65,14 +67,17 @@ pub(crate) fn plugin(app: &mut App) {
             // Accumulate our input before the fixed timestep loop to tell the physics simulation what it should do during the fixed timestep.
             // It reads the camera's rotation, so it must run after `camera::rotate_camera`
             // (which also runs before the fixed timestep loop).
-            accumulate_input
+            apply_movement_input
                 .after(rotate_camera)
                 .in_set(PausableSystems)
-                .in_set(RunFixedMainLoopSystems::BeforeFixedMainLoop),
+                .in_set(RunFixedMainLoopSystems::BeforeFixedMainLoop)
+                .run_if(in_state(GameState::Gameplay)),
             (
                 // Clear our accumulated input after it was processed during the fixed timestep.
                 // By clearing the input *after* the fixed timestep, we can still use `AccumulatedInput` inside `FixedUpdate` if we need it.
-                clear_input.run_if(did_fixed_timestep_run_this_frame),
+                clear_accumulated_input
+                    .run_if(did_fixed_timestep_run_this_frame)
+                    .run_if(in_state(GameState::Gameplay)),
                 // The player's visual representation needs to be updated after the physics simulation has been advanced.
                 // This could be run in `Update`, but if we run it here instead, the systems in `Update`
                 // will be working with the `Transform` that will actually be shown on screen.
@@ -90,20 +95,32 @@ pub(crate) fn plugin(app: &mut App) {
 #[derive(Resource, Debug, Deref, DerefMut, Default)]
 pub(crate) struct DidFixedTimestepRunThisFrame(bool);
 
-/// A vector representing the player's input, accumulated over all frames that ran
-/// since the last time the physics simulation was advanced.
-#[derive(Debug, Component, Clone, Copy, PartialEq, Default, Deref, DerefMut)]
+/// Instantaneous inputs accumulated over all frames that ran since the last time
+/// the physics simulation was advanced.
+#[derive(Debug, Component, Clone, Copy, PartialEq, Default)]
 pub(crate) struct AccumulatedInput {
-    /// The direction the character wants to move in on the XZ plane.
-    /// `x` maps to world X, `y` maps to world Z.
-    movement: Vec2,
-    // Other input that could make sense would be e.g.
-    // boost: bool
+    pub(crate) jump: bool,
+    pub(crate) interact: bool,
+    pub(crate) attack: bool,
 }
 
 /// A vector representing the player's velocity in the physics simulation.
 #[derive(Debug, Component, Clone, Copy, PartialEq, Default, Deref, DerefMut)]
 pub(crate) struct Velocity(Vec3);
+
+/// Whether the player is standing on the ground, as opposed to airborne.
+#[derive(Debug, Component, Clone, Copy, PartialEq, Default, Deref, DerefMut)]
+pub(crate) struct Grounded(pub(crate) bool);
+
+/// Gravity acceleration in m/s² (SI units, negative Y is down).
+const GRAVITY: f32 = 20.0;
+/// Upward velocity imparted by a jump in m/s.
+const JUMP_VELOCITY: f32 = 7.0;
+/// Height of the ground plane in the physics simulation.
+const GROUND_LEVEL: f32 = 0.0;
+/// Y translation at which the player's feet touch the ground plane.
+/// The player sprite is 1 m tall with its pivot at the center.
+const GROUNDED_TRANSLATION_Y: f32 = GROUND_LEVEL + 0.5;
 
 /// The actual position of the player in the physics simulation.
 /// This is separate from the `Transform`, which is merely a visual representation.
@@ -139,8 +156,7 @@ fn did_fixed_timestep_run_this_frame(
     did_fixed_timestep_run_this_frame.0
 }
 
-// Clear the input after it was processed in the fixed timestep.
-fn clear_input(mut input: Single<&mut AccumulatedInput>) {
+fn clear_accumulated_input(mut input: Single<&mut AccumulatedInput>) {
     **input = AccumulatedInput::default();
 }
 
@@ -153,68 +169,79 @@ fn advance_physics(
     mut query: Query<(
         &mut PhysicalTranslation,
         &mut PreviousPhysicalTranslation,
-        &Velocity,
+        &mut Velocity,
+        &mut Grounded,
+        &AccumulatedInput,
     )>,
 ) {
-    for (mut current_physical_translation, mut previous_physical_translation, velocity) in
-        query.iter_mut()
+    for (
+        mut current_physical_translation,
+        mut previous_physical_translation,
+        mut velocity,
+        mut grounded,
+        input,
+    ) in query.iter_mut()
     {
+        // Jump only from the ground; the accumulated input is cleared after the
+        // fixed timestep loop, so a press is consumed exactly once.
+        if input.jump && grounded.0 {
+            velocity.y = JUMP_VELOCITY;
+            grounded.0 = false;
+        }
+
+        // Gravity pulls the player down every tick, even while grounded.
+        velocity.y -= GRAVITY * fixed_time.delta_secs();
+
         previous_physical_translation.0 = current_physical_translation.0;
         current_physical_translation.0 += velocity.0 * fixed_time.delta_secs();
+
+        // Check for ground collision.
+        if current_physical_translation.y <= GROUNDED_TRANSLATION_Y {
+            current_physical_translation.y = GROUNDED_TRANSLATION_Y;
+            velocity.y = velocity.y.max(0.0);
+            grounded.0 = true;
+        }
     }
 }
 
-/// Handle keyboard input and accumulate it in the `AccumulatedInput` component.
-///
-/// There are many strategies for how to handle all the input that happened since the last fixed timestep.
-/// This is a very simple one: we just use the last available input.
-/// That strategy works fine for us since the user continuously presses the input keys in this example.
-/// If we had some kind of instantaneous action like activating a boost ability, we would need to remember that that input
-/// was pressed at some point since the last fixed timestep.
-fn accumulate_input(
-    keyboard_input: Res<ButtonInput<KeyCode>>,
-    player: Single<(&mut AccumulatedInput, &mut Velocity)>,
+/// Convert held movement/run input into the player's horizontal velocity.
+fn apply_movement_input(
+    movement: Query<&Action<Move>>,
+    run: Query<&Action<Run>>,
+    player: Single<(&mut Velocity, &Grounded)>,
     camera: Single<&Transform, With<Camera>>,
 ) {
     /// Since Bevy's 3D renderer assumes SI units, this has the unit of meters per second.
     /// Note that about 1.5 is the average walking speed of a human.
-    const SPEED: f32 = 4.0;
-    let (mut input, mut velocity) = player.into_inner();
-    // Reset the input to zero before reading the new input. As mentioned above, we can only do this
-    // because this is continuously pressed by the user. Do not reset e.g. whether the user wants to boost.
-    input.movement = Vec2::ZERO;
-    if keyboard_input.pressed(KeyCode::KeyW) {
-        input.movement.y += 1.0;
-    }
-    if keyboard_input.pressed(KeyCode::KeyS) {
-        input.movement.y -= 1.0;
-    }
-    if keyboard_input.pressed(KeyCode::KeyA) {
-        input.movement.x -= 1.0;
-    }
-    if keyboard_input.pressed(KeyCode::KeyD) {
-        input.movement.x += 1.0;
-    }
+    const WALK_SPEED: f32 = 4.0;
+    const RUN_SPEED: f32 = 7.0;
+
+    let (Some(movement), Some(run)) = (movement.iter().next(), run.iter().next()) else {
+        return;
+    };
+    let input: Vec2 = **movement;
+    let running: bool = **run;
 
     // Remap the 2D input to Bevy's 3D coordinate system.
-    // Pressing W makes `input.y` go up. Since Bevy assumes that -Z is forward, we make our new Z equal to -input.y
+    // `input.y` is forward (from the cardinal preset), and Bevy's -Z is forward.
     let input_3d = Vec3 {
-        x: input.movement.x,
+        x: input.x,
         y: 0.0,
-        z: -input.movement.y,
+        z: -input.y,
     };
 
     // The character is grounded (XZ-plane movement only), so rotate the input by the camera's
-    // yaw only. Using the full rotation would inject a Y component into the velocity whenever
-    // the camera is pitched, pushing the character off the ground plane.
+    // yaw only.
     let (yaw, _, _) = camera.rotation.to_euler(EulerRot::YXZ);
     let rotated_input = Quat::from_rotation_y(yaw) * input_3d;
 
-    // We need to normalize and scale because otherwise
-    // diagonal movement would be faster than horizontal or vertical movement.
-    // We use `clamp_length_max` instead of `.normalize_or_zero()` because gamepad input
-    // may be smaller than 1.0 when the player is pushing the stick just a little bit.
-    velocity.0 = rotated_input.clamp_length_max(1.0) * SPEED;
+    let speed = if running { RUN_SPEED } else { WALK_SPEED };
+    let (mut velocity, grounded) = player.into_inner();
+    if grounded.0 {
+        let scaled_input = rotated_input.clamp_length_max(1.0) * speed;
+        velocity.x = scaled_input.x;
+        velocity.z = scaled_input.z;
+    }
 }
 
 fn interpolate_rendered_transform(
