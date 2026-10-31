@@ -5,11 +5,14 @@ use crate::{
     ui::{menus::Menu, widget},
 };
 
+use super::{open_main_menu, open_main_menu_on_click};
+
 pub(super) fn plugin(app: &mut App) {
     app.add_systems(OnEnter(Menu::Credits), spawn_credits_menu);
     app.add_systems(
         Update,
-        go_back.run_if(in_state(Menu::Credits).and_then(input_just_pressed(KeyCode::Escape))),
+        open_main_menu
+            .run_if(in_state(Menu::Credits).and_then(input_just_pressed(KeyCode::Escape))),
     );
 }
 
@@ -31,7 +34,7 @@ fn credits_menu(bevy_logo: Handle<Image>) -> impl Scene {
             --
             @assets()
             --
-            @widget::button("Back", go_back_on_click)
+            @widget::button("Back", open_main_menu_on_click)
             --
             @made_with_bevy(bevy_logo)
         ]
@@ -131,12 +134,4 @@ fn made_with_bevy(logo: Handle<Image>) -> impl Scene {
             @widget::link_label("Bevy", "https://bevyengine.org")
         ]
     }
-}
-
-fn go_back_on_click(_: On<PointerClick>, mut next_menu: ResMut<NextState<Menu>>) {
-    next_menu.set(Menu::Main);
-}
-
-fn go_back(mut next_menu: ResMut<NextState<Menu>>) {
-    next_menu.set(Menu::Main);
 }

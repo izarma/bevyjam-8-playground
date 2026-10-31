@@ -87,20 +87,30 @@ pub(crate) struct GameplayCamera {
     pub cursor_lock_active: bool,
 }
 
+/// Default mouse sensitivity (horizontal, vertical) of the gameplay camera, in
+/// radians per pixel of mouse motion. It's often nicer to have a faster
+/// horizontal sensitivity than vertical, which is why the two axes differ.
+pub(crate) const DEFAULT_CAMERA_SENSITIVITY: Vec2 = Vec2::new(0.003, 0.002);
+
+/// Sensible lower and upper bounds for the sensitivity. These let the player
+/// adjust each axis from 10% to 200% of its default.
+pub(crate) const MIN_CAMERA_SENSITIVITY: Vec2 = Vec2::new(0.0003, 0.0002);
+pub(crate) const MAX_CAMERA_SENSITIVITY: Vec2 = Vec2::new(0.006, 0.004);
+
+/// How much a single settings-menu step changes the sensitivity (10% of the
+/// default, per axis).
+pub(crate) const CAMERA_SENSITIVITY_STEP: Vec2 = Vec2::new(0.0003, 0.0002);
+
 /// Mouse sensitivity (horizontal, vertical) of the gameplay camera.
+///
+/// This is a component so that it can be made user-configurable at runtime via
+/// the settings menu, and inspected in an editor once reflected.
 #[derive(Debug, Component, Clone, Deref, DerefMut)]
 pub(crate) struct CameraSensitivity(Vec2);
 
 impl Default for CameraSensitivity {
     fn default() -> Self {
-        Self(
-            // These factors are just arbitrary mouse sensitivity values.
-            // It's often nicer to have a faster horizontal sensitivity than vertical.
-            // We use a component for them so that we can make them user-configurable at runtime
-            // for accessibility reasons.
-            // It also allows you to inspect them in an editor if you `Reflect` the component.
-            Vec2::new(0.003, 0.002),
-        )
+        Self(DEFAULT_CAMERA_SENSITIVITY)
     }
 }
 

@@ -6,6 +6,7 @@ mod credits;
 mod gameover;
 mod mainmenu;
 mod pause;
+mod settings;
 
 pub(super) fn plugin(app: &mut App) {
     app.init_state::<Menu>();
@@ -14,6 +15,7 @@ pub(super) fn plugin(app: &mut App) {
         pause::plugin,
         credits::plugin,
         gameover::plugin,
+        settings::plugin,
     ));
 }
 
@@ -29,6 +31,10 @@ pub enum Menu {
 }
 
 pub(super) fn open_main_menu(mut next_menu: ResMut<NextState<Menu>>) {
+    next_menu.set(Menu::Main);
+}
+
+pub(super) fn open_main_menu_on_click(_: On<PointerClick>, mut next_menu: ResMut<NextState<Menu>>) {
     next_menu.set(Menu::Main);
 }
 
