@@ -57,6 +57,8 @@ pub fn plugin(app: &mut App) {
         gameplay::plugin,
         example_scene::plugin,
         jackdaw_runtime::JackdawPlugin,
+        avian3d::prelude::PhysicsPlugins::default(),
+        jackdaw_avian_integration::AvianColliderBridgePlugin,
     ));
 
     // Gameplay simulation runs across several schedules, and all of them must

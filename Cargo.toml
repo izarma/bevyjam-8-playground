@@ -60,7 +60,24 @@ log = { version = "0.4", features = ["max_level_debug", "release_max_level_warn"
 bevy_sprite3d = "10.1.0"
 # bevy-inspector-egui = "0.38.0"
 bevy_enhanced_input = "0.27"
-jackdaw_runtime = { version = "0.20", features = ["pie"] }
+jackdaw_runtime = { version = "0.20", features = ["pie", "terrain"] }
+avian3d = { version = "0.8", features = ["3d", "parry-f32", "collider-from-mesh"] }
+jackdaw_avian_integration = "0.20"
+
+[patch.crates-io]
+jackdaw_avian_integration = { git = "https://github.com/Piefayth/jackdaw", branch = "pixel-terrain-0.20.0" }
+jackdaw_bind = { git = "https://github.com/Piefayth/jackdaw", branch = "pixel-terrain-0.20.0" }
+jackdaw_bsn = { git = "https://github.com/Piefayth/jackdaw", branch = "pixel-terrain-0.20.0" }
+jackdaw_camera_rig = { git = "https://github.com/Piefayth/jackdaw", branch = "pixel-terrain-0.20.0" }
+jackdaw_geometry = { git = "https://github.com/Piefayth/jackdaw", branch = "pixel-terrain-0.20.0" }
+jackdaw_pie_protocol = { git = "https://github.com/Piefayth/jackdaw", branch = "pixel-terrain-0.20.0" }
+jackdaw_prefab = { git = "https://github.com/Piefayth/jackdaw", branch = "pixel-terrain-0.20.0" }
+jackdaw_runtime = { git = "https://github.com/Piefayth/jackdaw", branch = "pixel-terrain-0.20.0" }
+jackdaw_scene_types = { git = "https://github.com/Piefayth/jackdaw", branch = "pixel-terrain-0.20.0" }
+jackdaw_schema = { git = "https://github.com/Piefayth/jackdaw", branch = "pixel-terrain-0.20.0" }
+jackdaw_surface = { git = "https://github.com/Piefayth/jackdaw", branch = "pixel-terrain-0.20.0" }
+jackdaw_terrain = { git = "https://github.com/Piefayth/jackdaw", branch = "pixel-terrain-0.20.0" }
+jackdaw_widgets_runtime = { git = "https://github.com/Piefayth/jackdaw", branch = "pixel-terrain-0.20.0" }
 
 # Required to make `rand`/`getrandom` work on wasm.
 # Backend is selected via `.cargo/config.toml` rustflags for the wasm32-unknown-unknown target.

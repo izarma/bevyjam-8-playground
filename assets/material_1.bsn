@@ -3,4 +3,5 @@
 #material_1
 bevy_pbr::pbr_material::StandardMaterial {
     base_color: bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.25340473651885986, green: 0.0, blue: 0.5264096260070801, alpha: 1.0 }),
+    base_color_texture: "textures/terrain3.png",
 }

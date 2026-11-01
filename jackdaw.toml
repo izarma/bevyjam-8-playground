@@ -6,7 +6,7 @@ bevy = "0.20"
 channel = "stable"
 
 [modules]
-physics = false
+physics = true
 navmesh = false
 multiplayer = false
 

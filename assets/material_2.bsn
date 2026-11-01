@@ -1,0 +1,7 @@
+// jackdaw 0.20.0 | bevy 0.20
+// jackdaw asset bevy_pbr::pbr_material::StandardMaterial
+#material_2
+bevy_pbr::pbr_material::StandardMaterial {
+    base_color: bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.07797056436538696, green: 0.09742225706577301, blue: 0.2821841239929199, alpha: 1.0 }),
+    base_color_texture: "textures/terrain1.png",
+}
