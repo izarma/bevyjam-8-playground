@@ -1,15 +1,10 @@
 //! Development tools for the game. This plugin is only enabled in dev builds.
 
-use bevy::{
-    dev_tools::states::log_transitions, input::common_conditions::input_just_pressed, prelude::*,
-};
+use bevy::{input::common_conditions::input_just_pressed, prelude::*};
 
 use crate::{GameResult, GameState};
 
 pub(super) fn plugin(app: &mut App) {
-    // Log `GameState` state transitions.
-    app.add_systems(Update, log_transitions::<GameState>);
-
     // Toggle the debug overlay for UI.
     app.add_systems(
         Update,

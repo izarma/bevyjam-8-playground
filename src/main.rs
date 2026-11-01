@@ -13,18 +13,24 @@ use winit::window::Icon;
 fn main() {
     App::new()
         .insert_resource(ClearColor(Color::linear_rgb(0.0, 0.0, 0.0)))
-        .add_plugins(jackdaw_runtime::maybe_windowless(
-            DefaultPlugins
-                .set(set_window_plug())
-                .set(ImagePlugin::default_nearest()) // fot pixel art
-                .set(AssetPlugin {
-                    meta_check: AssetMetaCheck::Never,
-                    ..default()
-                }),
-        ))
+        .add_plugins(plugins())
         .add_plugins(bevy_game::plugin) // ToDo: Replace bevy_game with your new crate name.
         .add_systems(Startup, set_window_icon)
         .run();
+}
+
+fn plugins() -> impl PluginGroup {
+    let plugins = DefaultPlugins
+        .set(set_window_plug())
+        .set(ImagePlugin::default_nearest()) // for pixel art
+        .set(AssetPlugin {
+            meta_check: AssetMetaCheck::Never,
+            ..default()
+        });
+    // PIE doesnt work on web
+    #[cfg(not(target_arch = "wasm32"))]
+    let plugins = jackdaw_runtime::maybe_windowless(plugins);
+    plugins
 }
 
 fn set_window_plug() -> WindowPlugin {
