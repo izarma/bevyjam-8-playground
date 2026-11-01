@@ -10,6 +10,7 @@ mod camera;
 mod dev_tooling;
 mod example_scene;
 mod gameplay;
+mod lab;
 mod loading;
 mod ui;
 
@@ -26,6 +27,7 @@ enum GameState {
     /// Game over state with `GameResult`
     GameOver,
     ExampleScene,
+    LabScene,
 }
 
 /// The outcome of the last round of gameplay. Only available after the player won or lost once.
@@ -56,6 +58,7 @@ pub fn plugin(app: &mut App) {
         ui::plugin,
         gameplay::plugin,
         example_scene::plugin,
+        lab::plugin,
         jackdaw_runtime::JackdawPlugin,
         avian3d::prelude::PhysicsPlugins::default(),
         jackdaw_avian_integration::AvianColliderBridgePlugin,
