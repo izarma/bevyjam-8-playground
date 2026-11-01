@@ -183,7 +183,13 @@ impl PlayerAnimation {
 
     /// Update state and facing from the world-space velocity, camera yaw,
     /// whether the player is running, and whether the player is on the ground.
-    fn update(&mut self, velocity: Vec3, camera_rotation: Quat, running: bool, grounded: bool) {
+    pub(crate) fn update(
+        &mut self,
+        velocity: Vec3,
+        camera_rotation: Quat,
+        running: bool,
+        grounded: bool,
+    ) {
         let previous_state = self.state;
         if !grounded {
             self.state = PlayerAnimationState::Jump;
@@ -239,7 +245,7 @@ pub(super) fn plugin(app: &mut App) {
     );
 }
 
-fn tick_player_animation(time: Res<Time>, mut query: Query<&mut PlayerAnimation>) {
+pub(crate) fn tick_player_animation(time: Res<Time>, mut query: Query<&mut PlayerAnimation>) {
     for mut animation in &mut query {
         animation.tick(time.delta());
     }
@@ -256,7 +262,9 @@ pub(crate) fn update_player_animation_state(
     }
 }
 
-fn apply_player_animation(mut query: Query<(&PlayerAnimation, &mut Sprite, &mut Transform)>) {
+pub(crate) fn apply_player_animation(
+    mut query: Query<(&PlayerAnimation, &mut Sprite, &mut Transform)>,
+) {
     for (animation, mut sprite, mut transform) in &mut query {
         let index = animation.frame_index();
         // Read before writing: calling `as_mut()` on `Mut<Sprite>` would mark the

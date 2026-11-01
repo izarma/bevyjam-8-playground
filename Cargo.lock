@@ -543,6 +543,25 @@ dependencies = [
 ]
 
 [[package]]
+name = "bevy_ahoy"
+version = "0.2.0"
+source = "git+https://github.com/Piefayth/bevy_ahoy#c8ff56e067a56fdbf2061ba806c29d2b2b3f935c"
+dependencies = [
+ "avian3d",
+ "bevy_app",
+ "bevy_derive",
+ "bevy_ecs",
+ "bevy_enhanced_input",
+ "bevy_math",
+ "bevy_reflect",
+ "bevy_shape",
+ "bevy_time",
+ "bevy_transform",
+ "bevy_utils",
+ "tracing",
+]
+
+[[package]]
 name = "bevy_android"
 version = "0.20.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1081,6 +1100,7 @@ version = "0.1.0"
 dependencies = [
  "avian3d",
  "bevy",
+ "bevy_ahoy",
  "bevy_asset_loader",
  "bevy_enhanced_input",
  "bevy_kira_audio",

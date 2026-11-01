@@ -4,7 +4,9 @@ mod game_object;
 mod player;
 mod world;
 
-pub(crate) use player::{PlayerAnimation, update_player_animation_state};
+pub(crate) use player::{
+    PlayerAnimation, apply_player_animation, tick_player_animation, update_player_animation_state,
+};
 
 use bevy::prelude::*;
 use bevy_sprite3d::Sprite3dPlugin;
