@@ -19,7 +19,9 @@ use controller::{
     AccumulatedInput, Grounded, PhysicalTranslation, PreviousPhysicalTranslation, Velocity,
 };
 
-pub(crate) use animation::{PlayerAnimation, update_player_animation_state};
+pub(crate) use animation::{
+    PlayerAnimation, apply_player_animation, tick_player_animation, update_player_animation_state,
+};
 
 #[derive(Component, Clone, Default)]
 pub struct Player;

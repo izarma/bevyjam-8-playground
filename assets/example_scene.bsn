@@ -4,8 +4,8 @@ bevy_ecs::hierarchy::Children [
     bevy_transform::components::transform::Transform {
         translation: glam::Vec3 {
             x: -1.4088802337646484,
-            y: 10.0,
-            z: 5.907641410827637,
+            y: 38.59001541137695,
+            z: -1.6602296829223633,
         },
         rotation: glam::Quat {
             x: -0.38165590167045593,
@@ -473,20 +473,22 @@ bevy_ecs::hierarchy::Children [
     bevy_transform::components::transform::Transform {
         translation: glam::Vec3 {
             x: 0.11372411251068115,
-            y: 0.6471043825149536,
+            y: 6.636024475097656,
             z: -0.0643453598022461,
         },
     }
     jackdaw_scene_types::node_id::SceneNodeId(3989745432912132251)
+    avian3d::dynamics::rigid_body::RigidBody::Dynamic
+    jackdaw_avian_integration::AvianCollider(avian3d::collision::collider::constructor::ColliderConstructor::Cuboid { x_length: 5.0, y_length: 5.0, z_length: 5.0 })
     --
     #Camera
     bevy_camera::camera::Exposure
     bevy_camera::components::Camera3d
     bevy_transform::components::transform::Transform {
         translation: glam::Vec3 {
-            x: 2.6054763793945313,
-            y: 3.2156853675842285,
-            z: 6.032576084136963,
+            x: 90.01715087890625,
+            y: 33.727325439453125,
+            z: 100.40253448486328,
         },
         rotation: glam::Quat {
             x: -0.1854933500289917,
@@ -498,4 +500,18 @@ bevy_ecs::hierarchy::Children [
     bevy_camera::projection::Projection::Perspective(bevy_camera::projection::PerspectiveProjection { fov: 0.7853981852531433, aspect_ratio: 1.0, near: 0.10000000149011612, far: 1000.0, near_clip_plane: glam::Vec4 { x: 0.0, y: 0.0, z: -1.0, w: -0.10000000149011612 } })
     jackdaw_scene_types::node_id::SceneNodeId(3989745432912132252)
     bevy_camera::camera::CameraMainTextureUsages
+    --
+    #Terrain
+    bevy_transform::components::transform::Transform {
+        translation: glam::Vec3 {
+            x: -69.61250305175781,
+            y: -23.82464599609375,
+            z: -193.70016479492188,
+        },
+    }
+    jackdaw_scene_types::node_id::SceneNodeId(3989745432912132253)
+    jackdaw_scene_types::types::Terrain {
+        cell_size: 0.25,
+        data_path: "example_scene.terrain-0.jdterrain",
+    }
 ]

@@ -15,13 +15,19 @@ opt-level = 3
 [profile.dev]
 opt-level = 1
 
-# This is used by trunk as it doesn't support custom profiles: https://github.com/trunk-rs/trunk/issues/605
-# xbuild also uses this profile for building android AABs because I couldn't find a configuration for it
+# `trunk build --release`
 [profile.release]
 opt-level = "s"
 lto = true
 codegen-units = 1
 strip = true
+
+# `trunk build --cargo-profile web`.
+[profile.web]
+inherits = "release"
+opt-level = 3
+lto = false
+codegen-units = 16
 
 # Profile for distribution
 [profile.dist]
@@ -44,7 +50,6 @@ bevy = { version = "0.20", default-features = false, features = [
     "3d",
     "ui",
     "debug",
-    "bevy_dev_tools",
     "bevy_ui_debug",
 ] }
 bevy_kira_audio = { version = "0.27" }
@@ -60,12 +65,35 @@ log = { version = "0.4", features = ["max_level_debug", "release_max_level_warn"
 bevy_sprite3d = "10.1.0"
 # bevy-inspector-egui = "0.38.0"
 bevy_enhanced_input = "0.27"
-jackdaw_runtime = { version = "0.20", features = ["pie"] }
+jackdaw_runtime = { version = "0.20", default-features = false, features = ["terrain"] }
+avian3d = { version = "0.8", features = ["3d", "parry-f32", "collider-from-mesh"] }
+jackdaw_avian_integration = "0.20"
+bevy_ahoy = { git = "https://github.com/Piefayth/bevy_ahoy" }
 
-# Required to make `rand`/`getrandom` work on wasm.
-# Backend is selected via `.cargo/config.toml` rustflags for the wasm32-unknown-unknown target.
+[patch.crates-io]
+jackdaw_avian_integration = { git = "https://github.com/Piefayth/jackdaw", branch = "pixel-terrain-0.20.0" }
+jackdaw_bind = { git = "https://github.com/Piefayth/jackdaw", branch = "pixel-terrain-0.20.0" }
+jackdaw_bsn = { git = "https://github.com/Piefayth/jackdaw", branch = "pixel-terrain-0.20.0" }
+jackdaw_camera_rig = { git = "https://github.com/Piefayth/jackdaw", branch = "pixel-terrain-0.20.0" }
+jackdaw_geometry = { git = "https://github.com/Piefayth/jackdaw", branch = "pixel-terrain-0.20.0" }
+jackdaw_pie_protocol = { git = "https://github.com/Piefayth/jackdaw", branch = "pixel-terrain-0.20.0" }
+jackdaw_prefab = { git = "https://github.com/Piefayth/jackdaw", branch = "pixel-terrain-0.20.0" }
+jackdaw_runtime = { git = "https://github.com/Piefayth/jackdaw", branch = "pixel-terrain-0.20.0" }
+jackdaw_scene_types = { git = "https://github.com/Piefayth/jackdaw", branch = "pixel-terrain-0.20.0" }
+jackdaw_schema = { git = "https://github.com/Piefayth/jackdaw", branch = "pixel-terrain-0.20.0" }
+jackdaw_surface = { git = "https://github.com/Piefayth/jackdaw", branch = "pixel-terrain-0.20.0" }
+jackdaw_terrain = { git = "https://github.com/Piefayth/jackdaw", branch = "pixel-terrain-0.20.0" }
+jackdaw_widgets_runtime = { git = "https://github.com/Piefayth/jackdaw", branch = "pixel-terrain-0.20.0" }
+
+# PIE, certain asset importing, and PCSS doesnt work in browsers
+[target.'cfg(not(target_arch = "wasm32"))'.dependencies]
+jackdaw_runtime = { version = "0.20", features = ["pie", "import", "soft_shadows"] }
+
 [target.'cfg(target_arch = "wasm32")'.dependencies]
-getrandom = { version = "0.3", features = ["wasm_js"] }
+# TAA and SSAO need webgpu
+bevy = { version = "0.20", default-features = false, features = ["webgpu"] }
+# Required to make `rand`/`getrandom` work on wasm.
+getrandom = { version = "0.4", features = ["wasm_js"] }
 
 [build-dependencies]
 embed-resource = "1"
