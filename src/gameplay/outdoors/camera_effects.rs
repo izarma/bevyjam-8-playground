@@ -8,7 +8,7 @@ use bevy::{
 };
 use bevy_ahoy::prelude::CharacterController;
 
-use crate::{GameplayScene, camera::GameplayCamera};
+use crate::{GameplayScene, camera::SceneCamera};
 
 pub(super) fn plugin(app: &mut App) {
     app.add_systems(
@@ -18,8 +18,6 @@ pub(super) fn plugin(app: &mut App) {
             .run_if(in_state(GameplayScene::Outdoors)),
     );
 }
-
-type SceneCamera = (With<Camera3d>, Without<GameplayCamera>);
 
 fn add_camera_effects(
     mut commands: Commands,

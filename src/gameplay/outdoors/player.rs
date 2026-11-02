@@ -12,9 +12,10 @@ use pixel_sprite::PixelSprite;
 
 use crate::{
     GameplayScene, PausableSystems, Pause,
-    camera::{CameraSensitivity, GameplayCamera},
+    camera::{CameraSensitivity, SceneCamera, face_camera},
     gameplay::{PlayerAnimation, tick_player_animation},
     loading::PlayerAssets,
+    ui::menus::Menu,
 };
 
 const WALK_SPEED: f32 = 4.0;
@@ -42,6 +43,14 @@ pub(super) fn plugin(app: &mut App) {
         .add_systems(OnEnter(GameplayScene::Outdoors), set_cursor_locked::<true>)
         .add_systems(OnExit(GameplayScene::Outdoors), set_cursor_locked::<false>)
         .add_systems(
+            OnEnter(Menu::Pause),
+            set_cursor_locked::<false>.run_if(in_state(GameplayScene::Outdoors)),
+        )
+        .add_systems(
+            OnEnter(Menu::None),
+            set_cursor_locked::<true>.run_if(in_state(GameplayScene::Outdoors)),
+        )
+        .add_systems(
             RunFixedMainLoop,
             (rotate_camera, apply_look, apply_run)
                 .chain()
@@ -52,7 +61,7 @@ pub(super) fn plugin(app: &mut App) {
         .add_systems(
             Update,
             (
-                follow_player,
+                follow_player.before(face_camera),
                 tick_player_animation,
                 update_animation,
                 apply_animation,
@@ -153,11 +162,9 @@ fn spawn_player(
         });
 }
 
-type SceneCamera = (With<Camera3d>, Without<GameplayCamera>);
-
 fn rotate_camera(
     mouse_motion: Res<AccumulatedMouseMotion>,
-    sensitivity: Single<&CameraSensitivity>,
+    sensitivity: Res<CameraSensitivity>,
     mut camera: Single<&mut Transform, SceneCamera>,
 ) {
     let delta = mouse_motion.delta;

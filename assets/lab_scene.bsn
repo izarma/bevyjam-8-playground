@@ -55,31 +55,6 @@ bevy_ecs::hierarchy::Children [
     bevy_camera::camera::Camera {
         is_active: true,
     }
-    bevy_ecs::hierarchy::Children [
-        #"Camera Clip"
-        jackdaw_scene_types::node_id::SceneNodeId(6939876226162166056)
-        jackdaw_animation::clip::Clip
-        bevy_ecs::hierarchy::Children [
-            #"/ rotation"
-            jackdaw_scene_types::node_id::SceneNodeId(6939876226162166058)
-            jackdaw_animation::clip::AnimationTrack {
-                component_type_path: "bevy_transform::components::transform::Transform",
-                field_path: "rotation",
-            }
-            bevy_ecs::hierarchy::Children [
-                jackdaw_scene_types::node_id::SceneNodeId(6939876226162166059)
-                jackdaw_animation::clip::QuatKeyframe {
-                    time: 0.0,
-                    value: glam::Quat {
-                        x: 0.0,
-                        y: -0.0,
-                        z: -0.0,
-                        w: 0.0,
-                    },
-                }
-            ]
-        ]
-    ]
     --
     jackdaw_scene_types::node_id::SceneNodeId(6939876226162166057)
     jackdaw_animation::clip::QuatKeyframe {

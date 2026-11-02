@@ -5,9 +5,7 @@ use bevy_enhanced_input::prelude::{Actions, ActiveInStates};
 use bevy_sprite3d::Sprite3d;
 
 use crate::{
-    GameplayScene, Pause,
-    camera::{CameraTarget, FaceCamera},
-    gameplay::game_object::GameObject,
+    GameplayScene, Pause, camera::FaceCamera, gameplay::game_object::GameObject,
     loading::PlayerAssets,
 };
 
@@ -72,7 +70,6 @@ fn spawn_player(
             ~ActiveInStates::<Player, Pause>::single(Pause(false))
             Transform::from_translation(spawn_translation)
             animation
-            CameraTarget
             FaceCamera
             GameObject
         })
