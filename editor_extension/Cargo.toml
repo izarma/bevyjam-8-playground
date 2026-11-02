@@ -4,14 +4,8 @@ version = "0.1.17"
 edition = "2024"
 authors = ["Piefayth <piefayth@gmail.com>"]
 publish = false
-# `jd extension pack` reads publisher, license and homepage from here.
 license = "MIT OR Apache-2.0"
 
-# A jackdaw editor extension: it teaches the editor this game's own drawing
-# (pixel sprites), so the viewport shows what the game will. jackdaw builds it
-# against the editor's SDK.
-
-# Its own workspace: jackdaw builds it apart from the game.
 [workspace]
 
 [package.metadata.jackdaw]

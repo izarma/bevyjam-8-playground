@@ -81,16 +81,13 @@ impl MaterialExtension for PixelSpriteExtension {
 }
 
 #[derive(Resource)]
-struct ShaderLibrary(
-    #[expect(dead_code, reason = "this keeps the shader loaded")] Handle<Shader>,
-);
+struct ShaderLibrary(#[expect(dead_code, reason = "this keeps the shader loaded")] Handle<Shader>);
 
 #[derive(Resource, Default)]
 struct PixelSpriteCache {
     materials: HashMap<AssetId<Image>, Handle<PixelSpriteMaterial>>,
     quads: HashMap<(AssetId<Image>, QuadShape), Handle<Mesh>>,
 }
-
 
 #[derive(Clone, Copy, PartialEq, Eq, Hash)]
 struct QuadShape {
@@ -219,8 +216,11 @@ fn quad(sprite: &PixelSprite, rect: URect, size: UVec2) -> Mesh {
         [left, uv_min.y],
         [right, uv_min.y],
     ];
-    Mesh::new(PrimitiveTopology::TriangleList, RenderAssetUsages::default())
-        .with_inserted_attribute(Mesh::ATTRIBUTE_POSITION, corners.to_vec())
-        .with_inserted_attribute(Mesh::ATTRIBUTE_UV_0, uvs.to_vec())
-        .with_inserted_indices(Indices::U32(vec![0, 1, 2, 1, 3, 2]))
+    Mesh::new(
+        PrimitiveTopology::TriangleList,
+        RenderAssetUsages::default(),
+    )
+    .with_inserted_attribute(Mesh::ATTRIBUTE_POSITION, corners.to_vec())
+    .with_inserted_attribute(Mesh::ATTRIBUTE_UV_0, uvs.to_vec())
+    .with_inserted_indices(Indices::U32(vec![0, 1, 2, 1, 3, 2]))
 }

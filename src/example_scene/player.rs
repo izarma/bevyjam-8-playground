@@ -215,12 +215,11 @@ fn frame_rect(index: usize) -> URect {
     URect::from_corners(min, min + UVec2::splat(FRAME_SIZE))
 }
 
-
 fn apply_animation(mut sprites: Query<(&PlayerAnimation, &mut PixelSprite)>) {
     for (animation, mut sprite) in &mut sprites {
         let rect = frame_rect(animation.frame_index());
         let flip_x = animation.flipped();
-        
+
         if sprite.rect != rect || sprite.flip_x != flip_x {
             sprite.rect = rect;
             sprite.flip_x = flip_x;

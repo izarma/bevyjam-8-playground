@@ -1,5 +1,4 @@
-# Recorded when this project was set up. Jackdaw compares these on open so an
-# editor upgrade is reported instead of surfacing as a build failure.
+
 [jackdaw]
 version = "0.20.0"
 bevy = "0.20"
