@@ -5,14 +5,14 @@ use bevy_sprite3d::Sprite3d;
 use rand::{RngExt, seq::IndexedRandom};
 
 use crate::{
-    GameState,
+    GameplayScene,
     camera::FaceCamera,
     gameplay::{animation::Animation, game_object::GameObject, player::FRAME_INTERVAL},
     loading::LevelAssets,
 };
 
 pub(super) fn plugin(app: &mut App) {
-    app.add_systems(OnEnter(GameState::Gameplay), spawn_level);
+    app.add_systems(OnEnter(GameplayScene::Base), spawn_level);
 }
 
 pub fn spawn_level(

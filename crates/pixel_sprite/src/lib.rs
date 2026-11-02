@@ -34,7 +34,7 @@ impl Plugin for PixelSpritePlugin {
     }
 }
 
-#[derive(Component, Reflect, Clone, Debug)]
+#[derive(Component, Reflect, Clone, Debug, FromTemplate)]
 #[reflect(Component, Default)]
 #[require(NotShadowReceiver)]
 pub struct PixelSprite {

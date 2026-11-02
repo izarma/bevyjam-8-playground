@@ -1,13 +1,13 @@
 use bevy::prelude::*;
 
-use crate::{GameState, PausableSystems};
+use crate::{GameplayScene, PausableSystems};
 
 pub(super) fn plugin(app: &mut App) {
     app.add_systems(
         Update,
         animate_sprites
             .in_set(PausableSystems)
-            .run_if(in_state(GameState::Gameplay)),
+            .run_if(in_state(GameplayScene::Base)),
     );
 }
 

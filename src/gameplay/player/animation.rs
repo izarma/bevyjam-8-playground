@@ -3,7 +3,7 @@ use std::time::Duration;
 use bevy::prelude::*;
 use bevy_enhanced_input::prelude::Action;
 
-use crate::{GameState, PausableSystems, camera::face_camera};
+use crate::{GameplayScene, PausableSystems, camera::face_camera};
 
 use super::{
     FRAME_INTERVAL, Player,
@@ -245,7 +245,7 @@ pub(super) fn plugin(app: &mut App) {
         )
             .chain()
             .in_set(PausableSystems)
-            .run_if(in_state(GameState::Gameplay)),
+            .run_if(in_state(GameplayScene::Base)),
     );
 }
 

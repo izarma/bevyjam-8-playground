@@ -1,5 +1,6 @@
 #![allow(clippy::type_complexity)]
 
+use avian3d::prelude::{Physics, PhysicsTime};
 #[cfg(debug_assertions)]
 use bevy::diagnostic::{FrameTimeDiagnosticsPlugin, LogDiagnosticsPlugin};
 use bevy::prelude::*;
@@ -25,7 +26,16 @@ enum GameState {
     Title,
     /// Game over state with `GameResult`
     GameOver,
-    ExampleScene,
+}
+
+#[derive(SubStates, Copy, Clone, Eq, PartialEq, Hash, Debug, Default)]
+#[source(GameState = GameState::Gameplay)]
+pub(crate) enum GameplayScene {
+    /// Base / Lab / Hub area
+    #[default]
+    Base,
+    /// Open gathering scene
+    Outdoors,
 }
 
 /// The outcome of the last round of gameplay. Only available after the player won or lost once.
@@ -47,7 +57,9 @@ pub(crate) struct PausableSystems;
 /// Composes the whole game. The single entry point used by the desktop/web and
 /// mobile launchers.
 pub fn plugin(app: &mut App) {
-    app.init_state::<GameState>().add_sub_state::<Pause>();
+    app.init_state::<GameState>();
+    app.add_sub_state::<Pause>();
+    app.add_sub_state::<GameplayScene>();
 
     app.add_plugins((
         loading::plugin,
@@ -70,6 +82,12 @@ pub fn plugin(app: &mut App) {
             PausableSystems.run_if(in_state(Pause(false))),
         );
 
+    // For Physics `Pause`
+    app.add_systems(OnEnter(Pause(true)), pause_physics_time)
+        .add_systems(OnEnter(Pause(false)), unpause_physics_time)
+        .add_systems(OnExit(GameState::Gameplay), unpause_physics_time);
+    app.add_systems(Startup, unpause_physics_time);
+
     #[cfg(debug_assertions)]
     {
         app.add_plugins((
@@ -77,5 +95,15 @@ pub fn plugin(app: &mut App) {
             LogDiagnosticsPlugin::default(),
             dev_tooling::plugin,
         ));
+    }
+}
+
+fn pause_physics_time(mut time: ResMut<Time<Physics>>) {
+    time.pause();
+}
+
+fn unpause_physics_time(mut time: ResMut<Time<Physics>>) {
+    if time.is_paused() {
+        time.unpause();
     }
 }

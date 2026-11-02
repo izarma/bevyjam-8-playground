@@ -5,7 +5,7 @@ use bevy_enhanced_input::prelude::{Actions, ActiveInStates};
 use bevy_sprite3d::Sprite3d;
 
 use crate::{
-    GameState, Pause,
+    GameplayScene, Pause,
     camera::{CameraTarget, FaceCamera},
     gameplay::game_object::GameObject,
     loading::PlayerAssets,
@@ -28,11 +28,11 @@ pub struct Player;
 pub(crate) const FRAME_INTERVAL: Duration = Duration::from_millis(125);
 
 /// This plugin handles player related stuff like movement.
-/// Player logic is only active during the State `GameState::Gameplay`.
+/// Player logic is only active in the `GameplayScene::Base` substate of `GameState::Gameplay`.
 pub(super) fn plugin(app: &mut App) {
     app.add_plugins((input::plugin, controller::plugin, animation::plugin))
         .init_resource::<PlayerAtlasLayouts>()
-        .add_systems(OnEnter(GameState::Gameplay), spawn_player);
+        .add_systems(OnEnter(GameplayScene::Base), spawn_player);
 }
 
 /// Cache of texture atlas layouts created at runtime.

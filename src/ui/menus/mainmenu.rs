@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 
 use crate::{
-    GameState,
+    GameState, GameplayScene,
     ui::{menus::Menu, widget},
 };
 
@@ -36,8 +36,13 @@ fn enter_gameplay_state(_: On<PointerClick>, mut next_screen: ResMut<NextState<G
     next_screen.set(GameState::Gameplay);
 }
 
-fn enter_example_scene(_: On<PointerClick>, mut next_screen: ResMut<NextState<GameState>>) {
-    next_screen.set(GameState::ExampleScene);
+fn enter_example_scene(
+    _: On<PointerClick>,
+    mut next_screen: ResMut<NextState<GameState>>,
+    mut next_scene: ResMut<NextState<GameplayScene>>,
+) {
+    next_screen.set(GameState::Gameplay);
+    next_scene.set(GameplayScene::Outdoors);
 }
 
 fn open_credits_menu(_: On<PointerClick>, mut next_menu: ResMut<NextState<Menu>>) {

@@ -11,7 +11,7 @@ use bevy::{
     window::{CursorGrabMode, CursorOptions, PrimaryWindow},
 };
 
-use crate::{GameState, PausableSystems, ui::menus::Menu};
+use crate::{GameState, GameplayScene, PausableSystems, ui::menus::Menu};
 
 // Third-person follow: distance behind the player, and the point above the player the camera looks at.
 const CAM_RADIUS: f32 = 5.0;
@@ -26,8 +26,8 @@ pub(super) fn plugin(app: &mut App) {
             (
                 follow_target
                     .in_set(PausableSystems)
-                    .run_if(in_state(GameState::Gameplay)),
-                toggle_cursor.run_if(in_state(GameState::Gameplay).and_then(in_state(Menu::None))),
+                    .run_if(in_state(GameplayScene::Base)),
+                toggle_cursor.run_if(in_state(GameplayScene::Base).and_then(in_state(Menu::None))),
             ),
         )
         .add_systems(
@@ -35,7 +35,7 @@ pub(super) fn plugin(app: &mut App) {
             face_camera
                 .in_set(PausableSystems)
                 .after(follow_target)
-                .run_if(in_state(GameState::Gameplay)),
+                .run_if(in_state(GameplayScene::Base)),
         )
         // The camera needs to be rotated before the fixed timestep loop, so that the physics
         // simulation (see `player::controller`) can use the current rotation.
@@ -46,7 +46,7 @@ pub(super) fn plugin(app: &mut App) {
             rotate_camera
                 .in_set(PausableSystems)
                 .in_set(RunFixedMainLoopSystems::BeforeFixedMainLoop)
-                .run_if(in_state(GameState::Gameplay)),
+                .run_if(in_state(GameplayScene::Base)),
         )
         // Give the cursor back when leaving gameplay or pausing so menus stay usable.
         .add_systems(OnExit(GameState::Gameplay), release_cursor)

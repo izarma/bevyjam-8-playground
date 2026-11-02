@@ -1,7 +1,7 @@
-use bevy::{input::common_conditions::input_just_pressed, prelude::*};
+use bevy::{prelude::*, ui::IsDefaultUiCamera};
 use jackdaw_runtime::prelude::*;
 
-use crate::{GameState, camera::GameplayCamera};
+use crate::{GameplayScene, camera::GameplayCamera};
 
 mod camera_effects;
 mod player;
@@ -13,25 +13,42 @@ pub(super) fn plugin(app: &mut App) {
         camera_effects::plugin,
     ))
     .add_systems(
-        OnEnter(GameState::ExampleScene),
+        OnEnter(GameplayScene::Outdoors),
         (spawn_example_scene, set_gameplay_camera_active::<false>),
     )
     .add_systems(
-        OnExit(GameState::ExampleScene),
+        OnExit(GameplayScene::Outdoors),
         set_gameplay_camera_active::<true>,
     )
+    // UI should be rendered on the scene camera.
     .add_systems(
         Update,
-        return_to_title.run_if(
-            in_state(GameState::ExampleScene).and_then(input_just_pressed(KeyCode::Escape)),
-        ),
+        mark_scene_ui_camera.run_if(in_state(GameplayScene::Outdoors)),
     );
+}
+
+/// Bevy fallback picks the *oldest* camera, so when this camera is despawned
+/// gameplay camera becomes the default UI camera again.
+fn mark_scene_ui_camera(
+    mut commands: Commands,
+    scene_cameras: Query<
+        Entity,
+        (
+            With<Camera3d>,
+            Without<GameplayCamera>,
+            Without<IsDefaultUiCamera>,
+        ),
+    >,
+) {
+    for entity in &scene_cameras {
+        commands.entity(entity).insert(IsDefaultUiCamera);
+    }
 }
 
 fn spawn_example_scene(mut commands: Commands, asset_server: Res<AssetServer>) {
     commands.spawn((
         JackdawSceneRoot(asset_server.load("example_scene.bsn")),
-        DespawnOnExit(GameState::ExampleScene),
+        DespawnOnExit(GameplayScene::Outdoors),
     ));
 }
 
@@ -41,8 +58,4 @@ fn set_gameplay_camera_active<const ACTIVE: bool>(
     for mut camera in &mut cameras {
         camera.is_active = ACTIVE;
     }
-}
-
-fn return_to_title(mut next_screen: ResMut<NextState<GameState>>) {
-    next_screen.set(GameState::Title);
 }

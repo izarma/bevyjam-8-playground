@@ -2,7 +2,7 @@
 
 use bevy::{input::common_conditions::input_just_pressed, prelude::*};
 
-use crate::{GameResult, GameState};
+use crate::{GameResult, GameState, GameplayScene};
 
 pub(super) fn plugin(app: &mut App) {
     // Toggle the debug overlay for UI.
@@ -14,11 +14,11 @@ pub(super) fn plugin(app: &mut App) {
     // Debug-only win/lose triggers
     app.add_systems(
         Update,
-        win.run_if(in_state(GameState::Gameplay).and_then(input_just_pressed(KeyCode::F1))),
+        win.run_if(in_state(GameplayScene::Base).and_then(input_just_pressed(KeyCode::F1))),
     );
     app.add_systems(
         Update,
-        lose.run_if(in_state(GameState::Gameplay).and_then(input_just_pressed(KeyCode::F2))),
+        lose.run_if(in_state(GameplayScene::Base).and_then(input_just_pressed(KeyCode::F2))),
     );
 }
 

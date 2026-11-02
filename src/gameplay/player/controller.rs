@@ -34,7 +34,7 @@
 use bevy::prelude::*;
 use bevy_enhanced_input::prelude::Action;
 
-use crate::{GameState, PausableSystems, Pause, camera::rotate_camera};
+use crate::{GameplayScene, PausableSystems, Pause, camera::rotate_camera};
 
 use super::input::{Move, Run};
 
@@ -44,7 +44,7 @@ pub(super) fn plugin(app: &mut App) {
         FixedUpdate,
         advance_physics
             .in_set(PausableSystems)
-            .run_if(in_state(GameState::Gameplay)),
+            .run_if(in_state(GameplayScene::Base)),
     );
     // Drop pending one-shot requests when pausing so they don't fire on resume.
     // (`Pause` is a substate of `GameState::Gameplay`; exiting gameplay despawns
@@ -61,7 +61,7 @@ pub(super) fn plugin(app: &mut App) {
                 .after(rotate_camera)
                 .in_set(PausableSystems)
                 .in_set(RunFixedMainLoopSystems::BeforeFixedMainLoop)
-                .run_if(in_state(GameState::Gameplay)),
+                .run_if(in_state(GameplayScene::Base)),
             // The player's visual representation needs to be updated after the physics simulation has been advanced.
             // This could be run in `Update`, but if we run it here instead, the systems in `Update`
             // will be working with the `Transform` that will actually be shown on screen.
