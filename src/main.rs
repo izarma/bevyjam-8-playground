@@ -55,7 +55,10 @@ fn set_window_icon(
 ) -> Result {
     WINIT_WINDOWS.with_borrow(|windows| {
         let Some(primary) = windows.get_window(*primary_window) else {
-            return Err(BevyError::from("No primary window!"));
+            // return Err(BevyError::from("No primary window!"));
+            //
+            // for PIE
+            return Ok(());
         };
         let icon_buf = Cursor::new(include_bytes!(
             "../build/macos/AppIcon.iconset/icon_256x256.png"

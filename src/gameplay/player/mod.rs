@@ -5,21 +5,14 @@ use bevy_enhanced_input::prelude::{Actions, ActiveInStates};
 use bevy_sprite3d::Sprite3d;
 
 use crate::{
-    GameState, Pause,
-    camera::{CameraTarget, FaceCamera},
-    gameplay::game_object::GameObject,
+    GameplayScene, Pause, camera::FaceCamera, gameplay::game_object::GameObject,
     loading::PlayerAssets,
 };
 
 mod animation;
-mod controller;
 mod input;
 
-use controller::{
-    AccumulatedInput, Grounded, PhysicalTranslation, PreviousPhysicalTranslation, Velocity,
-};
-
-pub(crate) use animation::{PlayerAnimation, tick_player_animation, update_player_animation_state};
+pub(crate) use animation::{PlayerAnimation, tick_player_animation};
 
 #[derive(Component, Clone, Default)]
 pub struct Player;
@@ -28,11 +21,11 @@ pub struct Player;
 pub(crate) const FRAME_INTERVAL: Duration = Duration::from_millis(125);
 
 /// This plugin handles player related stuff like movement.
-/// Player logic is only active during the State `GameState::Gameplay`.
+/// Player logic is only active in the `GameplayScene::Base` substate of `GameState::Gameplay`.
 pub(super) fn plugin(app: &mut App) {
-    app.add_plugins((input::plugin, controller::plugin, animation::plugin))
+    app.add_plugins((input::plugin, animation::plugin))
         .init_resource::<PlayerAtlasLayouts>()
-        .add_systems(OnEnter(GameState::Gameplay), spawn_player);
+        .add_systems(OnEnter(GameplayScene::Base), spawn_player);
 }
 
 /// Cache of texture atlas layouts created at runtime.
@@ -76,14 +69,7 @@ fn spawn_player(
             Player
             ~ActiveInStates::<Player, Pause>::single(Pause(false))
             Transform::from_translation(spawn_translation)
-            PhysicalTranslation(spawn_translation)
-            PreviousPhysicalTranslation(spawn_translation)
-            Velocity::default()
-            Grounded(true)
-            // Half the sprite height (32px @ 32px/m = 1m tall, pivot at center) keeps feet on the ground.
-            AccumulatedInput::default()
             animation
-            CameraTarget
             FaceCamera
             GameObject
         })

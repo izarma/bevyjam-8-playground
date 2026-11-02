@@ -1,15 +1,10 @@
 use std::time::Duration;
 
 use bevy::prelude::*;
-use bevy_enhanced_input::prelude::Action;
 
-use crate::{GameState, PausableSystems, camera::face_camera};
+use crate::{GameplayScene, PausableSystems, camera::face_camera};
 
-use super::{
-    FRAME_INTERVAL, Player,
-    controller::{Grounded, Velocity},
-    input::Run,
-};
+use super::FRAME_INTERVAL;
 
 /// Squared horizontal speed below which the character counts as idle: (0.1 m/s)².
 const MOVING_SPEED_SQ: f32 = 0.01;
@@ -240,29 +235,17 @@ pub(super) fn plugin(app: &mut App) {
         Update,
         (
             tick_player_animation,
-            update_player_animation_state,
             apply_player_animation.after(face_camera),
         )
             .chain()
             .in_set(PausableSystems)
-            .run_if(in_state(GameState::Gameplay)),
+            .run_if(in_state(GameplayScene::Base)),
     );
 }
 
 pub(crate) fn tick_player_animation(time: Res<Time>, mut query: Query<&mut PlayerAnimation>) {
     for mut animation in &mut query {
         animation.tick(time.delta());
-    }
-}
-
-pub(crate) fn update_player_animation_state(
-    camera: Single<&Transform, With<Camera>>,
-    run: Query<&Action<Run>>,
-    mut query: Query<(&Velocity, &Grounded, &mut PlayerAnimation), With<Player>>,
-) {
-    let running = run.iter().next().map(|run| **run).unwrap_or(false);
-    for (velocity, grounded, mut animation) in &mut query {
-        animation.update(**velocity, camera.rotation, running, grounded.0);
     }
 }
 

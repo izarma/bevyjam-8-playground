@@ -124,63 +124,39 @@ struct HorizontalSensitivityLabel;
 #[derive(Component, Clone, Default)]
 struct VerticalSensitivityLabel;
 
-fn lower_horizontal_sensitivity(
-    _: On<PointerClick>,
-    mut cameras: Query<&mut CameraSensitivity, With<Camera>>,
-) {
-    let Ok(mut sensitivity) = cameras.single_mut() else {
-        return;
-    };
+fn lower_horizontal_sensitivity(_: On<PointerClick>, mut sensitivity: ResMut<CameraSensitivity>) {
     sensitivity.x = (sensitivity.x - CAMERA_SENSITIVITY_STEP.x).max(MIN_CAMERA_SENSITIVITY.x);
 }
 
-fn raise_horizontal_sensitivity(
-    _: On<PointerClick>,
-    mut cameras: Query<&mut CameraSensitivity, With<Camera>>,
-) {
-    let Ok(mut sensitivity) = cameras.single_mut() else {
-        return;
-    };
+fn raise_horizontal_sensitivity(_: On<PointerClick>, mut sensitivity: ResMut<CameraSensitivity>) {
     sensitivity.x = (sensitivity.x + CAMERA_SENSITIVITY_STEP.x).min(MAX_CAMERA_SENSITIVITY.x);
 }
 
-fn lower_vertical_sensitivity(
-    _: On<PointerClick>,
-    mut cameras: Query<&mut CameraSensitivity, With<Camera>>,
-) {
-    let Ok(mut sensitivity) = cameras.single_mut() else {
-        return;
-    };
+fn lower_vertical_sensitivity(_: On<PointerClick>, mut sensitivity: ResMut<CameraSensitivity>) {
     sensitivity.y = (sensitivity.y - CAMERA_SENSITIVITY_STEP.y).max(MIN_CAMERA_SENSITIVITY.y);
 }
 
-fn raise_vertical_sensitivity(
-    _: On<PointerClick>,
-    mut cameras: Query<&mut CameraSensitivity, With<Camera>>,
-) {
-    let Ok(mut sensitivity) = cameras.single_mut() else {
-        return;
-    };
+fn raise_vertical_sensitivity(_: On<PointerClick>, mut sensitivity: ResMut<CameraSensitivity>) {
     sensitivity.y = (sensitivity.y + CAMERA_SENSITIVITY_STEP.y).min(MAX_CAMERA_SENSITIVITY.y);
 }
 
 fn update_horizontal_sensitivity_label(
-    cameras: Single<&CameraSensitivity, With<Camera>>,
+    sensitivity: Res<CameraSensitivity>,
     mut label: Single<&mut Text, With<HorizontalSensitivityLabel>>,
 ) {
     label.0 = format!(
         "{:3.0}%",
-        sensitivity_percent(cameras.x, DEFAULT_CAMERA_SENSITIVITY.x)
+        sensitivity_percent(sensitivity.x, DEFAULT_CAMERA_SENSITIVITY.x)
     );
 }
 
 fn update_vertical_sensitivity_label(
-    cameras: Single<&CameraSensitivity, With<Camera>>,
+    sensitivity: Res<CameraSensitivity>,
     mut label: Single<&mut Text, With<VerticalSensitivityLabel>>,
 ) {
     label.0 = format!(
         "{:3.0}%",
-        sensitivity_percent(cameras.y, DEFAULT_CAMERA_SENSITIVITY.y)
+        sensitivity_percent(sensitivity.y, DEFAULT_CAMERA_SENSITIVITY.y)
     );
 }
 

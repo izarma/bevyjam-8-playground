@@ -11,10 +11,11 @@ use bevy_enhanced_input::prelude::*;
 use pixel_sprite::PixelSprite;
 
 use crate::{
-    GameState,
-    camera::{CameraSensitivity, GameplayCamera},
+    GameplayScene, PausableSystems, Pause,
+    camera::{CameraSensitivity, SceneCamera, face_camera},
     gameplay::{PlayerAnimation, tick_player_animation},
     loading::PlayerAssets,
+    ui::menus::Menu,
 };
 
 const WALK_SPEED: f32 = 4.0;
@@ -28,27 +29,46 @@ const SHEET_COLUMNS: u32 = 35;
 
 pub(super) fn plugin(app: &mut App) {
     app.add_plugins(AhoyPlugins::default())
+        .configure_sets(
+            FixedPostUpdate,
+            (
+                AhoySystems::MoveCharacters,
+                AhoySystems::ApplyForcesToDynamicRigidBodies,
+            )
+                .run_if(in_state(Pause(false))),
+        )
         .add_observer(spawn_player)
         .add_input_context::<ExamplePlayer>()
-        .add_systems(OnEnter(GameState::ExampleScene), set_cursor_locked::<true>)
-        .add_systems(OnExit(GameState::ExampleScene), set_cursor_locked::<false>)
+        .sync_context_to_state::<ExamplePlayer, Pause>()
+        .add_systems(OnEnter(GameplayScene::Outdoors), set_cursor_locked::<true>)
+        .add_systems(OnExit(GameplayScene::Outdoors), set_cursor_locked::<false>)
+        .add_systems(
+            OnEnter(Menu::Pause),
+            set_cursor_locked::<false>.run_if(in_state(GameplayScene::Outdoors)),
+        )
+        .add_systems(
+            OnEnter(Menu::None),
+            set_cursor_locked::<true>.run_if(in_state(GameplayScene::Outdoors)),
+        )
         .add_systems(
             RunFixedMainLoop,
             (rotate_camera, apply_look, apply_run)
                 .chain()
+                .in_set(PausableSystems)
                 .in_set(RunFixedMainLoopSystems::BeforeFixedMainLoop)
-                .run_if(in_state(GameState::ExampleScene)),
+                .run_if(in_state(GameplayScene::Outdoors)),
         )
         .add_systems(
             Update,
             (
-                follow_player,
+                follow_player.before(face_camera),
                 tick_player_animation,
                 update_animation,
                 apply_animation,
             )
                 .chain()
-                .run_if(in_state(GameState::ExampleScene)),
+                .in_set(PausableSystems)
+                .run_if(in_state(GameplayScene::Outdoors)),
         );
 }
 
@@ -86,7 +106,10 @@ fn spawn_player(
     };
 
     commands
-        .spawn((
+        .spawn_scene(bsn! {
+            ~ActiveInStates::<ExamplePlayer, Pause>::single(Pause(false))
+        })
+        .insert((
             ExamplePlayer,
             Transform::from_translation(spawn),
             Collider::capsule(CAPSULE_RADIUS, CAPSULE_HEIGHT - 2.0 * CAPSULE_RADIUS),
@@ -103,7 +126,7 @@ fn spawn_player(
                 ..default()
             },
             CharacterLook::default(),
-            DespawnOnExit(GameState::ExampleScene),
+            DespawnOnExit(GameplayScene::Outdoors),
             children![(
                 ExamplePlayerSprite,
                 // feet at the bottom of the capsule
@@ -139,11 +162,9 @@ fn spawn_player(
         });
 }
 
-type SceneCamera = (With<Camera3d>, Without<GameplayCamera>);
-
 fn rotate_camera(
     mouse_motion: Res<AccumulatedMouseMotion>,
-    sensitivity: Single<&CameraSensitivity>,
+    sensitivity: Res<CameraSensitivity>,
     mut camera: Single<&mut Transform, SceneCamera>,
 ) {
     let delta = mouse_motion.delta;

@@ -1,0 +1,23 @@
+use bevy::prelude::*;
+use jackdaw_runtime::prelude::*;
+
+use crate::GameplayScene;
+
+mod camera_effects;
+mod player;
+
+pub(super) fn plugin(app: &mut App) {
+    app.add_plugins((
+        player::plugin,
+        pixel_sprite::PixelSpritePlugin,
+        camera_effects::plugin,
+    ))
+    .add_systems(OnEnter(GameplayScene::Outdoors), spawn_example_scene);
+}
+
+fn spawn_example_scene(mut commands: Commands, asset_server: Res<AssetServer>) {
+    commands.spawn((
+        JackdawSceneRoot(asset_server.load("example_scene.bsn")),
+        DespawnOnExit(GameplayScene::Outdoors),
+    ));
+}
