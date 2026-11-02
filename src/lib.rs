@@ -9,7 +9,6 @@ mod audio;
 mod camera;
 #[cfg(debug_assertions)]
 mod dev_tooling;
-mod example_scene;
 mod gameplay;
 mod loading;
 mod ui;
@@ -67,7 +66,6 @@ pub fn plugin(app: &mut App) {
         audio::plugin,
         ui::plugin,
         gameplay::plugin,
-        example_scene::plugin,
         jackdaw_runtime::JackdawPlugin,
         avian3d::prelude::PhysicsPlugins::default(),
         jackdaw_avian_integration::AvianColliderBridgePlugin,

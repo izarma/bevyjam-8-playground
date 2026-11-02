@@ -1,8 +1,8 @@
 mod animation;
-mod collision;
+mod base;
 mod game_object;
+mod outdoors;
 mod player;
-mod world;
 
 pub(crate) use player::{PlayerAnimation, tick_player_animation, update_player_animation_state};
 
@@ -15,6 +15,7 @@ pub(super) fn plugin(app: &mut App) {
         animation::plugin,
         game_object::plugin,
         player::plugin,
-        world::plugin,
+        base::plugin,
+        outdoors::plugin,
     ));
 }

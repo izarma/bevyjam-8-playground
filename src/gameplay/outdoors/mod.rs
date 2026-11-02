@@ -29,7 +29,7 @@ pub(super) fn plugin(app: &mut App) {
 
 /// Bevy fallback picks the *oldest* camera, so when this camera is despawned
 /// gameplay camera becomes the default UI camera again.
-fn mark_scene_ui_camera(
+pub(crate) fn mark_scene_ui_camera(
     mut commands: Commands,
     scene_cameras: Query<
         Entity,
@@ -52,7 +52,7 @@ fn spawn_example_scene(mut commands: Commands, asset_server: Res<AssetServer>) {
     ));
 }
 
-fn set_gameplay_camera_active<const ACTIVE: bool>(
+pub(crate) fn set_gameplay_camera_active<const ACTIVE: bool>(
     mut cameras: Query<&mut Camera, With<GameplayCamera>>,
 ) {
     for mut camera in &mut cameras {

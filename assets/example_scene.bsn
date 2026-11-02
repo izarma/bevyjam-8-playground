@@ -1495,7 +1495,7 @@ bevy_ecs::hierarchy::Children [
     }
     jackdaw_scene_types::node_id::SceneNodeId(6840295457926845820)
     bevy_camera::visibility::Visibility::Hidden
-    bevy_game::example_scene::player::PlayerSpawn
+    bevy_game::gameplay::outdoors::player::PlayerSpawn
     --
     #"Point Light"
     bevy_transform::components::transform::Transform {

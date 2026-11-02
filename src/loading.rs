@@ -14,7 +14,8 @@ pub(super) fn plugin(app: &mut App) {
             .load_collection::<UIAssets>()
             .load_collection::<MusicAssets>()
             .load_collection::<PlayerAssets>()
-            .load_collection::<LevelAssets>(),
+            .load_collection::<LevelAssets>()
+            .load_collection::<NPCAssets>(),
     );
 }
 
@@ -53,6 +54,12 @@ pub struct PlayerAssets {
     pub step3: Handle<AudioSource>,
     #[asset(path = "audio/sfx/step4.ogg")]
     pub step4: Handle<AudioSource>,
+}
+
+#[derive(AssetCollection, Resource)]
+pub struct NPCAssets {
+    #[asset(path = "textures/character/fox.png")]
+    pub fox: Handle<Image>,
 }
 
 #[derive(AssetCollection, Resource)]
