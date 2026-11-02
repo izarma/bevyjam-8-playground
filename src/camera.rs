@@ -27,7 +27,8 @@ pub(super) fn plugin(app: &mut App) {
                 follow_target
                     .in_set(PausableSystems)
                     .run_if(in_state(GameplayScene::Base)),
-                toggle_cursor.run_if(in_state(GameplayScene::Base).and_then(in_state(Menu::None))),
+                toggle_cursor
+                    .run_if(in_state(GameplayScene::Outdoors).and_then(in_state(Menu::None))),
             ),
         )
         .add_systems(
@@ -35,7 +36,7 @@ pub(super) fn plugin(app: &mut App) {
             face_camera
                 .in_set(PausableSystems)
                 .after(follow_target)
-                .run_if(in_state(GameplayScene::Base)),
+                .run_if(in_state(GameState::Gameplay)),
         )
         // The camera needs to be rotated before the fixed timestep loop, so that the physics
         // simulation (see `player::controller`) can use the current rotation.

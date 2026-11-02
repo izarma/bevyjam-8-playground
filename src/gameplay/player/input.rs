@@ -3,7 +3,7 @@ use bevy_enhanced_input::prelude::*;
 
 use crate::Pause;
 
-use super::{Player, controller::AccumulatedInput};
+use super::Player;
 
 #[derive(Debug, InputAction)]
 #[action_output(Vec2)]
@@ -30,10 +30,7 @@ pub(super) fn plugin(app: &mut App) {
         .add_input_context::<Player>()
         // Keep the `Player` context active only while the `Pause` substate of `GameState::Gameplay`
         // is `Pause(false)` (the player can act).
-        .sync_context_to_state::<Player, Pause>()
-        .add_observer(on_jump_start)
-        .add_observer(on_interact_start)
-        .add_observer(on_attack_start);
+        .sync_context_to_state::<Player, Pause>();
 }
 
 /// The player's action bindings, spawned as [`Actions`] related to the player entity.
@@ -79,29 +76,5 @@ pub(crate) fn player_input_scenes() -> impl SceneList {
             --
             Binding(GamepadButton::West)
         ]
-    }
-}
-
-fn on_jump_start(start: On<Start<Jump>>, mut inputs: Query<&mut AccumulatedInput, With<Player>>) {
-    if let Ok(mut input) = inputs.get_mut(start.context) {
-        input.jump = true;
-    }
-}
-
-fn on_interact_start(
-    start: On<Start<Interact>>,
-    mut inputs: Query<&mut AccumulatedInput, With<Player>>,
-) {
-    if let Ok(mut input) = inputs.get_mut(start.context) {
-        input.interact = true;
-    }
-}
-
-fn on_attack_start(
-    start: On<Start<Attack>>,
-    mut inputs: Query<&mut AccumulatedInput, With<Player>>,
-) {
-    if let Ok(mut input) = inputs.get_mut(start.context) {
-        input.attack = true;
     }
 }

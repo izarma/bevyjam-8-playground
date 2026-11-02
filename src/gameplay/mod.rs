@@ -4,7 +4,7 @@ mod game_object;
 mod outdoors;
 mod player;
 
-pub(crate) use player::{PlayerAnimation, tick_player_animation, update_player_animation_state};
+pub(crate) use player::{PlayerAnimation, tick_player_animation};
 
 use bevy::prelude::*;
 use bevy_sprite3d::Sprite3dPlugin;
