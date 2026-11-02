@@ -1,0 +1,17 @@
+[package]
+name = "bevyjam_editor"
+version = "0.1.17"
+edition = "2024"
+authors = ["Piefayth <piefayth@gmail.com>"]
+publish = false
+license = "MIT OR Apache-2.0"
+
+[workspace]
+
+[package.metadata.jackdaw]
+label = "Bevyjam Editor"
+
+[dependencies]
+bevy = "0.20"
+jackdaw_extension = { version = "0.20" }
+pixel_sprite = { path = "../crates/pixel_sprite" }

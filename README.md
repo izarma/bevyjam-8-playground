@@ -9,6 +9,19 @@ Template for a Game using the awesome [Bevy engine][bevy] featuring out of the b
 2. `cargo run` to play
 3. `jd open .` to open the editor
 
+## Editor extension
+
+The editor needs an extension to draw billboard sprites in the viewport. Editor users should build and install it. From the repo root do:
+
+```sh
+cd editor_extension
+jd build
+jd extension pack
+jd extension install bevyjam_editor-<version>-<platform>.jdext --trust-publisher
+```
+
+Should be available after starting jackdaw again.
+
 # What does this template give you?
 
 * small example ["game"](https://niklasei.github.io/bevy_game_template/)

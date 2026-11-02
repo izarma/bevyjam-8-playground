@@ -1,0 +1,5 @@
+
+[jackdaw]
+version = "0.20.0"
+bevy = "0.20"
+channel = "stable"

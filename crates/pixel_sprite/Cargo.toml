@@ -1,0 +1,11 @@
+[package]
+name = "pixel_sprite"
+version = "0.1.0"
+edition = "2024"
+publish = false
+
+# Shared by the game and the editor extension in `../../editor_extension`, so
+# the editor draws sprites with the same code the game does.
+
+[dependencies]
+bevy = { version = "0.20", default-features = false, features = ["3d"] }
