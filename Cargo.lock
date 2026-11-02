@@ -1111,7 +1111,7 @@ dependencies = [
  "jackdaw_avian_integration",
  "jackdaw_runtime",
  "log",
- "pixel_sprite",
+ "pixel_art",
  "rand 0.10.3",
  "webbrowser",
  "winit",
@@ -5422,7 +5422,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "pixel_sprite"
+name = "pixel_art"
 version = "0.1.0"
 dependencies = [
  "bevy",

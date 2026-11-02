@@ -22,18 +22,10 @@ import bevy_render::maths::{PI, quat_rotate};
 import bevy_pbr::render::mesh_view_bindings::diffuse_environment_maps;
 @if(ENVIRONMENT_MAP && !MULTIPLE_LIGHT_PROBES_IN_ARRAY)
 import bevy_pbr::render::mesh_view_bindings::diffuse_environment_map;
-import pixel_sprite::billboard::{billboard_facing, billboard_position};
+import pixel_art::billboard::{billboard_facing, billboard_position};
+import pixel_art::texel::texel_sharp;
 
 @group(constants::MATERIAL_BIND_GROUP) @binding(100) var sprite_texture: texture_2d<f32>;
-
-// same trick we do in terrain to make it sharp from a distance
-fn texel_sharp(uv: vec2<f32>, ddx: vec2<f32>, ddy: vec2<f32>, size: vec2<f32>) -> vec2<f32> {
-    let texel = uv * size;
-    let footprint = clamp((abs(ddx) + abs(ddy)) * size, vec2<f32>(1e-5), vec2<f32>(1.0));
-    let edge = floor(texel + 0.5);
-    let across = smoothstep(-0.5 * footprint, 0.5 * footprint, texel - edge) - 0.5;
-    return (edge + across) / size;
-}
 
 // for the transparancy trick
 fn premultiplied(texel: vec2<i32>) -> vec4<f32> {
@@ -55,10 +47,23 @@ fn sprite_color(uv: vec2<f32>, ddx: vec2<f32>, ddy: vec2<f32>) -> vec4<f32> {
     return vec4<f32>(blended.rgb / max(blended.a, 1e-4), blended.a);
 }
 
+// this is just a copy of bevy's vertex output
+// but for web, position needs to be invariant for it to survive apparently
+struct BillboardOutput {
+    @invariant @builtin(position) position: vec4<f32>,
+    @location(0) world_position: vec4<f32>,
+    @location(1) world_normal: vec3<f32>,
+    @location(2) uv: vec2<f32>,
+    @if(VERTEX_OUTPUT_INSTANCE_INDEX)
+    @location(6) @interpolate(flat) instance_index: u32,
+    @if(VISIBILITY_RANGE_DITHER)
+    @location(7) @interpolate(flat) visibility_range_dither: i32,
+}
+
 // 90% normal bevy vertex shader
 @vertex
-fn vertex(packed: Vertex) -> VertexOutput {
-    var out: VertexOutput;
+fn vertex(packed: Vertex) -> BillboardOutput {
+    var out: BillboardOutput;
     let vertex = decompress_vertex(packed, packed.instance_index);
     let world_from_local = mesh_functions::get_world_from_local(packed.instance_index);
 

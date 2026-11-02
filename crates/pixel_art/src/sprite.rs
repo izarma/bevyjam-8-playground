@@ -2,7 +2,7 @@
 // prevents distortion of pixel art on moving sprites
 
 use bevy::{
-    asset::{RenderAssetUsages, embedded_asset, load_embedded_asset},
+    asset::{RenderAssetUsages, embedded_asset},
     camera::primitives::Aabb,
     camera::visibility::NoAutoAabb,
     light::NotShadowReceiver,
@@ -11,27 +11,20 @@ use bevy::{
     platform::collections::HashMap,
     prelude::*,
     render::render_resource::AsBindGroup,
-    shader::{Shader, ShaderRef},
+    shader::ShaderRef,
 };
 
-pub struct PixelSpritePlugin;
-
-impl Plugin for PixelSpritePlugin {
-    fn build(&self, app: &mut App) {
-        embedded_asset!(app, "pixel_sprite.wesl");
-        embedded_asset!(app, "pixel_sprite_prepass.wesl");
-        embedded_asset!(app, "billboard.wesl");
-        let billboard = load_embedded_asset!(app, "billboard.wesl");
-        app.insert_resource(ShaderLibrary(billboard))
-            .add_plugins(MaterialPlugin::<PixelSpriteMaterial>::default())
-            .init_resource::<PixelSpriteCache>()
-            .add_systems(
-                PostUpdate,
-                (mark_stale_sprites, sync_pixel_sprites)
-                    .chain()
-                    .before(check_entities_needing_specialization::<PixelSpriteMaterial>),
-            );
-    }
+pub(crate) fn plugin(app: &mut App) {
+    embedded_asset!(app, "sprite.wesl");
+    embedded_asset!(app, "sprite_prepass.wesl");
+    app.add_plugins(MaterialPlugin::<PixelSpriteMaterial>::default())
+        .init_resource::<PixelSpriteCache>()
+        .add_systems(
+            PostUpdate,
+            (mark_stale_sprites, sync_pixel_sprites)
+                .chain()
+                .before(check_entities_needing_specialization::<PixelSpriteMaterial>),
+        );
 }
 
 #[derive(Component, Reflect, Clone, Debug, FromTemplate)]
@@ -68,20 +61,17 @@ pub struct PixelSpriteExtension {
 
 impl MaterialExtension for PixelSpriteExtension {
     fn vertex_shader() -> ShaderRef {
-        "embedded://pixel_sprite/pixel_sprite.wesl".into()
+        "embedded://pixel_art/sprite.wesl".into()
     }
 
     fn fragment_shader() -> ShaderRef {
-        "embedded://pixel_sprite/pixel_sprite.wesl".into()
+        "embedded://pixel_art/sprite.wesl".into()
     }
 
     fn prepass_vertex_shader() -> ShaderRef {
-        "embedded://pixel_sprite/pixel_sprite_prepass.wesl".into()
+        "embedded://pixel_art/sprite_prepass.wesl".into()
     }
 }
-
-#[derive(Resource)]
-struct ShaderLibrary(#[expect(dead_code, reason = "this keeps the shader loaded")] Handle<Shader>);
 
 #[derive(Resource, Default)]
 struct PixelSpriteCache {

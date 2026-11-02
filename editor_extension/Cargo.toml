@@ -1,6 +1,6 @@
 [package]
 name = "bevyjam_editor"
-version = "0.1.17"
+version = "0.1.21"
 edition = "2024"
 authors = ["Piefayth <piefayth@gmail.com>"]
 publish = false
@@ -14,4 +14,4 @@ label = "Bevyjam Editor"
 [dependencies]
 bevy = "0.20"
 jackdaw_extension = { version = "0.20" }
-pixel_sprite = { path = "../crates/pixel_sprite" }
+pixel_art = { path = "../crates/pixel_art" }

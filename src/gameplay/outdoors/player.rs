@@ -8,7 +8,7 @@ use bevy::{
 };
 use bevy_ahoy::{CharacterLook, prelude::*};
 use bevy_enhanced_input::prelude::*;
-use pixel_sprite::PixelSprite;
+use pixel_art::PixelSprite;
 
 use crate::{
     GameplayScene, PausableSystems, Pause,
