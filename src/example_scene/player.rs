@@ -23,7 +23,6 @@ const CAPSULE_RADIUS: f32 = 0.25;
 const CAPSULE_HEIGHT: f32 = 1.0;
 const CAM_RADIUS: f32 = 5.0;
 const CAM_LOOK_OFFSET: Vec3 = Vec3::new(0.0, 0.5, 0.0);
-/// The character sheet's frames: 32 px squares, 35 to a row.
 const FRAME_SIZE: u32 = 32;
 const SHEET_COLUMNS: u32 = 35;
 
@@ -53,7 +52,6 @@ pub(super) fn plugin(app: &mut App) {
         );
 }
 
-/// Where the player's feet start.
 #[derive(Component, Reflect, Default)]
 #[reflect(Component, Default)]
 pub struct PlayerSpawn;

@@ -133,13 +133,13 @@ fn mark_stale_sprites(
     }
 }
 
+// sprites whose mesh and material have to be (re)built
+type NeedsSync = Or<(Changed<PixelSprite>, With<Stale>, Without<Mesh3d>)>;
+
 // unstale the sprites
 fn sync_pixel_sprites(
     mut commands: Commands,
-    sprites: Query<
-        (Entity, &PixelSprite),
-        Or<(Changed<PixelSprite>, With<Stale>, Without<Mesh3d>)>,
-    >,
+    sprites: Query<(Entity, &PixelSprite), NeedsSync>,
     mut cache: ResMut<PixelSpriteCache>,
     images: Res<Assets<Image>>,
     mut meshes: ResMut<Assets<Mesh>>,
