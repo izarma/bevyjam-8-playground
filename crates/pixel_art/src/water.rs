@@ -99,9 +99,7 @@ const TEXELS_PER_METER: f32 = 32.0;
 
 impl PixelWater {
     fn material(&self, images: &mut Assets<Image>) -> PixelWaterMaterial {
-        let foam = Mat2::from_diagonal(Vec2::splat(
-            1.0 / (self.foam_spacing * FOAM_CELLS as f32),
-        ));
+        let foam = Mat2::from_diagonal(Vec2::splat(1.0 / (self.foam_spacing * FOAM_CELLS as f32)));
         let mask_texel = 1.0 / FOAM_TILE as f32;
         ExtendedMaterial {
             base: StandardMaterial {
