@@ -79,7 +79,7 @@ fn spawn_title_camera(mut commands: Commands) {
     });
 }
 
-/// Tag scene cameras when they spawn.
+/// Tag scene cameras when they spawn. May want a better way to do this.
 fn add_default_ui_camera(
     mut commands: Commands,
     cameras: Query<Entity, (Added<Camera3d>, Without<TitleCamera>)>,

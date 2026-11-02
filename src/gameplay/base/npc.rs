@@ -9,7 +9,7 @@ pub(super) fn plugin(app: &mut App) {
 }
 
 #[derive(Component)]
-struct NPC;
+struct Npc;
 
 fn spawn_npc(
     assets: Res<NPCAssets>,
@@ -20,7 +20,7 @@ fn spawn_npc(
         &mut commands,
         &assets,
         &mut texture_atlas_layouts,
-        NPC,
+        Npc,
         Vec3::new(1.0, 0.5, 0.0),
     );
 }
