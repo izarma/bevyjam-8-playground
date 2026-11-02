@@ -5,7 +5,7 @@ mod player;
 mod world;
 
 pub(crate) use player::{
-    PlayerAnimation, apply_player_animation, tick_player_animation, update_player_animation_state,
+    PlayerAnimation, tick_player_animation, update_player_animation_state,
 };
 
 use bevy::prelude::*;

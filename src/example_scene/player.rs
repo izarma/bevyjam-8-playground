@@ -8,13 +8,12 @@ use bevy::{
 };
 use bevy_ahoy::{CharacterLook, prelude::*};
 use bevy_enhanced_input::prelude::*;
-use bevy_sprite3d::Sprite3d;
-use jackdaw_runtime::TerrainHeights;
+use pixel_sprite::PixelSprite;
 
 use crate::{
     GameState,
     camera::{CameraSensitivity, GameplayCamera},
-    gameplay::{PlayerAnimation, apply_player_animation, tick_player_animation},
+    gameplay::{PlayerAnimation, tick_player_animation},
     loading::PlayerAssets,
 };
 
@@ -24,9 +23,13 @@ const CAPSULE_RADIUS: f32 = 0.25;
 const CAPSULE_HEIGHT: f32 = 1.0;
 const CAM_RADIUS: f32 = 5.0;
 const CAM_LOOK_OFFSET: Vec3 = Vec3::new(0.0, 0.5, 0.0);
+/// The character sheet's frames: 32 px squares, 35 to a row.
+const FRAME_SIZE: u32 = 32;
+const SHEET_COLUMNS: u32 = 35;
 
 pub(super) fn plugin(app: &mut App) {
     app.add_plugins(AhoyPlugins::default())
+        .add_observer(spawn_player)
         .add_input_context::<ExamplePlayer>()
         .add_systems(OnEnter(GameState::ExampleScene), set_cursor_locked::<true>)
         .add_systems(OnExit(GameState::ExampleScene), set_cursor_locked::<false>)
@@ -40,17 +43,20 @@ pub(super) fn plugin(app: &mut App) {
         .add_systems(
             Update,
             (
-                spawn_player,
                 follow_player,
-                face_camera,
                 tick_player_animation,
                 update_animation,
-                apply_player_animation,
+                apply_animation,
             )
                 .chain()
                 .run_if(in_state(GameState::ExampleScene)),
         );
 }
+
+/// Where the player's feet start.
+#[derive(Component, Reflect, Default)]
+#[reflect(Component, Default)]
+pub struct PlayerSpawn;
 
 #[derive(Component)]
 struct ExamplePlayer;
@@ -63,34 +69,21 @@ struct ExamplePlayerSprite;
 struct Run;
 
 fn spawn_player(
+    spawn: On<Insert<PlayerSpawn>>,
     mut commands: Commands,
-    terrains: Query<(&TerrainHeights, &GlobalTransform), Added<TerrainHeights>>,
+    transforms: Query<&GlobalTransform>,
     player_assets: Res<PlayerAssets>,
-    mut texture_atlas_layouts: ResMut<Assets<TextureAtlasLayout>>,
 ) {
-    let Some((heights, terrain_transform)) = terrains.iter().next() else {
+    let Ok(feet) = transforms.get(spawn.entity) else {
         return;
     };
-    let centre = heights.0.origin + heights.0.size / 2.0;
-    let Some(ground) = heights.0.height_at_local(centre) else {
-        return;
-    };
-    let spawn = terrain_transform.transform_point(Vec3::new(centre.x, ground, centre.y))
-        + Vec3::Y * CAPSULE_HEIGHT;
+    let spawn = feet.translation() + Vec3::Y * CAPSULE_HEIGHT / 2.0;
 
     let animation = PlayerAnimation::default();
-    let sprite = Sprite {
+    let sprite = PixelSprite {
         image: player_assets.player_sheet.clone(),
-        texture_atlas: Some(TextureAtlas {
-            layout: texture_atlas_layouts.add(TextureAtlasLayout::from_grid(
-                UVec2::splat(32),
-                35,
-                7,
-                None,
-                None,
-            )),
-            index: animation.frame_index(),
-        }),
+        rect: frame_rect(animation.frame_index()),
+        pixels_per_meter: 32.0,
         ..default()
     };
 
@@ -115,13 +108,10 @@ fn spawn_player(
             DespawnOnExit(GameState::ExampleScene),
             children![(
                 ExamplePlayerSprite,
+                // feet at the bottom of the capsule
+                Transform::from_xyz(0.0, -CAPSULE_HEIGHT / 2.0, 0.0),
                 animation,
                 sprite,
-                Sprite3d {
-                    pixels_per_metre: 32.0,
-                    double_sided: true,
-                    ..default()
-                },
             )],
         ))
         .queue_spawn_related_scenes::<Actions<ExamplePlayer>>(bsn_list! {
@@ -193,14 +183,6 @@ fn follow_player(
     camera.translation = look_at + camera.rotation * Vec3::new(0.0, 0.0, CAM_RADIUS);
 }
 
-fn face_camera(
-    camera: Single<&Transform, SceneCamera>,
-    mut sprite: Single<&mut Transform, (With<ExamplePlayerSprite>, Without<Camera3d>)>,
-) {
-    let (yaw, _, _) = camera.rotation.to_euler(EulerRot::YXZ);
-    sprite.rotation = Quat::from_rotation_y(yaw);
-}
-
 fn update_animation(
     camera: Single<&Transform, SceneCamera>,
     run: Single<&Action<Run>>,
@@ -225,4 +207,23 @@ fn set_cursor_locked<const LOCKED: bool>(
         CursorGrabMode::None
     };
     cursor.visible = !LOCKED;
+}
+
+fn frame_rect(index: usize) -> URect {
+    let index = index as u32;
+    let min = UVec2::new(index % SHEET_COLUMNS, index / SHEET_COLUMNS) * FRAME_SIZE;
+    URect::from_corners(min, min + UVec2::splat(FRAME_SIZE))
+}
+
+
+fn apply_animation(mut sprites: Query<(&PlayerAnimation, &mut PixelSprite)>) {
+    for (animation, mut sprite) in &mut sprites {
+        let rect = frame_rect(animation.frame_index());
+        let flip_x = animation.flipped();
+        
+        if sprite.rect != rect || sprite.flip_x != flip_x {
+            sprite.rect = rect;
+            sprite.flip_x = flip_x;
+        }
+    }
 }

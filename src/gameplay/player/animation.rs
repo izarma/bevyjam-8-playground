@@ -142,6 +142,10 @@ impl Default for PlayerAnimation {
 }
 
 impl PlayerAnimation {
+    pub(crate) fn flipped(&self) -> bool {
+        self.flip
+    }
+
     /// Current atlas index for the animation.
     pub(crate) fn frame_index(&self) -> usize {
         let frame_count = self.state.frame_count();

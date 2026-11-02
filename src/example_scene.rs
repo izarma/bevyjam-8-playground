@@ -3,10 +3,11 @@ use jackdaw_runtime::prelude::*;
 
 use crate::{GameState, camera::GameplayCamera};
 
+mod camera_effects;
 mod player;
 
 pub(super) fn plugin(app: &mut App) {
-    app.add_plugins(player::plugin)
+    app.add_plugins((player::plugin, pixel_sprite::PixelSpritePlugin, camera_effects::plugin))
         .add_systems(
             OnEnter(GameState::ExampleScene),
             (spawn_example_scene, set_gameplay_camera_active::<false>),
