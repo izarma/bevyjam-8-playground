@@ -118,7 +118,7 @@ fn restore_standard_materials(
         let Ok(StandardSource(source)) = sources.get(entity) else {
             continue;
         };
-        
+
         commands
             .entity(entity)
             .try_remove::<(MeshMaterial3d<PixelModelMaterial>, StandardSource)>()
