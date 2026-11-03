@@ -1,6 +1,3 @@
-// the wipe minigame: the plant's colored texels sit over a grey copy of the
-// plant, and sweeping the mouse across them knocks them off to fall out of
-// the screen. wiping every one wins
 use bevy::{prelude::*, ui::UiGlobalTransform, window::PrimaryWindow};
 use pixel_art::PixelSprite;
 
