@@ -526,4 +526,13 @@ bevy_ecs::hierarchy::Children [
     }
     avian3d::dynamics::rigid_body::RigidBody::Static
     jackdaw_avian_integration::AvianCollider(avian3d::collision::collider::constructor::ColliderConstructor::TrimeshFromMesh)
+    --
+    #"Spawn Point"
+    jackdaw_scene_types::node_id::SceneNodeId(8480734209342456169)
+    bevy_transform::components::transform::Transform {
+        translation: glam::Vec3 {
+            y: 0.0,
+        },
+    }
+    bevy_game::gameplay::base::player_indoor::IndoorPlayerSpawn
 ]

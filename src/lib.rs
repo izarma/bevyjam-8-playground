@@ -4,6 +4,7 @@ use avian3d::prelude::{Physics, PhysicsTime};
 #[cfg(debug_assertions)]
 use bevy::diagnostic::{FrameTimeDiagnosticsPlugin, LogDiagnosticsPlugin};
 use bevy::prelude::*;
+use bevy_ahoy::{AhoyPlugins, AhoySystems};
 
 mod audio;
 mod camera;
@@ -69,6 +70,7 @@ pub fn plugin(app: &mut App) {
         render_scale::plugin,
         audio::plugin,
         ui::plugin,
+        AhoyPlugins::default(),
         gameplay::plugin,
         jackdaw_runtime::JackdawPlugin,
         avian3d::prelude::PhysicsPlugins::default(),
@@ -82,6 +84,14 @@ pub fn plugin(app: &mut App) {
         .configure_sets(
             RunFixedMainLoop,
             PausableSystems.run_if(in_state(Pause(false))),
+        )
+        .configure_sets(
+            FixedPostUpdate,
+            (
+                AhoySystems::MoveCharacters,
+                AhoySystems::ApplyForcesToDynamicRigidBodies,
+            )
+                .run_if(in_state(Pause(false))),
         );
 
     // For Physics `Pause`

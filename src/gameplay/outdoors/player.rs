@@ -13,7 +13,7 @@ use pixel_art::PixelSprite;
 use crate::{
     GameplayScene, PausableSystems, Pause,
     camera::{CameraSensitivity, SceneCamera, face_camera},
-    gameplay::{PlayerAnimation, tick_player_animation},
+    gameplay::{PlayerAnimation, player::Player, tick_player_animation},
     loading::{PLAYER_FRAME, PLAYER_SHEET_COLUMNS, PlayerAssets},
     ui::menus::Menu,
 };
@@ -27,16 +27,7 @@ const CAM_RADIUS: f32 = 10.0;
 const CAM_LOOK_OFFSET: Vec3 = Vec3::new(0.0, 1.0, 0.0);
 
 pub(super) fn plugin(app: &mut App) {
-    app.add_plugins(AhoyPlugins::default())
-        .configure_sets(
-            FixedPostUpdate,
-            (
-                AhoySystems::MoveCharacters,
-                AhoySystems::ApplyForcesToDynamicRigidBodies,
-            )
-                .run_if(in_state(Pause(false))),
-        )
-        .add_observer(spawn_player)
+    app.add_observer(spawn_player)
         .add_input_context::<ExamplePlayer>()
         .sync_context_to_state::<ExamplePlayer, Pause>()
         .add_systems(OnEnter(GameplayScene::Outdoors), set_cursor_locked::<true>)
@@ -105,12 +96,9 @@ fn spawn_player(
 
     commands
         .spawn_scene(bsn! {
-            ~ActiveInStates::<ExamplePlayer, Pause>::single(Pause(false))
-        })
-        .insert((
-            ExamplePlayer,
-            Transform::from_translation(spawn),
-            Collider::capsule(CAPSULE_RADIUS, CAPSULE_HEIGHT - 2.0 * CAPSULE_RADIUS),
+            Player
+            Transform::from_translation(spawn)
+            Collider::capsule(CAPSULE_RADIUS, CAPSULE_HEIGHT - 2.0 * CAPSULE_RADIUS)
             CharacterController {
                 speed: WALK_SPEED,
                 standing_view_height: 1.8,
@@ -121,10 +109,14 @@ fn spawn_player(
                 mantle_height: 1.1,
                 crane_height: 1.6,
                 min_ledge_grab_space: Cuboid::new(0.2, 0.1, 0.2),
-                ..default()
-            },
-            CharacterLook::default(),
-            DespawnOnExit(GameplayScene::Outdoors),
+                ..CharacterController::default()
+            }
+            ~ActiveInStates::<ExamplePlayer, Pause>::single(Pause(false))
+            CharacterLook::default()
+            DespawnOnExit::<GameplayScene>(GameplayScene::Outdoors)
+        })
+        .insert((
+            ExamplePlayer,
             children![(
                 ExamplePlayerSprite,
                 // feet at the bottom of the capsule

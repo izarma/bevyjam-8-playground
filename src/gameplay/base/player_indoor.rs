@@ -1,23 +1,70 @@
+use avian3d::prelude::*;
 use bevy::prelude::*;
+use bevy_ahoy::prelude::*;
+use bevy_enhanced_input::prelude::*;
 
-use crate::{GameplayScene, gameplay::player::Player, loading::NPCAssets};
+use crate::{GameplayScene, Pause, gameplay::player::Player, loading::NPCAssets};
 
-use super::anim::spawn_base_sprite;
+use super::anim::indoor_visual_bundle;
+
+const WALK_SPEED: f32 = 2.0;
+const CAPSULE_RADIUS: f32 = 0.25;
+const CAPSULE_HEIGHT: f32 = 1.0;
+const STEP_SIZE: f32 = 0.15;
+
+#[derive(Component, Reflect, Default)]
+#[reflect(Component, Default)]
+pub struct IndoorPlayerSpawn;
+
+#[derive(Component, Clone, Default)]
+struct IndoorPlayer;
 
 pub(super) fn plugin(app: &mut App) {
-    app.add_systems(OnEnter(GameplayScene::Base), spawn_player_base);
+    app.add_observer(spawn_player_base)
+        .add_input_context::<IndoorPlayer>()
+        .sync_context_to_state::<IndoorPlayer, Pause>();
 }
 
 fn spawn_player_base(
+    spawn: On<Insert<IndoorPlayerSpawn>>,
+    mut commands: Commands,
+    transforms: Query<&GlobalTransform>,
     assets: Res<NPCAssets>,
     mut texture_atlas_layouts: ResMut<Assets<TextureAtlasLayout>>,
-    mut commands: Commands,
 ) {
-    spawn_base_sprite(
-        &mut commands,
-        &assets,
-        &mut texture_atlas_layouts,
-        Player,
-        Vec3::new(0.0, 0.5, 0.0),
-    );
+    let Ok(feet) = transforms.get(spawn.entity) else {
+        return;
+    };
+    let spawn = feet.translation() + Vec3::Y * CAPSULE_HEIGHT / 2.0;
+
+    let (animation, sprite, sprite3d) = indoor_visual_bundle(&assets, &mut texture_atlas_layouts);
+
+    commands
+        .spawn_scene(bsn! {
+            IndoorPlayer
+            Player
+            Transform::from_translation(spawn)
+            Collider::capsule(CAPSULE_RADIUS, CAPSULE_HEIGHT - 2.0 * CAPSULE_RADIUS)
+            CharacterController {
+                speed: WALK_SPEED,
+                step_size: STEP_SIZE,
+            }
+            ~ActiveInStates::<IndoorPlayer, Pause>::single(Pause(false))
+            DespawnOnExit::<GameplayScene>(GameplayScene::Base)
+        })
+        .insert(children![(
+            Transform::IDENTITY,
+            animation,
+            sprite,
+            sprite3d,
+        )])
+        .queue_spawn_related_scenes::<Actions<IndoorPlayer>>(bsn_list! {
+            Action::<Movement>::new()
+            DeadZone
+            Bindings [
+                {preset::cardinal::wasd_keys()}
+                --
+                {preset::axial::left_stick()}
+            ]
+        });
 }

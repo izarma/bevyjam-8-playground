@@ -10,7 +10,9 @@ use bevy::{
 };
 use bevy_ahoy::prelude::CharacterController;
 
-use crate::{GameplayScene, camera::SceneCamera, graphics::GraphicsSettings};
+use crate::{
+    GameplayScene, camera::SceneCamera, gameplay::player::Player, graphics::GraphicsSettings,
+};
 
 pub(super) fn plugin(app: &mut App) {
     app.add_systems(
@@ -46,7 +48,7 @@ fn add_camera_effects(
 
 fn focus_on_player(
     mut cameras: Query<(&GlobalTransform, &mut DepthOfField), SceneCamera>,
-    player: Single<&GlobalTransform, With<CharacterController>>,
+    player: Single<&GlobalTransform, (With<CharacterController>, With<Player>)>,
 ) {
     for (camera, mut depth_of_field) in &mut cameras {
         depth_of_field.focal_distance = camera.translation().distance(player.translation());
