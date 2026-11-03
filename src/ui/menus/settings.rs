@@ -6,6 +6,7 @@ use crate::{
         CAMERA_SENSITIVITY_STEP, CameraSensitivity, DEFAULT_CAMERA_SENSITIVITY,
         MAX_CAMERA_SENSITIVITY, MIN_CAMERA_SENSITIVITY,
     },
+    graphics::{GraphicsSettings, RENDER_SCALES},
     ui::{menus::Menu, widget},
 };
 
@@ -21,6 +22,7 @@ pub(super) fn plugin(app: &mut App) {
         (
             update_horizontal_sensitivity_label,
             update_vertical_sensitivity_label,
+            update_graphics_labels,
         )
             .run_if(in_state(Menu::Settings)),
     );
@@ -66,8 +68,167 @@ fn settings_grid() -> impl Scene {
             }
             --
             @vertical_sensitivity_widget()
+            --
+            @widget::label("Render Scale")
+            Node {
+                justify_self: JustifySelf::End,
+            }
+            --
+            @render_scale_widget()
+            --
+            @widget::label("Depth of Field")
+            Node {
+                justify_self: JustifySelf::End,
+            }
+            --
+            @depth_of_field_widget()
+            --
+            @widget::label("Fog")
+            Node {
+                justify_self: JustifySelf::End,
+            }
+            --
+            @fog_widget()
         ]
     }
+}
+
+fn render_scale_widget() -> impl Scene {
+    bsn! {
+        #RenderScaleWidget
+        Node {
+            justify_self: JustifySelf::Start,
+        }
+        Children [
+            @widget::button_small("-", lower_render_scale)
+            --
+            #RenderScaleValue
+            Node {
+                padding: UiRect::horizontal(px(10)),
+                justify_content: JustifyContent::Center,
+            }
+            Children [
+                @widget::label("")
+                RenderScaleLabel
+            ]
+            --
+            @widget::button_small("+", raise_render_scale)
+        ]
+    }
+}
+
+fn depth_of_field_widget() -> impl Scene {
+    bsn! {
+        #DepthOfFieldWidget
+        Node {
+            justify_self: JustifySelf::Start,
+        }
+        Children [
+            @widget::button_small("-", turn_off_depth_of_field)
+            --
+            #DepthOfFieldValue
+            Node {
+                padding: UiRect::horizontal(px(10)),
+                justify_content: JustifyContent::Center,
+            }
+            Children [
+                @widget::label("")
+                DepthOfFieldLabel
+            ]
+            --
+            @widget::button_small("+", turn_on_depth_of_field)
+        ]
+    }
+}
+
+fn fog_widget() -> impl Scene {
+    bsn! {
+        #FogWidget
+        Node {
+            justify_self: JustifySelf::Start,
+        }
+        Children [
+            @widget::button_small("-", turn_off_fog)
+            --
+            #FogValue
+            Node {
+                padding: UiRect::horizontal(px(10)),
+                justify_content: JustifyContent::Center,
+            }
+            Children [
+                @widget::label("")
+                FogLabel
+            ]
+            --
+            @widget::button_small("+", turn_on_fog)
+        ]
+    }
+}
+
+#[derive(Component, Clone, Default)]
+struct RenderScaleLabel;
+
+#[derive(Component, Clone, Default)]
+struct DepthOfFieldLabel;
+
+#[derive(Component, Clone, Default)]
+struct FogLabel;
+
+fn lower_render_scale(_: On<PointerClick>, mut settings: ResMut<GraphicsSettings>) {
+    if let Some(&lower) = RENDER_SCALES
+        .iter()
+        .rev()
+        .find(|&&scale| scale < settings.render_scale)
+    {
+        settings.render_scale = lower;
+    }
+}
+
+fn raise_render_scale(_: On<PointerClick>, mut settings: ResMut<GraphicsSettings>) {
+    if let Some(&higher) = RENDER_SCALES
+        .iter()
+        .find(|&&scale| scale > settings.render_scale)
+    {
+        settings.render_scale = higher;
+    }
+}
+
+fn turn_off_depth_of_field(_: On<PointerClick>, mut settings: ResMut<GraphicsSettings>) {
+    settings.depth_of_field = false;
+}
+
+fn turn_on_depth_of_field(_: On<PointerClick>, mut settings: ResMut<GraphicsSettings>) {
+    settings.depth_of_field = true;
+}
+
+fn turn_off_fog(_: On<PointerClick>, mut settings: ResMut<GraphicsSettings>) {
+    settings.fog = false;
+}
+
+fn turn_on_fog(_: On<PointerClick>, mut settings: ResMut<GraphicsSettings>) {
+    settings.fog = true;
+}
+
+fn on_off(on: bool) -> String {
+    if on { "On" } else { "Off" }.to_string()
+}
+
+fn update_graphics_labels(
+    settings: Res<GraphicsSettings>,
+    mut scale: Single<
+        &mut Text,
+        (
+            With<RenderScaleLabel>,
+            Without<DepthOfFieldLabel>,
+            Without<FogLabel>,
+        ),
+    >,
+    mut depth_of_field: Single<&mut Text, (With<DepthOfFieldLabel>, Without<FogLabel>)>,
+    mut fog: Single<&mut Text, (With<FogLabel>, Without<RenderScaleLabel>)>,
+) {
+    scale.0 = format!("{}%", settings.render_scale);
+    depth_of_field.0 = on_off(settings.depth_of_field);
+    fog.0 = on_off(settings.fog);
 }
 
 fn horizontal_sensitivity_widget() -> impl Scene {

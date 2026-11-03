@@ -2,41 +2,32 @@
 // prevents distortion of pixel art on moving sprites
 
 use bevy::{
-    asset::{RenderAssetUsages, embedded_asset, load_embedded_asset},
+    asset::{RenderAssetUsages, embedded_asset},
     camera::primitives::Aabb,
     camera::visibility::NoAutoAabb,
-    light::NotShadowReceiver,
     mesh::{Indices, PrimitiveTopology},
     pbr::{ExtendedMaterial, MaterialExtension, check_entities_needing_specialization},
     platform::collections::HashMap,
     prelude::*,
     render::render_resource::AsBindGroup,
-    shader::{Shader, ShaderRef},
+    shader::ShaderRef,
 };
 
-pub struct PixelSpritePlugin;
-
-impl Plugin for PixelSpritePlugin {
-    fn build(&self, app: &mut App) {
-        embedded_asset!(app, "pixel_sprite.wesl");
-        embedded_asset!(app, "pixel_sprite_prepass.wesl");
-        embedded_asset!(app, "billboard.wesl");
-        let billboard = load_embedded_asset!(app, "billboard.wesl");
-        app.insert_resource(ShaderLibrary(billboard))
-            .add_plugins(MaterialPlugin::<PixelSpriteMaterial>::default())
-            .init_resource::<PixelSpriteCache>()
-            .add_systems(
-                PostUpdate,
-                (mark_stale_sprites, sync_pixel_sprites)
-                    .chain()
-                    .before(check_entities_needing_specialization::<PixelSpriteMaterial>),
-            );
-    }
+pub(crate) fn plugin(app: &mut App) {
+    embedded_asset!(app, "sprite.wesl");
+    embedded_asset!(app, "sprite_prepass.wesl");
+    app.add_plugins(MaterialPlugin::<PixelSpriteMaterial>::default())
+        .init_resource::<PixelSpriteCache>()
+        .add_systems(
+            PostUpdate,
+            (mark_stale_sprites, sync_pixel_sprites)
+                .chain()
+                .before(check_entities_needing_specialization::<PixelSpriteMaterial>),
+        );
 }
 
 #[derive(Component, Reflect, Clone, Debug, FromTemplate)]
 #[reflect(Component, Default)]
-#[require(NotShadowReceiver)]
 pub struct PixelSprite {
     pub image: Handle<Image>,
     // which part of the image (like a spritesheet) to draw
@@ -51,7 +42,7 @@ impl Default for PixelSprite {
         Self {
             image: Handle::default(),
             rect: URect::default(),
-            pixels_per_meter: 32.0,
+            pixels_per_meter: crate::TEXELS_PER_METER,
             flip_x: false,
             anchor: Vec2::new(0.5, 0.0),
         }
@@ -68,20 +59,17 @@ pub struct PixelSpriteExtension {
 
 impl MaterialExtension for PixelSpriteExtension {
     fn vertex_shader() -> ShaderRef {
-        "embedded://pixel_sprite/pixel_sprite.wesl".into()
+        "embedded://pixel_art/sprite.wesl".into()
     }
 
     fn fragment_shader() -> ShaderRef {
-        "embedded://pixel_sprite/pixel_sprite.wesl".into()
+        "embedded://pixel_art/sprite.wesl".into()
     }
 
     fn prepass_vertex_shader() -> ShaderRef {
-        "embedded://pixel_sprite/pixel_sprite_prepass.wesl".into()
+        "embedded://pixel_art/sprite_prepass.wesl".into()
     }
 }
-
-#[derive(Resource)]
-struct ShaderLibrary(#[expect(dead_code, reason = "this keeps the shader loaded")] Handle<Shader>);
 
 #[derive(Resource, Default)]
 struct PixelSpriteCache {
@@ -216,11 +204,13 @@ fn quad(sprite: &PixelSprite, rect: URect, size: UVec2) -> Mesh {
         [left, uv_min.y],
         [right, uv_min.y],
     ];
+    let opposite_uvs = [uvs[3], uvs[2], uvs[1], uvs[0]];
     Mesh::new(
         PrimitiveTopology::TriangleList,
         RenderAssetUsages::default(),
     )
     .with_inserted_attribute(Mesh::ATTRIBUTE_POSITION, corners.to_vec())
     .with_inserted_attribute(Mesh::ATTRIBUTE_UV_0, uvs.to_vec())
+    .with_inserted_attribute(Mesh::ATTRIBUTE_UV_1, opposite_uvs.to_vec())
     .with_inserted_indices(Indices::U32(vec![0, 1, 2, 1, 3, 2]))
 }

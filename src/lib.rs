@@ -10,7 +10,9 @@ mod camera;
 #[cfg(debug_assertions)]
 mod dev_tooling;
 mod gameplay;
+mod graphics;
 mod loading;
+mod render_scale;
 mod ui;
 
 /// Application-level states. See `gameplay` for gameplay-owned state.
@@ -63,6 +65,8 @@ pub fn plugin(app: &mut App) {
     app.add_plugins((
         loading::plugin,
         camera::plugin,
+        graphics::plugin,
+        render_scale::plugin,
         audio::plugin,
         ui::plugin,
         gameplay::plugin,
