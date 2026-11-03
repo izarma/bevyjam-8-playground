@@ -21,11 +21,11 @@ fn spawn_main_menu() -> impl Scene {
         Children [
             @widget::button("Play", enter_gameplay_state)
             --
-            @widget::button("Example Scene", enter_example_scene)
-            --
             @widget::button("Settings", open_settings_menu)
             --
             @widget::button("Credits", open_credits_menu)
+            --
+            { #[cfg(debug_assertions)] (true).then(|| { bsn! { @widget::button("Outdoor Scene", enter_example_scene) }}) }
             --
             { #[cfg(not(target_family = "wasm"))] (true).then(|| { bsn! { @widget::button("Exit", exit_app) }})}
         ]
@@ -36,6 +36,7 @@ fn enter_gameplay_state(_: On<PointerClick>, mut next_screen: ResMut<NextState<G
     next_screen.set(GameState::Gameplay);
 }
 
+#[cfg(debug_assertions)]
 fn enter_example_scene(
     _: On<PointerClick>,
     mut next_screen: ResMut<NextState<GameState>>,

@@ -5,7 +5,7 @@ use crate::{GameplayScene, PausableSystems, gameplay::base::indoor_body, loading
 
 use super::anim::indoor_visual_bundle;
 
-const NPC_SPEED: f32 = 1.0;
+const NPC_SPEED: f32 = 4.0;
 
 pub(super) fn plugin(app: &mut App) {
     app.add_systems(OnEnter(GameplayScene::Base), spawn_npcs)
