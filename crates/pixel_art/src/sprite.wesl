@@ -18,7 +18,7 @@ import bevy_pbr::render::{
     pbr_fragment::pbr_input_from_standard_material,
     pbr_functions,
     pbr_lighting::getDistanceAttenuation,
-    pbr_types::PbrInput,
+    pbr_types::{PbrInput, STANDARD_MATERIAL_FLAGS_UNLIT_BIT},
     shadows,
     view_transformations::position_world_to_clip,
 };
@@ -250,7 +250,11 @@ fn fragment(in: VertexOutput, quad: Quad, @builtin(front_facing) is_front: bool)
     pbr_input.world_position = vec4<f32>(seen, 1.0);
 
     var out: FragmentOutput;
-    out.color = sprite_lighting(pbr_input, quad, local);
+    if (pbr_input.material.flags & STANDARD_MATERIAL_FLAGS_UNLIT_BIT) != 0u {
+        out.color = pbr_input.material.base_color;
+    } else {
+        out.color = sprite_lighting(pbr_input, quad, local);
+    }
     out.color = pbr_functions::main_pass_post_lighting_processing(pbr_input, out.color);
     return out;
 }

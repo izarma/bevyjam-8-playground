@@ -4,20 +4,30 @@ use pixel_art::PixelSprite;
 use plants::Growing;
 
 use super::player::Harvest;
-use crate::{GameplayScene, Pause, ui::menus::Menu};
+use crate::{GameplayScene, Pause, gameplay::player::Player, ui::menus::Menu};
 
 mod wipe;
+mod yields;
 
 const REACH: f32 = 1.5;
 const FADE_SECONDS: f32 = 0.3;
 const OVERLAY_ALPHA: f32 = 0.6;
 
 pub(super) fn plugin(app: &mut App) {
-    app.add_plugins(wipe::plugin)
+    app.add_plugins((wipe::plugin, yields::plugin))
+        .init_resource::<InReach>()
+        .add_systems(
+            Update,
+            find_in_reach.run_if(in_state(GameplayScene::Outdoors)),
+        )
         .add_observer(start_harvest)
         .add_systems(OnExit(Menu::Minigame), close_overlays)
         .add_systems(Update, fade_overlay);
 }
+
+// the nearest plant you can harvest
+#[derive(Resource, Default)]
+struct InReach(Option<Entity>);
 
 #[derive(Component)]
 struct Fades(Color);
@@ -28,26 +38,33 @@ struct Overlay {
     closing: bool,
 }
 
+fn find_in_reach(
+    mut in_reach: ResMut<InReach>,
+    player: Option<Single<&GlobalTransform, With<Player>>>,
+    plants: Query<(Entity, &GlobalTransform), With<Growing>>,
+) {
+    let ground = |at: &GlobalTransform| Vec2::new(at.translation().x, at.translation().z);
+    in_reach.0 = player.and_then(|player| {
+        let player = ground(&player);
+        plants
+            .iter()
+            .map(|(plant, at)| (plant, ground(at).distance(player)))
+            .filter(|(_, distance)| *distance <= REACH)
+            .min_by(|a, b| a.1.total_cmp(&b.1))
+            .map(|(plant, _)| plant)
+    });
+}
+
 fn start_harvest(
-    start: On<Start<Harvest>>,
+    _: On<Start<Harvest>>,
     mut commands: Commands,
-    players: Query<&GlobalTransform>,
-    plants: Query<(&GlobalTransform, &PixelSprite), With<Growing>>,
+    in_reach: Res<InReach>,
+    sprites: Query<&PixelSprite>,
     images: Res<Assets<Image>>,
     mut next_pause: ResMut<NextState<Pause>>,
     mut next_menu: ResMut<NextState<Menu>>,
 ) {
-    let Ok(player) = players.get(start.context) else {
-        return;
-    };
-    let ground = |at: Vec3| Vec2::new(at.x, at.z);
-    let player = ground(player.translation());
-    let Some((_, sprite)) = plants
-        .iter()
-        .map(|(at, sprite)| (ground(at.translation()).distance(player), sprite))
-        .filter(|(distance, _)| *distance <= REACH)
-        .min_by(|a, b| a.0.total_cmp(&b.0))
-    else {
+    let Some(sprite) = in_reach.0.and_then(|plant| sprites.get(plant).ok()) else {
         return;
     };
 

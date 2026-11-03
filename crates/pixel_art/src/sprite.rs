@@ -37,6 +37,8 @@ pub struct PixelSprite {
     pub pixels_per_meter: f32,
     pub flip_x: bool,
     pub anchor: Vec2,
+
+    pub unlit: bool,
 }
 
 impl Default for PixelSprite {
@@ -48,6 +50,7 @@ impl Default for PixelSprite {
             pixels_per_meter: crate::TEXELS_PER_METER,
             flip_x: false,
             anchor: Vec2::new(0.5, 0.0),
+            unlit: false,
         }
     }
 }
@@ -85,7 +88,7 @@ impl MaterialExtension for PixelSpriteExtension {
 
 #[derive(Resource, Default)]
 struct PixelSpriteCache {
-    materials: HashMap<AssetId<Image>, Handle<PixelSpriteMaterial>>,
+    materials: HashMap<(AssetId<Image>, bool), Handle<PixelSpriteMaterial>>,
     quads: HashMap<(AssetId<Image>, QuadShape), Handle<Mesh>>,
 }
 
@@ -153,12 +156,13 @@ fn sync_pixel_sprites(
         let image = sprite.image.id();
         let material = cache
             .materials
-            .entry(image)
+            .entry((image, sprite.unlit))
             .or_insert_with(|| {
                 materials.add(ExtendedMaterial {
                     base: StandardMaterial {
                         base_color_texture: Some(sprite.image.clone()),
                         alpha_mode: AlphaMode::Mask(0.5),
+                        unlit: sprite.unlit,
                         ..default()
                     },
                     extension: PixelSpriteExtension {

@@ -161,10 +161,7 @@ where
         Children [
             #ButtonInner
             // Button
-            ImageNode {
-                image: "ui/9slice.png",
-                image_mode: { button_slices() },
-            }
+            @panel()
             InteractionPalette {
                 none: Color::WHITE,
                 hovered: BUTTON_HOVERED_TINT,
@@ -187,12 +184,18 @@ where
     }
 }
 
-// these settings are specific to how the 9slice png is authored
-fn button_slices() -> NodeImageMode {
-    NodeImageMode::Sliced(TextureSlicer {
-        border: BorderRect::all(7.0),
-        // 1:1 art texels to ui texels
-        max_corner_scale: TEXEL,
-        ..default()
-    })
+pub fn panel() -> impl Scene {
+    bsn! {
+        ImageNode {
+            image: "ui/9slice.png",
+            image_mode: { 
+                // these settings are specific to how the 9slice png is authored
+                NodeImageMode::Sliced(TextureSlicer {
+                    border: BorderRect::all(7.0),
+                    max_corner_scale: TEXEL,
+                    ..default()
+                })
+            },
+        }
+    }
 }
