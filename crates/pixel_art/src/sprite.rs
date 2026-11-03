@@ -30,8 +30,10 @@ pub(crate) fn plugin(app: &mut App) {
 #[reflect(Component, Default)]
 pub struct PixelSprite {
     pub image: Handle<Image>,
-    // which part of the image (like a spritesheet) to draw
-    pub rect: URect,
+    // the size in pixels of each sprite in the sheet
+    pub size: Option<UVec2>,
+    // which linear position in the sheet to draw (like if you collapsed the 2d array)
+    pub cell: u32,
     pub pixels_per_meter: f32,
     pub flip_x: bool,
     pub anchor: Vec2,
@@ -41,11 +43,21 @@ impl Default for PixelSprite {
     fn default() -> Self {
         Self {
             image: Handle::default(),
-            rect: URect::default(),
+            size: None,
+            cell: 0,
             pixels_per_meter: crate::TEXELS_PER_METER,
             flip_x: false,
             anchor: Vec2::new(0.5, 0.0),
         }
+    }
+}
+
+impl PixelSprite {
+    pub fn rect(&self, image_size: UVec2) -> URect {
+        let size = self.size.unwrap_or(image_size).max(UVec2::ONE);
+        let columns = (image_size.x / size.x).max(1);
+        let min = UVec2::new(self.cell % columns, self.cell / columns) * size;
+        URect::from_corners(min, min + size)
     }
 }
 
@@ -155,11 +167,7 @@ fn sync_pixel_sprites(
                 })
             })
             .clone();
-        let rect = if sprite.rect.is_empty() {
-            URect::from_corners(UVec2::ZERO, size)
-        } else {
-            sprite.rect
-        };
+        let rect = sprite.rect(size);
         let mesh = cache
             .quads
             .entry((image, QuadShape::of(sprite, rect)))

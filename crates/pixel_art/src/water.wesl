@@ -118,8 +118,7 @@ fn fragment(in: VertexOutput, @builtin(front_facing) is_front: bool) -> Fragment
     let foam = select(mix(coverage, step(0.5, coverage), resolved), 1.0, depth < water.foam_depth + lap);
     color = mix(color, water.foam_color, foam);
 
-    // the material's transmission only exists to get the scene behind into
-    // view_transmission_texture; the refraction below is ours
+    // we dont want pbr transmission because we read the transmission texture ourselves
     var lighting = pbr_input;
     lighting.material.base_color = vec4<f32>(color.rgb, 1.0);
     lighting.material.specular_transmission = 0.0;

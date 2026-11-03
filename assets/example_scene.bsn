@@ -1011,16 +1011,25 @@ bevy_ecs::hierarchy::Children [
     jackdaw_scene_types::node_id::SceneNodeId(1218168217690349787)
     pixel_art::sprite::PixelSprite {
         image: "sprites/planted.png",
-        rect: bevy_math::rects::urect::URect {
-            min: glam::UVec2 {
-                x: 48,
-                y: 32,
-            },
-            max: glam::UVec2 {
-                x: 64,
-                y: 48,
-            },
+        size: core::option::Option::Some(glam::UVec2 { x: 16, y: 16 }),
+        cell: 23,
+    }
+    --
+    #"Plant Spot"
+    bevy_transform::components::transform::Transform {
+        translation: glam::Vec3 {
+            x: 2.0,
+            y: 0.48371559381484985,
+            z: 1.9700000286102295,
         },
+    }
+    jackdaw_scene_types::node_id::SceneNodeId(4182730591733048611)
+    plants::Gatherable {
+        plants: [
+            plants::Plant::Plant01,
+            plants::Plant::Plant06,
+            plants::Plant::Plant13,
+        ],
     }
     --
     #Environment

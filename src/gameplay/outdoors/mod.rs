@@ -11,6 +11,9 @@ pub(super) fn plugin(app: &mut App) {
         player::plugin,
         pixel_art::PixelArtPlugin,
         camera_effects::plugin,
+        plants::PlantsPlugin {
+            pick: plants::Pick::Random,
+        },
     ))
     .add_systems(OnEnter(GameplayScene::Outdoors), spawn_example_scene);
 }

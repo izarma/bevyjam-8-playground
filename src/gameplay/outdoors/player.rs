@@ -14,7 +14,7 @@ use crate::{
     GameplayScene, PausableSystems, Pause,
     camera::{CameraSensitivity, SceneCamera, face_camera},
     gameplay::{PlayerAnimation, player::Player, tick_player_animation},
-    loading::{PLAYER_FRAME, PLAYER_SHEET_COLUMNS, PlayerAssets},
+    loading::{PLAYER_FRAME, PlayerAssets},
     ui::menus::Menu,
 };
 
@@ -90,7 +90,8 @@ fn spawn_player(
     let animation = PlayerAnimation::default();
     let sprite = PixelSprite {
         image: player_assets.player_sheet.clone(),
-        rect: frame_rect(animation.frame_index()),
+        size: Some(PLAYER_FRAME),
+        cell: animation.frame_index() as u32,
         ..default()
     };
 
@@ -218,19 +219,13 @@ fn set_cursor_locked<const LOCKED: bool>(
     cursor.visible = !LOCKED;
 }
 
-fn frame_rect(index: usize) -> URect {
-    let index = index as u32;
-    let min = UVec2::new(index % PLAYER_SHEET_COLUMNS, index / PLAYER_SHEET_COLUMNS) * PLAYER_FRAME;
-    URect::from_corners(min, min + PLAYER_FRAME)
-}
-
 fn apply_animation(mut sprites: Query<(&PlayerAnimation, &mut PixelSprite)>) {
     for (animation, mut sprite) in &mut sprites {
-        let rect = frame_rect(animation.frame_index());
+        let cell = animation.frame_index() as u32;
         let flip_x = animation.flipped();
 
-        if sprite.rect != rect || sprite.flip_x != flip_x {
-            sprite.rect = rect;
+        if sprite.cell != cell || sprite.flip_x != flip_x {
+            sprite.cell = cell;
             sprite.flip_x = flip_x;
         }
     }

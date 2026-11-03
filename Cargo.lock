@@ -1113,6 +1113,7 @@ dependencies = [
  "jackdaw_surface",
  "log",
  "pixel_art",
+ "plants",
  "rand 0.10.3",
  "webbrowser",
  "winit",
@@ -5440,6 +5441,16 @@ name = "plain"
 version = "0.2.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b4596b6d070b27117e987119b4dac604f3c58cfb0b191112e24771b2faeac1a6"
+
+[[package]]
+name = "plants"
+version = "0.1.0"
+dependencies = [
+ "bevy",
+ "jackdaw_scene_types",
+ "pixel_art",
+ "rand 0.10.3",
+]
 
 [[package]]
 name = "plotters"

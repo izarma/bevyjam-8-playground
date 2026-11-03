@@ -2032,11 +2032,12 @@ dependencies = [
 
 [[package]]
 name = "bevyjam_editor"
-version = "0.1.0"
+version = "0.1.28"
 dependencies = [
  "bevy",
  "jackdaw_extension",
- "pixel_sprite",
+ "pixel_art",
+ "plants",
 ]
 
 [[package]]
@@ -5053,7 +5054,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "pixel_sprite"
+name = "pixel_art"
 version = "0.1.0"
 dependencies = [
  "bevy",
@@ -5070,6 +5071,16 @@ name = "plain"
 version = "0.2.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b4596b6d070b27117e987119b4dac604f3c58cfb0b191112e24771b2faeac1a6"
+
+[[package]]
+name = "plants"
+version = "0.1.0"
+dependencies = [
+ "bevy",
+ "jackdaw_scene_types",
+ "pixel_art",
+ "rand 0.10.3",
+]
 
 [[package]]
 name = "png"

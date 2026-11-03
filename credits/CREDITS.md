@@ -16,6 +16,8 @@
 
 - **Grass and dirt textures (16 px)**: [16x16 Grass Textures](https://opengameart.org/content/16x16-grass-textures) by [SpringySpringo](https://opengameart.org/users/springyspringo), [CC-BY 4.0](https://creativecommons.org/licenses/by/4.0/) or [CC0](https://creativecommons.org/publicdomain/zero/1.0/).
 
+- **Plant sheet (`sprites/plants.png`)**: [Free Pixel Plants 16x16](https://danaida.itch.io/free-pixel-plants-16x16) by [Danaida](https://danaida.itch.io/), rearranged into a 10x7 grid. In the author's words: "This pack can be used in your commercial project."
+
 - **Plant sprites**: [RPG Plant Sprites and Icons](https://amyvc.itch.io/rpg-plant-sprites-and-icons) by [AmyVC](https://amyvc.itch.io/), [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/).
 
 - **Stick bundle model**: [Stick Bundle](https://blockbenchworkshop.com/model/alexander/stick-bundle) by alexander on Blockbench Workshop, [CC BY](https://creativecommons.org/licenses/by/4.0/).
