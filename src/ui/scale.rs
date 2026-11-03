@@ -4,7 +4,7 @@ use bevy::{prelude::*, window::PrimaryWindow};
 const WINDOW_TEXELS_TALL: f32 = 240.0;
 
 // logical ui pixels per texel
-const TEXEL: f32 = 2.0;
+pub(crate) const TEXEL: f32 = 2.0;
 
 // size all ui in whole texels to keep it on the grid
 pub(crate) fn texels(n: u16) -> Val {

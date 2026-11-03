@@ -2,7 +2,12 @@ use std::borrow::Cow;
 
 use bevy::{ecs::system::IntoObserverSystem, prelude::*};
 
-use crate::ui::{font, interaction::InteractionPalette, palette::*, scale::texels};
+use crate::ui::{
+    font,
+    interaction::InteractionPalette,
+    palette::*,
+    scale::{TEXEL, texels},
+};
 
 /// A root UI node that fills the window and centers its content.
 pub fn ui_root(name: impl Into<Cow<'static, str>>) -> impl Scene {
@@ -87,7 +92,7 @@ fn unhover_link(out: On<PointerOut>, mut links: Query<&mut TextColor, With<OpenL
     *color = LINK_TEXT.into();
 }
 
-/// A large rounded button with text and an action defined as an [`Observer`].
+/// A large button with text and an action defined as an [`Observer`].
 pub fn button<E, M, I>(text: impl Into<String>, action: I) -> impl Scene
 where
     E: EntityEvent,
@@ -103,9 +108,9 @@ where
                 height: texels(20),
                 align_items: AlignItems::Center,
                 justify_content: JustifyContent::Center,
-                border_radius: BorderRadius::MAX,
             }
         },
+        UiRect::ZERO,
     )
 }
 
@@ -127,11 +132,22 @@ where
                 justify_content: JustifyContent::Center,
             }
         },
+        // center the + and - in their buttons, probably font-specific
+        UiRect {
+            left: texels(1),
+            bottom: texels(2),
+            ..default()
+        },
     )
 }
 
 /// A simple button with text and an action defined as an [`Observer`]. The button's layout is provided by `button_bundle`.
-fn button_base<E, M, I>(text: impl Into<String>, action: I, button_bundle: impl Scene) -> impl Scene
+fn button_base<E, M, I>(
+    text: impl Into<String>,
+    action: I,
+    button_bundle: impl Scene,
+    text_padding: UiRect,
+) -> impl Scene
 where
     E: EventPattern<Event: EntityEvent>,
     I: IntoObserverSystem<E, M, ()> + Clone + Sync,
@@ -145,15 +161,21 @@ where
         Children [
             #ButtonInner
             // Button
-            BackgroundColor(BUTTON_BACKGROUND)
+            ImageNode {
+                image: "ui/9slice.png",
+                image_mode: { button_slices() },
+            }
             InteractionPalette {
-                none: BUTTON_BACKGROUND,
-                hovered: BUTTON_HOVERED_BACKGROUND,
-                pressed: BUTTON_PRESSED_BACKGROUND,
+                none: Color::WHITE,
+                hovered: BUTTON_HOVERED_TINT,
+                pressed: BUTTON_PRESSED_TINT,
             }
             Children [
                 #ButtonText
                 Text(text)
+                Node {
+                    padding: text_padding,
+                }
                 @font::text(1)
                 TextColor(BUTTON_TEXT)
                 // Don't bubble picking events from the text up to the button.
@@ -163,4 +185,14 @@ where
             @on(action)
         ]
     }
+}
+
+// these settings are specific to how the 9slice png is authored
+fn button_slices() -> NodeImageMode {
+    NodeImageMode::Sliced(TextureSlicer {
+        border: BorderRect::all(7.0),
+        // 1:1 art texels to ui texels
+        max_corner_scale: TEXEL,
+        ..default()
+    })
 }
