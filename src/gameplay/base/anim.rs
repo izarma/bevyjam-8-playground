@@ -105,7 +105,7 @@ pub(super) fn spawn_base_sprite(
             ..default()
         },
         Sprite3d {
-            pixels_per_metre: 32.0,
+            pixels_per_metre: pixel_art::TEXELS_PER_METER,
             double_sided: true,
             ..default()
         },

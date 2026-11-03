@@ -42,9 +42,15 @@ pub struct MusicAssets {
     pub game_bg1: Handle<AudioSource>,
 }
 
+// size of one cell of the player sheet, in texels
+pub const PLAYER_FRAME: UVec2 = UVec2::new(16, 32);
+// cells per row of the sheet
+pub const PLAYER_SHEET_COLUMNS: u32 = 35;
+
 #[derive(AssetCollection, Resource)]
 pub struct PlayerAssets {
-    #[asset(path = "textures/character/16x32char-sheet-template.png")]
+    // todo: remove / replace with real character
+    #[asset(path = "textures/character/standin-16x32.png")]
     pub player_sheet: Handle<Image>,
     #[asset(path = "audio/sfx/step1.ogg")]
     pub step1: Handle<AudioSource>,

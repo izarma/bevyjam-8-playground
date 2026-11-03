@@ -5,7 +5,6 @@ use bevy::{
     asset::{RenderAssetUsages, embedded_asset},
     camera::primitives::Aabb,
     camera::visibility::NoAutoAabb,
-    light::NotShadowReceiver,
     mesh::{Indices, PrimitiveTopology},
     pbr::{ExtendedMaterial, MaterialExtension, check_entities_needing_specialization},
     platform::collections::HashMap,
@@ -29,7 +28,6 @@ pub(crate) fn plugin(app: &mut App) {
 
 #[derive(Component, Reflect, Clone, Debug, FromTemplate)]
 #[reflect(Component, Default)]
-#[require(NotShadowReceiver)]
 pub struct PixelSprite {
     pub image: Handle<Image>,
     // which part of the image (like a spritesheet) to draw
@@ -44,7 +42,7 @@ impl Default for PixelSprite {
         Self {
             image: Handle::default(),
             rect: URect::default(),
-            pixels_per_meter: 32.0,
+            pixels_per_meter: crate::TEXELS_PER_METER,
             flip_x: false,
             anchor: Vec2::new(0.5, 0.0),
         }
@@ -206,11 +204,13 @@ fn quad(sprite: &PixelSprite, rect: URect, size: UVec2) -> Mesh {
         [left, uv_min.y],
         [right, uv_min.y],
     ];
+    let opposite_uvs = [uvs[3], uvs[2], uvs[1], uvs[0]];
     Mesh::new(
         PrimitiveTopology::TriangleList,
         RenderAssetUsages::default(),
     )
     .with_inserted_attribute(Mesh::ATTRIBUTE_POSITION, corners.to_vec())
     .with_inserted_attribute(Mesh::ATTRIBUTE_UV_0, uvs.to_vec())
+    .with_inserted_attribute(Mesh::ATTRIBUTE_UV_1, opposite_uvs.to_vec())
     .with_inserted_indices(Indices::U32(vec![0, 1, 2, 1, 3, 2]))
 }

@@ -14,12 +14,12 @@
 
 - **Dungeon tileset**: [Dungeon Tileset](https://opengameart.org/content/dungeon-tileset-1) by Calciumtrice, usable under [Creative Commons Attribution 3.0](https://creativecommons.org/licenses/by/3.0/) license.
 
-- **Terrain textures**: [Ground texture tiles 32 x 32](https://opengameart.org/content/ground-texture-tiles-32-x-32) by eurydike, [CC0](https://creativecommons.org/publicdomain/zero/1.0/).
+- **Grass and dirt textures (16 px)**: [16x16 Grass Textures](https://opengameart.org/content/16x16-grass-textures) by [SpringySpringo](https://opengameart.org/users/springyspringo), [CC-BY 4.0](https://creativecommons.org/licenses/by/4.0/) or [CC0](https://creativecommons.org/publicdomain/zero/1.0/).
 
-- **Wildflower sprites**: [Wildflower Assets](https://oxymoron-nonsense.itch.io/wildflower-assets) by [Oxymoron](https://oxymoron-nonsense.itch.io/). No formal license; in the author's words:
+- **Plant sprites**: [RPG Plant Sprites and Icons](https://amyvc.itch.io/rpg-plant-sprites-and-icons) by [AmyVC](https://amyvc.itch.io/), [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/).
 
-  > no licence. they're just some things I drew and I thought other people might have some use for them.
-  >
-  > credit is appreciated, but they're just free to use
+- **Stick bundle model**: [Stick Bundle](https://blockbenchworkshop.com/model/alexander/stick-bundle) by alexander on Blockbench Workshop, [CC BY](https://creativecommons.org/licenses/by/4.0/).
+
+- **Tiny box with apples model**: [Tiny Box With Apples](https://blockbenchworkshop.com/model/conczin/tiny-box-with-apples) by conczin on Blockbench Workshop, [CC BY](https://creativecommons.org/licenses/by/4.0/).
 
 - **Music**: "Music", CC BY 3.0 by Kevin MacLeod

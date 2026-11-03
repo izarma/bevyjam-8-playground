@@ -5,8 +5,10 @@ use bevy_enhanced_input::prelude::{Actions, ActiveInStates};
 use bevy_sprite3d::Sprite3d;
 
 use crate::{
-    GameplayScene, Pause, camera::FaceCamera, gameplay::game_object::GameObject,
-    loading::PlayerAssets,
+    GameplayScene, Pause,
+    camera::FaceCamera,
+    gameplay::game_object::GameObject,
+    loading::{PLAYER_FRAME, PLAYER_SHEET_COLUMNS, PlayerAssets},
 };
 
 mod animation;
@@ -44,8 +46,8 @@ fn spawn_player(
         .sheet
         .get_or_insert_with(|| {
             texture_atlas_layouts.add(TextureAtlasLayout::from_grid(
-                UVec2::splat(32),
-                35,
+                PLAYER_FRAME,
+                PLAYER_SHEET_COLUMNS,
                 7,
                 None,
                 None,
@@ -78,7 +80,7 @@ fn spawn_player(
         .insert((
             sprite,
             Sprite3d {
-                pixels_per_metre: 32.0,
+                pixels_per_metre: pixel_art::TEXELS_PER_METER,
                 double_sided: true,
                 ..default()
             },

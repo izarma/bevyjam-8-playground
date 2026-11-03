@@ -14,18 +14,17 @@ use crate::{
     GameplayScene, PausableSystems, Pause,
     camera::{CameraSensitivity, SceneCamera, face_camera},
     gameplay::{PlayerAnimation, tick_player_animation},
-    loading::PlayerAssets,
+    loading::{PLAYER_FRAME, PLAYER_SHEET_COLUMNS, PlayerAssets},
     ui::menus::Menu,
 };
 
 const WALK_SPEED: f32 = 4.0;
 const RUN_SPEED: f32 = 7.0;
-const CAPSULE_RADIUS: f32 = 0.25;
-const CAPSULE_HEIGHT: f32 = 1.0;
-const CAM_RADIUS: f32 = 5.0;
-const CAM_LOOK_OFFSET: Vec3 = Vec3::new(0.0, 0.5, 0.0);
-const FRAME_SIZE: u32 = 32;
-const SHEET_COLUMNS: u32 = 35;
+// body sized to the sprite: a 32 texel frame is 2 m at 16 texels per meter
+const CAPSULE_RADIUS: f32 = 0.5;
+const CAPSULE_HEIGHT: f32 = 2.0;
+const CAM_RADIUS: f32 = 10.0;
+const CAM_LOOK_OFFSET: Vec3 = Vec3::new(0.0, 1.0, 0.0);
 
 pub(super) fn plugin(app: &mut App) {
     app.add_plugins(AhoyPlugins::default())
@@ -101,7 +100,6 @@ fn spawn_player(
     let sprite = PixelSprite {
         image: player_assets.player_sheet.clone(),
         rect: frame_rect(animation.frame_index()),
-        pixels_per_meter: 32.0,
         ..default()
     };
 
@@ -115,14 +113,14 @@ fn spawn_player(
             Collider::capsule(CAPSULE_RADIUS, CAPSULE_HEIGHT - 2.0 * CAPSULE_RADIUS),
             CharacterController {
                 speed: WALK_SPEED,
-                standing_view_height: 0.9,
-                crouch_height: 0.7,
-                crouch_view_height: 0.6,
-                step_size: 0.35,
-                jump_height: 1.0,
-                mantle_height: 0.55,
-                crane_height: 0.8,
-                min_ledge_grab_space: Cuboid::new(0.1, 0.05, 0.1),
+                standing_view_height: 1.8,
+                crouch_height: 1.4,
+                crouch_view_height: 1.2,
+                step_size: 0.7,
+                jump_height: 2.0,
+                mantle_height: 1.1,
+                crane_height: 1.6,
+                min_ledge_grab_space: Cuboid::new(0.2, 0.1, 0.2),
                 ..default()
             },
             CharacterLook::default(),
@@ -230,8 +228,8 @@ fn set_cursor_locked<const LOCKED: bool>(
 
 fn frame_rect(index: usize) -> URect {
     let index = index as u32;
-    let min = UVec2::new(index % SHEET_COLUMNS, index / SHEET_COLUMNS) * FRAME_SIZE;
-    URect::from_corners(min, min + UVec2::splat(FRAME_SIZE))
+    let min = UVec2::new(index % PLAYER_SHEET_COLUMNS, index / PLAYER_SHEET_COLUMNS) * PLAYER_FRAME;
+    URect::from_corners(min, min + PLAYER_FRAME)
 }
 
 fn apply_animation(mut sprites: Query<(&PlayerAnimation, &mut PixelSprite)>) {

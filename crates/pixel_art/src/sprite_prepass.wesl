@@ -5,16 +5,23 @@ import bevy_pbr::render::{
     view_transformations::position_world_to_clip,
 };
 import bevy_pbr::prepass::io::{Vertex, decompress_vertex};
-import pixel_art::billboard::{billboard_facing, billboard_position};
+import pixel_art::billboard::{billboard_facing, billboard_point, billboard_scale};
+
+fn facing(world_from_local: mat4x4<f32>) -> vec3<f32> {
+    return billboard_facing(world_from_local[3].xyz, world_from_local[2].xyz);
+}
 
 fn placed(world_from_local: mat4x4<f32>, local: vec3<f32>) -> vec3<f32> {
-    return billboard_position(world_from_local, local, billboard_facing(world_from_local));
+    return billboard_point(
+        world_from_local[3].xyz, billboard_scale(world_from_local), local.xy, facing(world_from_local));
 }
 
 struct BillboardOutput {
     @invariant @builtin(position) position: vec4<f32>,
     @if(VERTEX_UVS_A)
     @location(0) uv: vec2<f32>,
+    @if(VERTEX_UVS_B)
+    @location(1) uv_b: vec2<f32>,
     @if(NORMAL_PREPASS_OR_DEFERRED_PREPASS)
     @location(2) world_normal: vec3<f32>,
     @location(4) world_position: vec4<f32>,
@@ -44,9 +51,11 @@ fn vertex(packed: Vertex) -> BillboardOutput {
 
     @if(VERTEX_UVS_A)
     out.uv = vertex.uv;
+    @if(VERTEX_UVS_B)
+    out.uv_b = vertex.uv_b;
 
     @if(NORMAL_PREPASS_OR_DEFERRED_PREPASS)
-    out.world_normal = billboard_facing(world_from_local);
+    out.world_normal = facing(world_from_local);
 
     @if(MOTION_VECTOR_PREPASS) {
         let previous_from_local = mesh_functions::get_previous_world_from_local(packed.instance_index);

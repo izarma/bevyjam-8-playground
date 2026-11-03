@@ -95,8 +95,6 @@ struct PixelWaterSettings {
     second_foam_drift: Vec2,
 }
 
-const TEXELS_PER_METER: f32 = 32.0;
-
 impl PixelWater {
     fn material(&self, images: &mut Assets<Image>) -> PixelWaterMaterial {
         let foam = Mat2::from_diagonal(Vec2::splat(1.0 / (self.foam_spacing * FOAM_CELLS as f32)));
@@ -116,7 +114,7 @@ impl PixelWater {
                     foam_color: self.foam.into(),
                     depth_range: self.depth_range,
                     bands: self.bands as f32,
-                    texels_per_meter: TEXELS_PER_METER,
+                    texels_per_meter: crate::TEXELS_PER_METER,
                     foam_depth: self.foam_depth,
                     lap_depth: self.lap_depth,
                     lap_speed: self.lap_speed,

@@ -8,12 +8,18 @@ import bevy_pbr::render::{
     forward_io::{Vertex, VertexOutput, FragmentOutput, decompress_vertex},
     mesh_functions,
     mesh_view_bindings::{clustered_lights, lights, view},
-    mesh_view_types::POINT_LIGHT_FLAGS_SPOT_LIGHT_Y_NEGATIVE,
+    mesh_types::MESH_FLAGS_SHADOW_RECEIVER_BIT,
+    mesh_view_types::{
+        DIRECTIONAL_LIGHT_FLAGS_SHADOWS_ENABLED_BIT,
+        POINT_LIGHT_FLAGS_SHADOWS_ENABLED_BIT,
+        POINT_LIGHT_FLAGS_SPOT_LIGHT_Y_NEGATIVE,
+    },
     pbr_ambient,
     pbr_fragment::pbr_input_from_standard_material,
     pbr_functions,
     pbr_lighting::getDistanceAttenuation,
     pbr_types::PbrInput,
+    shadows,
     view_transformations::position_world_to_clip,
 };
 import bevy_render::maths::{PI, quat_rotate};
@@ -22,26 +28,31 @@ import bevy_render::maths::{PI, quat_rotate};
 import bevy_pbr::render::mesh_view_bindings::diffuse_environment_maps;
 @if(ENVIRONMENT_MAP && !MULTIPLE_LIGHT_PROBES_IN_ARRAY)
 import bevy_pbr::render::mesh_view_bindings::diffuse_environment_map;
-import pixel_art::billboard::{billboard_facing, billboard_position};
-import pixel_art::texel::texel_sharp;
+import pixel_art::billboard::{billboard_facing, billboard_point, billboard_scale, facing_toward};
+import pixel_art::texel::{texel_center, texel_sharp};
 
 @group(constants::MATERIAL_BIND_GROUP) @binding(100) var sprite_texture: texture_2d<f32>;
 
 // for the transparancy trick
-fn premultiplied(texel: vec2<i32>) -> vec4<f32> {
-    let last = vec2<i32>(textureDimensions(sprite_texture)) - 1;
-    let color = textureLoad(sprite_texture, clamp(texel, vec2<i32>(0), last), 0);
+fn premultiplied(texel: vec2<i32>, first: vec2<i32>, last: vec2<i32>) -> vec4<f32> {
+    let color = textureLoad(sprite_texture, clamp(texel, first, last), 0);
     return vec4<f32>(color.rgb * color.a, color.a);
 }
 
-fn sprite_color(uv: vec2<f32>, ddx: vec2<f32>, ddy: vec2<f32>) -> vec4<f32> {
+fn sprite_color(uv: vec2<f32>, ddx: vec2<f32>, ddy: vec2<f32>, frame: vec4<f32>) -> vec4<f32> {
     let size = vec2<f32>(textureDimensions(sprite_texture));
+    let first = vec2<i32>(round(frame.xy * size));
+    let last = vec2<i32>(round(frame.zw * size)) - 1;
     let at = texel_sharp(uv, ddx, ddy, size) * size - 0.5;
     let corner = vec2<i32>(floor(at));
     let f = at - floor(at);
     let blended = mix(
-        mix(premultiplied(corner), premultiplied(corner + vec2<i32>(1, 0)), f.x),
-        mix(premultiplied(corner + vec2<i32>(0, 1)), premultiplied(corner + vec2<i32>(1, 1)), f.x),
+        mix(premultiplied(corner, first, last), premultiplied(corner + vec2<i32>(1, 0), first, last), f.x),
+        mix(
+            premultiplied(corner + vec2<i32>(0, 1), first, last),
+            premultiplied(corner + vec2<i32>(1, 1), first, last),
+            f.x,
+        ),
         f.y,
     );
     return vec4<f32>(blended.rgb / max(blended.a, 1e-4), blended.a);
@@ -54,10 +65,26 @@ struct BillboardOutput {
     @location(0) world_position: vec4<f32>,
     @location(1) world_normal: vec3<f32>,
     @location(2) uv: vec2<f32>,
+    @location(3) uv_b: vec2<f32>,
     @if(VERTEX_OUTPUT_INSTANCE_INDEX)
     @location(6) @interpolate(flat) instance_index: u32,
     @if(VISIBILITY_RANGE_DITHER)
     @location(7) @interpolate(flat) visibility_range_dither: i32,
+    @location(8) @interpolate(flat) frame: vec4<f32>,
+    @location(9) local: vec2<f32>,
+    @location(10) @interpolate(flat) origin: vec3<f32>,
+    @location(11) @interpolate(flat) scale: vec2<f32>,
+    @location(12) @interpolate(flat) own: vec3<f32>,
+}
+
+struct Quad {
+    // the frame's uv rect as (min, max)
+    @location(8) @interpolate(flat) frame: vec4<f32>,
+    @location(9) local: vec2<f32>,
+    @location(10) @interpolate(flat) origin: vec3<f32>,
+    @location(11) @interpolate(flat) scale: vec2<f32>,
+    // the entity's forward direction
+    @location(12) @interpolate(flat) own: vec3<f32>,
 }
 
 // 90% normal bevy vertex shader
@@ -67,12 +94,18 @@ fn vertex(packed: Vertex) -> BillboardOutput {
     let vertex = decompress_vertex(packed, packed.instance_index);
     let world_from_local = mesh_functions::get_world_from_local(packed.instance_index);
 
-    let facing = billboard_facing(world_from_local);
-    out.world_position = vec4<f32>(billboard_position(world_from_local, vertex.position, facing), 1.0);
+    out.origin = world_from_local[3].xyz;
+    out.scale = billboard_scale(world_from_local);
+    out.own = world_from_local[2].xyz;
+    out.local = vertex.position.xy;
+    let facing = billboard_facing(out.origin, out.own);
+    out.world_position = vec4<f32>(billboard_point(out.origin, out.scale, out.local, facing), 1.0);
     out.world_normal = facing;
     out.position = position_world_to_clip(out.world_position.xyz);
 
     out.uv = vertex.uv;
+    out.uv_b = vertex.uv_b;
+    out.frame = vec4<f32>(min(vertex.uv, vertex.uv_b), max(vertex.uv, vertex.uv_b));
     @if(VERTEX_OUTPUT_INSTANCE_INDEX)
     out.instance_index = packed.instance_index;
     @if(VISIBILITY_RANGE_DITHER)
@@ -123,14 +156,10 @@ fn spot_cone(id: u32, at: vec3<f32>) -> f32 {
 }
 
 // reads bevys point/spot/direction lights and jackdaws env map
-fn sprite_lighting(in: PbrInput) -> vec4<f32> {
+fn sprite_lighting(in: PbrInput, quad: Quad, local: vec2<f32>) -> vec4<f32> {
     let diffuse = in.material.base_color.rgb;
-    let at = in.world_position.xyz;
+    let receives = (in.flags & MESH_FLAGS_SHADOW_RECEIVER_BIT) != 0u;
     var arriving = vec3<f32>(0.0);
-
-    for (var i = 0u; i < lights.n_directional_lights; i += 1u) {
-        arriving += lights.directional_lights[i].color.rgb;
-    }
 
     let view_z = dot(
         vec4<f32>(
@@ -141,14 +170,42 @@ fn sprite_lighting(in: PbrInput) -> vec4<f32> {
         ),
         in.world_position,
     );
+
+    for (var i = 0u; i < lights.n_directional_lights; i += 1u) {
+        let light = &lights.directional_lights[i];
+        var shadow = 1.0;
+        if receives && ((*light).flags & DIRECTIONAL_LIGHT_FLAGS_SHADOWS_ENABLED_BIT) != 0u {
+            let facing = facing_toward((*light).direction_to_light, quad.own);
+            let at = billboard_point(quad.origin, quad.scale, local, facing);
+            shadow = shadows::fetch_directional_shadow(i, vec4<f32>(at, 1.0), facing, view_z, in.frag_coord.xy);
+        }
+        arriving += (*light).color.rgb * shadow;
+    }
+
     let ranges = clustering::unpack_clusterable_object_index_ranges(
         clustering::view_fragment_cluster_index(in.frag_coord.xy, view_z, in.is_orthographic));
     for (var i = ranges.first_point_light_index_offset; i < ranges.first_spot_light_index_offset; i += 1u) {
-        arriving += light_arriving(clustering::get_clusterable_object_id(i), at);
+        let id = clustering::get_clusterable_object_id(i);
+        let light = &clustered_lights.data[id];
+        let facing = facing_toward((*light).position_radius.xyz - quad.origin, quad.own);
+        let at = billboard_point(quad.origin, quad.scale, local, facing);
+        var shadow = 1.0;
+        if receives && ((*light).flags & POINT_LIGHT_FLAGS_SHADOWS_ENABLED_BIT) != 0u {
+            shadow = shadows::fetch_point_shadow(id, vec4<f32>(at, 1.0), facing, in.frag_coord.xy);
+        }
+        arriving += light_arriving(id, at) * shadow;
     }
     for (var i = ranges.first_spot_light_index_offset; i < ranges.first_rect_light_index_offset; i += 1u) {
         let id = clustering::get_clusterable_object_id(i);
-        arriving += light_arriving(id, at) * spot_cone(id, at);
+        let light = &clustered_lights.data[id];
+        let facing = facing_toward((*light).position_radius.xyz - quad.origin, quad.own);
+        let at = billboard_point(quad.origin, quad.scale, local, facing);
+        var shadow = 1.0;
+        if receives && ((*light).flags & POINT_LIGHT_FLAGS_SHADOWS_ENABLED_BIT) != 0u {
+            shadow = shadows::fetch_spot_shadow(
+                id, vec4<f32>(at, 1.0), facing, (*light).shadow_map_near_z, in.frag_coord.xy);
+        }
+        arriving += light_arriving(id, at) * spot_cone(id, at) * shadow;
     }
 
     var ambient = pbr_ambient::ambient_light(
@@ -173,8 +230,12 @@ fn sprite_lighting(in: PbrInput) -> vec4<f32> {
 }
 
 @fragment
-fn fragment(in: VertexOutput, @builtin(front_facing) is_front: bool) -> FragmentOutput {
-    let color = sprite_color(in.uv, dpdx(in.uv), dpdy(in.uv));
+fn fragment(in: VertexOutput, quad: Quad, @builtin(front_facing) is_front: bool) -> FragmentOutput {
+    let ddx = dpdx(in.uv);
+    let ddy = dpdy(in.uv);
+    let local_ddx = vec3<f32>(dpdx(quad.local), 0.0);
+    let local_ddy = vec3<f32>(dpdy(quad.local), 0.0);
+    let color = sprite_color(in.uv, ddx, ddy, quad.frame);
     var pbr_input = pbr_input_from_standard_material(in, is_front);
     pbr_input.material.base_color = pbr_functions::alpha_discard(
         pbr_input.material.flags,
@@ -182,8 +243,14 @@ fn fragment(in: VertexOutput, @builtin(front_facing) is_front: bool) -> Fragment
         color,
     );
 
+    // every fragment of a texel should be lit and postprocessed the same
+    let size = vec2<f32>(textureDimensions(sprite_texture));
+    let local = texel_center(in.uv, size, vec3<f32>(quad.local, 0.0), ddx, ddy, local_ddx, local_ddy).xy;
+    let seen = billboard_point(quad.origin, quad.scale, local, billboard_facing(quad.origin, quad.own));
+    pbr_input.world_position = vec4<f32>(seen, 1.0);
+
     var out: FragmentOutput;
-    out.color = sprite_lighting(pbr_input);
+    out.color = sprite_lighting(pbr_input, quad, local);
     out.color = pbr_functions::main_pass_post_lighting_processing(pbr_input, out.color);
     return out;
 }

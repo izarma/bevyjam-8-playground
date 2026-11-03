@@ -2,7 +2,7 @@ use std::time::Duration;
 
 use bevy::prelude::*;
 
-use crate::{GameplayScene, PausableSystems, camera::face_camera};
+use crate::{GameplayScene, PausableSystems, camera::face_camera, loading::PLAYER_SHEET_COLUMNS};
 
 use super::FRAME_INTERVAL;
 
@@ -81,7 +81,7 @@ enum Facing {
 
 impl Facing {
     /// Sprite sheet columns per row.
-    const COLUMNS: usize = 35;
+    const COLUMNS: usize = PLAYER_SHEET_COLUMNS as usize;
 
     /// Directional group index, independent of the animation's frame count.
     fn group_index(self) -> usize {

@@ -6,11 +6,16 @@ use bevy::{
     shader::Shader,
 };
 
+mod model;
 mod sprite;
 mod water;
 
+pub use model::PixelModel;
 pub use sprite::PixelSprite;
 pub use water::PixelWater;
+
+// should be shared by everything
+pub const TEXELS_PER_METER: f32 = 16.0;
 
 pub struct PixelArtPlugin;
 
@@ -22,8 +27,11 @@ impl Plugin for PixelArtPlugin {
             load_embedded_asset!(app, "billboard.wesl"),
             load_embedded_asset!(app, "texel.wesl"),
         ];
-        app.insert_resource(ShaderLibrary(library))
-            .add_plugins((sprite::plugin, water::plugin));
+        app.insert_resource(ShaderLibrary(library)).add_plugins((
+            model::plugin,
+            sprite::plugin,
+            water::plugin,
+        ));
     }
 }
 

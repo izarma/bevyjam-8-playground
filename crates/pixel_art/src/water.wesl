@@ -3,12 +3,12 @@ import bevy_pbr::render::{
     mesh_view_bindings::{globals, view},
     pbr_fragment::pbr_input_from_standard_material,
     pbr_functions,
-    view_transformations::{ndc_to_frag_coord, ndc_to_uv, position_ndc_to_world, position_world_to_ndc},
+    view_transformations::{ndc_to_frag_coord, position_ndc_to_world, position_world_to_ndc},
 };
 @if(DEPTH_PREPASS) import bevy_pbr::prepass::utils::prepass_depth;
 import pixel_art::texel::texel_sharp;
 @if(STANDARD_MATERIAL_SPECULAR_TRANSMISSION)
-import bevy_pbr::render::mesh_view_bindings::{view_transmission_texture, view_transmission_sampler};
+import bevy_pbr::render::mesh_view_bindings::view_transmission_texture;
 
 const WOBBLE_SCALE: f32 = 0.2;
 const WOBBLE_SPEED: f32 = 0.5;
@@ -57,28 +57,30 @@ fn value_noise(p: vec2<f32>) -> f32 {
     );
 }
 
-@if(DEPTH_PREPASS)
-fn pixel_depth(pixel: vec2<f32>) -> f32 {
+fn on_screen(pixel: vec2<f32>) -> vec2<f32> {
     let first = view.viewport.xy;
-    let last = first + view.viewport.zw - 1.0;
-    return prepass_depth(vec4<f32>(clamp(pixel, first, last), 0.0, 0.0), 0u);
+    return clamp(pixel, first, first + view.viewport.zw - 1.0);
+}
+
+fn pixel_depth(pixel: vec2<f32>) -> f32 {
+    @if(DEPTH_PREPASS) {
+        return prepass_depth(vec4<f32>(on_screen(pixel), 0.0, 0.0), 0u);
+    } @else {
+        return 0.0;
+    }
 }
 
 // if we dont blend depth around the pixel we are sampling for foam
 // it will be noisy when you or the camera move because of small changes in depth
 fn buffer_depth(ndc: vec2<f32>) -> f32 {
-    @if(DEPTH_PREPASS) {
-        let at = ndc_to_frag_coord(ndc) - 0.5;
-        let low = floor(at);
-        let f = at - low;
-        return mix(
-            mix(pixel_depth(low), pixel_depth(low + vec2<f32>(1.0, 0.0)), f.x),
-            mix(pixel_depth(low + vec2<f32>(0.0, 1.0)), pixel_depth(low + vec2<f32>(1.0, 1.0)), f.x),
-            f.y,
-        );
-    } @else {
-        return 0.0;
-    }
+    let at = ndc_to_frag_coord(ndc) - 0.5;
+    let low = floor(at);
+    let f = at - low;
+    return mix(
+        mix(pixel_depth(low), pixel_depth(low + vec2<f32>(1.0, 0.0)), f.x),
+        mix(pixel_depth(low + vec2<f32>(0.0, 1.0)), pixel_depth(low + vec2<f32>(1.0, 1.0)), f.x),
+        f.y,
+    );
 }
 
 @fragment
@@ -132,13 +134,12 @@ fn fragment(in: VertexOutput, @builtin(front_facing) is_front: bool) -> Fragment
         ) * 2.0 - 1.0;
         let shift = floor(wobble * water.refraction * deepness * resolved + 0.5) / water.texels_per_meter;
 
-        var seen = position_world_to_ndc(in.world_position.xyz + vec3<f32>(shift.x, 0.0, shift.y));
-        if buffer_depth(seen.xy) > seen.z {
-            seen = position_world_to_ndc(in.world_position.xyz);
+        let seen = position_world_to_ndc(in.world_position.xyz + vec3<f32>(shift.x, 0.0, shift.y));
+        var pixel = on_screen(floor(ndc_to_frag_coord(seen.xy)));
+        if pixel_depth(pixel) > seen.z {
+            pixel = floor(in.position.xy);
         }
-
-        let uv = ndc_to_uv(seen.xy);
-        let bed = textureSampleLevel(view_transmission_texture, view_transmission_sampler, uv, 0.0).rgb;
+        let bed = textureLoad(view_transmission_texture, vec2<i32>(pixel), 0).rgb;
         out.color = vec4<f32>(mix(bed, lit, color.a), 1.0);
     } @else {
         out.color = vec4<f32>(lit, 1.0);
