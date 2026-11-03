@@ -129,7 +129,7 @@ fn collect(
     let Ok(Growing(plant)) = plants.get(overlay.plant) else {
         return;
     };
-    
+
     commands.entity(overlay.plant).despawn();
     let count = inventory.plants.entry(*plant).or_default();
     *count += 1;
