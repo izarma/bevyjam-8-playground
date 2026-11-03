@@ -1,6 +1,14 @@
+use std::time::Duration;
+
 use bevy::prelude::*;
 
 use crate::{GameplayScene, PausableSystems};
+
+/// Interval between animation frames for every sprite animation.
+pub(crate) const FRAME_INTERVAL: Duration = Duration::from_millis(250);
+
+/// Squared horizontal speed below which the character counts as idle: (0.1 m/s)².
+pub(crate) const MOVING_SPEED_SQ: f32 = 0.01;
 
 pub(super) fn plugin(app: &mut App) {
     app.add_systems(

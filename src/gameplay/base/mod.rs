@@ -1,4 +1,6 @@
+use avian3d::collision::collider::Collider;
 use bevy::prelude::*;
+use bevy_ahoy::CharacterController;
 use jackdaw_runtime::prelude::*;
 
 use crate::GameplayScene;
@@ -17,4 +19,21 @@ fn spawn_lab_scene(mut commands: Commands, asset_server: Res<AssetServer>) {
         JackdawSceneRoot(asset_server.load("lab_scene.bsn")),
         DespawnOnExit(GameplayScene::Base),
     ));
+}
+
+const BODY_WIDTH_X: f32 = 0.8;
+pub(super) const BODY_HEIGHT: f32 = 2.0;
+const BODY_DEPTH_Z: f32 = 0.3;
+const STEP_SIZE: f32 = 0.15;
+
+/// The collider and character controller shared by every indoor character.
+pub(super) fn indoor_body(speed: f32) -> (Collider, CharacterController) {
+    (
+        Collider::round_cuboid(BODY_WIDTH_X, BODY_HEIGHT, BODY_DEPTH_Z, BODY_DEPTH_Z / 2.0),
+        CharacterController {
+            speed,
+            step_size: STEP_SIZE,
+            ..default()
+        },
+    )
 }

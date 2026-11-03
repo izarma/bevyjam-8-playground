@@ -2,12 +2,12 @@ use std::time::Duration;
 
 use bevy::prelude::*;
 
-use crate::{GameplayScene, PausableSystems, camera::face_camera, loading::PLAYER_SHEET_COLUMNS};
-
-use super::FRAME_INTERVAL;
-
-/// Squared horizontal speed below which the character counts as idle: (0.1 m/s)².
-const MOVING_SPEED_SQ: f32 = 0.01;
+use crate::{
+    GameplayScene, PausableSystems,
+    camera::face_camera,
+    gameplay::animation::{FRAME_INTERVAL, MOVING_SPEED_SQ},
+    loading::PLAYER_SHEET_COLUMNS,
+};
 
 /// Animation state for the player character.
 ///
@@ -265,10 +265,13 @@ pub(crate) fn apply_player_animation(
         {
             atlas.index = index;
         }
-        // Mirror the texture for left facings by showing the quad's double-sided
-        // back face.
-        if animation.flip {
-            transform.rotate_y(std::f32::consts::PI);
+        let rotation = Quat::from_rotation_y(if animation.flip {
+            std::f32::consts::PI
+        } else {
+            0.0
+        });
+        if transform.rotation != rotation {
+            transform.rotation = rotation;
         }
     }
 }
