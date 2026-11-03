@@ -2,7 +2,7 @@ use std::borrow::Cow;
 
 use bevy::{ecs::system::IntoObserverSystem, prelude::*};
 
-use crate::ui::{interaction::InteractionPalette, palette::*};
+use crate::ui::{font, interaction::InteractionPalette, palette::*, scale::texels};
 
 /// A root UI node that fills the window and centers its content.
 pub fn ui_root(name: impl Into<Cow<'static, str>>) -> impl Scene {
@@ -16,7 +16,7 @@ pub fn ui_root(name: impl Into<Cow<'static, str>>) -> impl Scene {
             align_items: AlignItems::Center,
             justify_content: JustifyContent::Center,
             flex_direction: FlexDirection::Column,
-            row_gap: px(20),
+            row_gap: texels(6),
         }
         // Don't block picking events for other UI roots.
         Pickable::IGNORE
@@ -28,7 +28,7 @@ pub fn header(text: impl Into<String>) -> impl Scene {
     bsn! {
         #Header
         Text({ text.into() })
-        TextFont { font_size: px(40.0) }
+        @font::text(2)
         TextColor(HEADER_TEXT)
     }
 }
@@ -38,7 +38,7 @@ pub fn label(text: impl Into<String>) -> impl Scene {
     bsn! {
         #Label
         Text({ text.into() })
-        TextFont { font_size: px(24.0) }
+        @font::text(1)
         TextColor(LABEL_TEXT)
     }
 }
@@ -50,7 +50,7 @@ pub fn link_label(text: impl Into<String>, url: &'static str) -> impl Scene {
     bsn! {
         #Label
         Text(text)
-        TextFont { font_size: px(24.0) }
+        @font::text(1)
         TextColor(LINK_TEXT)
         Underline
         OpenLink(url)
@@ -99,8 +99,8 @@ where
         action,
         bsn! {
             Node {
-                width: px(380),
-                height: px(80),
+                width: texels(112),
+                height: texels(20),
                 align_items: AlignItems::Center,
                 justify_content: JustifyContent::Center,
                 border_radius: BorderRadius::MAX,
@@ -121,8 +121,8 @@ where
         action,
         bsn! {
             Node {
-                width: px(30),
-                height: px(30),
+                width: texels(16),
+                height: texels(16),
                 align_items: AlignItems::Center,
                 justify_content: JustifyContent::Center,
             }
@@ -154,7 +154,7 @@ where
             Children [
                 #ButtonText
                 Text(text)
-                TextFont { font_size: px(40.0) }
+                @font::text(1)
                 TextColor(BUTTON_TEXT)
                 // Don't bubble picking events from the text up to the button.
                 Pickable::IGNORE

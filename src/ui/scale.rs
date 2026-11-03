@@ -6,6 +6,11 @@ const WINDOW_TEXELS_TALL: f32 = 240.0;
 // logical ui pixels per texel
 const TEXEL: f32 = 2.0;
 
+// size all ui in whole texels to keep it on the grid
+pub(crate) fn texels(n: u16) -> Val {
+    px(f32::from(n) * TEXEL)
+}
+
 pub(super) fn plugin(app: &mut App) {
     app.add_systems(Update, fit_ui_scale);
 }

@@ -7,7 +7,7 @@ use crate::{
         MAX_CAMERA_SENSITIVITY, MIN_CAMERA_SENSITIVITY,
     },
     graphics::{GraphicsSettings, RENDER_SCALES},
-    ui::{menus::Menu, widget},
+    ui::{menus::Menu, scale::texels, widget},
 };
 
 pub(super) fn plugin(app: &mut App) {
@@ -44,14 +44,14 @@ fn spawn_settings_menu() -> impl Scene {
 }
 
 fn settings_grid() -> impl Scene {
-    let cols: Vec<RepeatedGridTrack> = RepeatedGridTrack::px(2, 400.0);
+    let cols: Vec<RepeatedGridTrack> = RepeatedGridTrack::auto(2);
 
     bsn! {
         #SettingsGrid
         Node {
             display: Display::Grid,
-            row_gap: px(10),
-            column_gap: px(30),
+            row_gap: texels(4),
+            column_gap: texels(12),
             grid_template_columns: cols,
         }
         Children [
@@ -104,7 +104,7 @@ fn render_scale_widget() -> impl Scene {
             --
             #RenderScaleValue
             Node {
-                padding: UiRect::horizontal(px(10)),
+                padding: UiRect::horizontal(texels(4)),
                 justify_content: JustifyContent::Center,
             }
             Children [
@@ -128,7 +128,7 @@ fn depth_of_field_widget() -> impl Scene {
             --
             #DepthOfFieldValue
             Node {
-                padding: UiRect::horizontal(px(10)),
+                padding: UiRect::horizontal(texels(4)),
                 justify_content: JustifyContent::Center,
             }
             Children [
@@ -152,7 +152,7 @@ fn fog_widget() -> impl Scene {
             --
             #FogValue
             Node {
-                padding: UiRect::horizontal(px(10)),
+                padding: UiRect::horizontal(texels(4)),
                 justify_content: JustifyContent::Center,
             }
             Children [
@@ -242,7 +242,7 @@ fn horizontal_sensitivity_widget() -> impl Scene {
             --
             #HorizontalSensitivityValue
             Node {
-                padding: UiRect::horizontal(px(10)),
+                padding: UiRect::horizontal(texels(4)),
                 justify_content: JustifyContent::Center,
             }
             Children [
@@ -266,7 +266,7 @@ fn vertical_sensitivity_widget() -> impl Scene {
             --
             #VerticalSensitivityValue
             Node {
-                padding: UiRect::horizontal(px(10)),
+                padding: UiRect::horizontal(texels(4)),
                 justify_content: JustifyContent::Center,
             }
             Children [
