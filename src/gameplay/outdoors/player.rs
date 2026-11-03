@@ -33,7 +33,7 @@ pub(super) fn plugin(app: &mut App) {
         .add_systems(OnEnter(GameplayScene::Outdoors), set_cursor_locked::<true>)
         .add_systems(OnExit(GameplayScene::Outdoors), set_cursor_locked::<false>)
         .add_systems(
-            OnEnter(Menu::Pause),
+            OnExit(Menu::None),
             set_cursor_locked::<false>.run_if(in_state(GameplayScene::Outdoors)),
         )
         .add_systems(
@@ -75,6 +75,10 @@ struct ExamplePlayerSprite;
 #[derive(Debug, InputAction)]
 #[action_output(bool)]
 struct Run;
+
+#[derive(Debug, InputAction)]
+#[action_output(bool)]
+pub(super) struct Harvest;
 
 fn spawn_player(
     spawn: On<Insert<PlayerSpawn>>,
@@ -149,6 +153,13 @@ fn spawn_player(
                 Binding(KeyCode::ShiftRight)
                 --
                 Binding(GamepadButton::LeftThumb)
+            ]
+            --
+            Action::<Harvest>::new()
+            Bindings [
+                Binding(KeyCode::KeyF)
+                --
+                Binding(GamepadButton::West)
             ]
         });
 }
