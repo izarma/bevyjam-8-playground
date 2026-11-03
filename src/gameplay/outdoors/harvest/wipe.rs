@@ -4,7 +4,7 @@
 use bevy::{prelude::*, ui::UiGlobalTransform, window::PrimaryWindow};
 use pixel_art::PixelSprite;
 
-use super::Fades;
+use super::{Fades, Won};
 use crate::ui::{menus::Menu, scale::TEXEL};
 
 // how many ui texels wide each sprite texel is
@@ -112,13 +112,12 @@ fn snapped(texels: f32) -> Val {
 fn wipe(
     mut commands: Commands,
     window: Single<&Window, With<PrimaryWindow>>,
-    mut boards: Query<(&mut Board, &ComputedNode, &UiGlobalTransform)>,
-    mut next_menu: ResMut<NextState<Menu>>,
+    mut boards: Query<(&mut Board, &ComputedNode, &UiGlobalTransform, &ChildOf)>,
 ) {
     let cursor = window
         .cursor_position()
         .map(|logical| logical * window.scale_factor());
-    for (mut board, node, transform) in &mut boards {
+    for (mut board, node, transform, overlay) in &mut boards {
         let from = board.last_cursor.or(cursor);
         board.last_cursor = cursor;
         let (Some(from), Some(to)) = (from, cursor) else {
@@ -151,34 +150,20 @@ fn wipe(
             }
         }
         if board.stuck.iter().all(Option::is_none) {
-            next_menu.set(Menu::None);
+            commands.trigger(Won {
+                entity: overlay.parent(),
+            });
         }
     }
 }
 
-fn fall(
-    mut commands: Commands,
-    time: Res<Time>,
-    window: Single<&Window, With<PrimaryWindow>>,
-    mut texels: Query<(
-        Entity,
-        &mut Falling,
-        &mut Node,
-        &ComputedNode,
-        &UiGlobalTransform,
-    )>,
-) {
+fn fall(time: Res<Time>, mut texels: Query<(&mut Falling, &mut Node)>) {
     let dt = time.delta_secs();
-    for (entity, mut falling, mut node, computed, transform) in &mut texels {
+    for (mut falling, mut node) in &mut texels {
         falling.velocity.y += GRAVITY * dt;
         let step = falling.velocity * dt;
         falling.position += step;
         node.left = snapped(falling.position.x);
         node.top = snapped(falling.position.y);
-        // despawn once it leaves the window
-        let top = transform.translation.y - computed.size().y / 2.0;
-        if top > window.physical_height() as f32 {
-            commands.entity(entity).despawn();
-        }
     }
 }

@@ -188,7 +188,7 @@ pub fn panel() -> impl Scene {
     bsn! {
         ImageNode {
             image: "ui/9slice.png",
-            image_mode: { 
+            image_mode: {
                 // these settings are specific to how the 9slice png is authored
                 NodeImageMode::Sliced(TextureSlicer {
                     border: BorderRect::all(7.0),

@@ -4,7 +4,11 @@ use pixel_art::PixelSprite;
 use plants::Growing;
 
 use super::player::Harvest;
-use crate::{GameplayScene, Pause, gameplay::player::Player, ui::menus::Menu};
+use crate::{
+    GameplayScene, Pause,
+    gameplay::{inventory::Inventory, player::Player},
+    ui::menus::Menu,
+};
 
 mod wipe;
 mod yields;
@@ -15,56 +19,68 @@ const OVERLAY_ALPHA: f32 = 0.6;
 
 pub(super) fn plugin(app: &mut App) {
     app.add_plugins((wipe::plugin, yields::plugin))
-        .init_resource::<InReach>()
         .add_systems(
             Update,
             find_in_reach.run_if(in_state(GameplayScene::Outdoors)),
         )
         .add_observer(start_harvest)
+        .add_observer(collect)
         .add_systems(OnExit(Menu::Minigame), close_overlays)
         .add_systems(Update, fade_overlay);
 }
 
 // the nearest plant you can harvest
-#[derive(Resource, Default)]
-struct InReach(Option<Entity>);
+#[derive(Component)]
+struct InReach;
+
+#[derive(EntityEvent)]
+struct Won {
+    entity: Entity,
+}
 
 #[derive(Component)]
 struct Fades(Color);
 
 #[derive(Component)]
 struct Overlay {
+    plant: Entity,
     shown: f32,
     closing: bool,
 }
 
 fn find_in_reach(
-    mut in_reach: ResMut<InReach>,
+    mut commands: Commands,
     player: Option<Single<&GlobalTransform, With<Player>>>,
-    plants: Query<(Entity, &GlobalTransform), With<Growing>>,
+    plants: Query<(Entity, &GlobalTransform, Has<InReach>), With<Growing>>,
 ) {
     let ground = |at: &GlobalTransform| Vec2::new(at.translation().x, at.translation().z);
-    in_reach.0 = player.and_then(|player| {
+    let nearest = player.and_then(|player| {
         let player = ground(&player);
         plants
             .iter()
-            .map(|(plant, at)| (plant, ground(at).distance(player)))
+            .map(|(plant, at, _)| (plant, ground(at).distance(player)))
             .filter(|(_, distance)| *distance <= REACH)
             .min_by(|a, b| a.1.total_cmp(&b.1))
             .map(|(plant, _)| plant)
     });
+    for (plant, _, in_reach) in &plants {
+        if in_reach && Some(plant) != nearest {
+            commands.entity(plant).remove::<InReach>();
+        } else if !in_reach && Some(plant) == nearest {
+            commands.entity(plant).insert(InReach);
+        }
+    }
 }
 
 fn start_harvest(
     _: On<Start<Harvest>>,
     mut commands: Commands,
-    in_reach: Res<InReach>,
-    sprites: Query<&PixelSprite>,
+    plants: Query<(Entity, &PixelSprite), With<InReach>>,
     images: Res<Assets<Image>>,
     mut next_pause: ResMut<NextState<Pause>>,
     mut next_menu: ResMut<NextState<Menu>>,
 ) {
-    let Some(sprite) = in_reach.0.and_then(|plant| sprites.get(plant).ok()) else {
+    let Some((plant, sprite)) = plants.iter().next() else {
         return;
     };
 
@@ -72,6 +88,7 @@ fn start_harvest(
         .spawn((
             Name::new("Harvest Overlay"),
             Overlay {
+                plant,
                 shown: 0.0,
                 closing: false,
             },
@@ -95,6 +112,28 @@ fn start_harvest(
     }
     next_pause.set(Pause(true));
     next_menu.set(Menu::Minigame);
+}
+
+fn collect(
+    won: On<Won>,
+    mut commands: Commands,
+    overlays: Query<&Overlay>,
+    plants: Query<&Growing>,
+    mut inventory: Single<&mut Inventory>,
+    mut next_menu: ResMut<NextState<Menu>>,
+) {
+    next_menu.set(Menu::None);
+    let Ok(overlay) = overlays.get(won.entity) else {
+        return;
+    };
+    let Ok(Growing(plant)) = plants.get(overlay.plant) else {
+        return;
+    };
+    
+    commands.entity(overlay.plant).despawn();
+    let count = inventory.plants.entry(*plant).or_default();
+    *count += 1;
+    info!("harvested {plant:?}, carrying {count}");
 }
 
 fn close_overlays(mut overlays: Query<&mut Overlay>) {

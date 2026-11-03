@@ -98,7 +98,7 @@ struct CanvasCamera;
 
 fn show_panel(
     mut commands: Commands,
-    in_reach: Res<InReach>,
+    in_reach: Option<Single<Entity, With<InReach>>>,
     menu: Res<State<Menu>>,
     panels: Query<(Entity, &YieldPanel)>,
     plants: Query<(&Growing, &GlobalTransform, &PixelSprite)>,
@@ -106,7 +106,9 @@ fn show_panel(
     ui_scale: Res<UiScale>,
 ) {
     // hidden while a menu or minigame is up
-    let target = in_reach.0.filter(|_| *menu.get() == Menu::None);
+    let target = in_reach
+        .map(|plant| *plant)
+        .filter(|_| *menu.get() == Menu::None);
     for (panel, shown) in &panels {
         if Some(shown.plant) != target {
             commands.entity(panel).despawn();

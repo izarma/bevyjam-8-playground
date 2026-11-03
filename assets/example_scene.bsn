@@ -1032,6 +1032,40 @@ bevy_ecs::hierarchy::Children [
         ],
     }
     --
+    #"Plant Spot2"
+    bevy_transform::components::transform::Transform {
+        translation: glam::Vec3 {
+            x: -2.9812183380126953,
+            y: 0.48371559381484985,
+            z: 1.9700000286102295,
+        },
+    }
+    plants::Gatherable {
+        plants: [
+            plants::Plant::Plant01,
+            plants::Plant::Plant06,
+            plants::Plant::Plant13,
+        ],
+    }
+    jackdaw_scene_types::node_id::SceneNodeId(3766148771669846517)
+    --
+    #"Plant Spot3"
+    bevy_transform::components::transform::Transform {
+        translation: glam::Vec3 {
+            x: -5.628231048583984,
+            y: 0.48371559381484985,
+            z: 0.26145827770233154,
+        },
+    }
+    plants::Gatherable {
+        plants: [
+            plants::Plant::Plant01,
+            plants::Plant::Plant06,
+            plants::Plant::Plant13,
+        ],
+    }
+    jackdaw_scene_types::node_id::SceneNodeId(3766148771669846518)
+    --
     #Environment
     bevy_transform::components::transform::Transform
     jackdaw_scene_types::node_id::SceneNodeId(3391703645149169079)
