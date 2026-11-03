@@ -1,16 +1,19 @@
-use avian3d::prelude::*;
 use bevy::prelude::*;
 use bevy_ahoy::prelude::*;
 use bevy_enhanced_input::prelude::*;
 
-use crate::{GameplayScene, Pause, gameplay::player::Player, loading::NPCAssets};
+use crate::{
+    GameplayScene, Pause,
+    gameplay::{
+        base::{CAPSULE_HEIGHT, indoor_body},
+        player::Player,
+    },
+    loading::NPCAssets,
+};
 
 use super::anim::indoor_visual_bundle;
 
-const WALK_SPEED: f32 = 2.0;
-const CAPSULE_RADIUS: f32 = 0.25;
-const CAPSULE_HEIGHT: f32 = 1.0;
-const STEP_SIZE: f32 = 0.15;
+const WALK_SPEED: f32 = 2.5;
 
 #[derive(Component, Reflect, Default)]
 #[reflect(Component, Default)]
@@ -38,17 +41,15 @@ fn spawn_player_base(
     let spawn = feet.translation() + Vec3::Y * CAPSULE_HEIGHT / 2.0;
 
     let (animation, sprite, sprite3d) = indoor_visual_bundle(&assets, &mut texture_atlas_layouts);
+    let (collider, controller) = indoor_body(WALK_SPEED);
 
     commands
         .spawn_scene(bsn! {
             IndoorPlayer
             Player
             Transform::from_translation(spawn)
-            Collider::capsule(CAPSULE_RADIUS, CAPSULE_HEIGHT - 2.0 * CAPSULE_RADIUS)
-            CharacterController {
-                speed: WALK_SPEED,
-                step_size: STEP_SIZE,
-            }
+            collider
+            controller
             ~ActiveInStates::<IndoorPlayer, Pause>::single(Pause(false))
             DespawnOnExit::<GameplayScene>(GameplayScene::Base)
         })

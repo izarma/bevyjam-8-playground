@@ -27,11 +27,11 @@ bevy_ecs::hierarchy::Children [
     bevy_transform::components::transform::Transform {
         translation: glam::Vec3 {
             x: 0.0,
-            y: 0.5199999809265137,
-            z: 2.0799999237060547,
+            y: 2.0999999046325684,
+            z: 6.199999809265137,
         },
         rotation: glam::Quat {
-            x: 0.0,
+            x: 0.029999999329447746,
             y: -0.0,
             z: -0.0,
             w: 1.0,
@@ -71,7 +71,7 @@ bevy_ecs::hierarchy::Children [
     jackdaw_scene_types::node_id::SceneNodeId(6939876226162166060)
     bevy_transform::components::transform::Transform {
         scale: glam::Vec3 {
-            x: 4.0,
+            x: 12.0,
             y: 1.0,
             z: 2.0,
         },

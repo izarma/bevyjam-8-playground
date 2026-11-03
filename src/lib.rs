@@ -88,6 +88,7 @@ pub fn plugin(app: &mut App) {
         .configure_sets(
             FixedPostUpdate,
             (
+                PausableSystems,
                 AhoySystems::MoveCharacters,
                 AhoySystems::ApplyForcesToDynamicRigidBodies,
             )

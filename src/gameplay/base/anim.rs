@@ -165,24 +165,6 @@ pub(super) fn indoor_visual_bundle(
     (animation, sprite, sprite3d)
 }
 
-pub(super) fn spawn_base_sprite(
-    commands: &mut Commands,
-    assets: &NPCAssets,
-    texture_atlas_layouts: &mut Assets<TextureAtlasLayout>,
-    marker: impl Bundle,
-    spawn: Vec3,
-) {
-    let (animation, sprite, sprite3d) = indoor_visual_bundle(assets, texture_atlas_layouts);
-    commands.spawn((
-        marker,
-        animation,
-        Transform::from_translation(spawn),
-        sprite,
-        sprite3d,
-        DespawnOnExit(GameplayScene::Base),
-    ));
-}
-
 fn animate(
     time: Res<Time>,
     mut query: Query<(&mut IndoorCharAnimation, &mut Sprite, &mut Transform)>,
