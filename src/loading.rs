@@ -14,7 +14,6 @@ pub(super) fn plugin(app: &mut App) {
             .load_collection::<UIAssets>()
             .load_collection::<MusicAssets>()
             .load_collection::<PlayerAssets>()
-            .load_collection::<LevelAssets>()
             .load_collection::<NPCAssets>(),
     );
 }
@@ -43,14 +42,13 @@ pub struct MusicAssets {
 }
 
 // size of one cell of the player sheet, in texels
-pub const PLAYER_FRAME: UVec2 = UVec2::new(16, 32);
+pub const PLAYER_FRAME: UVec2 = UVec2::new(32, 38);
 // cells per row of the sheet
-pub const PLAYER_SHEET_COLUMNS: u32 = 35;
+pub const PLAYER_SHEET_COLUMNS: u32 = 13;
 
 #[derive(AssetCollection, Resource)]
 pub struct PlayerAssets {
-    // todo: remove / replace with real character
-    #[asset(path = "textures/character/standin-16x32.png")]
+    #[asset(path = "textures/character/monk-sheet.png")]
     pub player_sheet: Handle<Image>,
     #[asset(path = "audio/sfx/step1.ogg")]
     pub step1: Handle<AudioSource>,
@@ -66,10 +64,4 @@ pub struct PlayerAssets {
 pub struct NPCAssets {
     #[asset(path = "textures/character/fox.png")]
     pub fox: Handle<Image>,
-}
-
-#[derive(AssetCollection, Resource)]
-pub struct LevelAssets {
-    #[asset(path = "textures/tileset/tileset_padded.png")]
-    pub level_tilemap: Handle<Image>,
 }

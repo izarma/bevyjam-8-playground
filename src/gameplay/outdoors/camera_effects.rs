@@ -10,9 +10,7 @@ use bevy::{
 };
 use bevy_ahoy::prelude::CharacterController;
 
-use crate::{
-    GameplayScene, camera::SceneCamera, gameplay::player::Player, graphics::GraphicsSettings,
-};
+use crate::{GameplayScene, camera::SceneCamera, gameplay::Player, graphics::GraphicsSettings};
 
 pub(super) fn plugin(app: &mut App) {
     app.add_systems(

@@ -6,7 +6,7 @@ use rand::prelude::*;
 
 use crate::{
     GameState, PausableSystems,
-    gameplay::PlayerAnimation,
+    gameplay::{PlayerAnimation, PlayerAnimationSystems},
     loading::{MusicAssets, PlayerAssets},
 };
 
@@ -30,6 +30,7 @@ pub(super) fn plugin(app: &mut App) {
         .add_systems(
             Update,
             trigger_step_sound
+                .after(PlayerAnimationSystems::UpdateState)
                 .in_set(PausableSystems)
                 .run_if(in_state(GameState::Gameplay)),
         );
