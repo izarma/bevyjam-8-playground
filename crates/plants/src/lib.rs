@@ -8,7 +8,7 @@ use jackdaw_scene_types::EditorHidden;
 use pixel_art::PixelSprite;
 use rand::seq::IndexedRandom;
 
-#[derive(Reflect, Clone, Copy, Debug, Default, PartialEq, Eq, Hash)]
+#[derive(Reflect, Clone, Copy, Debug, Default, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum Plant {
     #[default]
     Plant01,

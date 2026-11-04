@@ -10,6 +10,9 @@ use crate::{
     ui::menus::Menu,
 };
 
+mod billboard;
+use billboard::Billboards;
+mod popup;
 mod wipe;
 mod yields;
 
@@ -18,15 +21,20 @@ const FADE_SECONDS: f32 = 0.3;
 const OVERLAY_ALPHA: f32 = 0.6;
 
 pub(super) fn plugin(app: &mut App) {
-    app.add_plugins((wipe::plugin, yields::plugin))
-        .add_systems(
-            Update,
-            find_in_reach.run_if(in_state(GameplayScene::Outdoors)),
-        )
-        .add_observer(start_harvest)
-        .add_observer(collect)
-        .add_systems(OnExit(Menu::Minigame), close_overlays)
-        .add_systems(Update, fade_overlay);
+    app.add_plugins((
+        billboard::plugin,
+        popup::plugin,
+        wipe::plugin,
+        yields::plugin,
+    ))
+    .add_systems(
+        Update,
+        find_in_reach.run_if(in_state(GameplayScene::Outdoors)),
+    )
+    .add_observer(start_harvest)
+    .add_observer(collect)
+    .add_systems(OnExit(Menu::Minigame), close_overlays)
+    .add_systems(Update, fade_overlay);
 }
 
 // the nearest plant you can harvest
@@ -118,18 +126,22 @@ fn collect(
     won: On<Won>,
     mut commands: Commands,
     overlays: Query<&Overlay>,
-    plants: Query<&Growing>,
+    plants: Query<(&Growing, &GlobalTransform, &PixelSprite)>,
     mut inventory: Single<&mut Inventory>,
     mut next_menu: ResMut<NextState<Menu>>,
+    mut billboards: Billboards,
 ) {
     next_menu.set(Menu::None);
     let Ok(overlay) = overlays.get(won.entity) else {
         return;
     };
-    let Ok(Growing(plant)) = plants.get(overlay.plant) else {
+    let Ok((Growing(plant), at, sprite)) = plants.get(overlay.plant) else {
         return;
     };
 
+    if let Some(above) = billboards.above(sprite, at) {
+        popup::spawn(&mut billboards, above, *plant);
+    }
     commands.entity(overlay.plant).despawn();
     let count = inventory.plants.entry(*plant).or_default();
     *count += 1;
@@ -145,8 +157,8 @@ fn close_overlays(mut overlays: Query<&mut Overlay>) {
 fn fade_overlay(
     mut commands: Commands,
     time: Res<Time>,
-    mut overlays: Query<(Entity, &mut Overlay, &mut BackgroundColor), Without<Fades>>,
-    mut faders: Query<(&Fades, &mut BackgroundColor)>,
+    mut overlays: Query<(Entity, &mut Overlay, &mut BackgroundColor)>,
+    mut faders: Query<(&Fades, &mut ImageNode)>,
 ) {
     let step = time.delta_secs() / FADE_SECONDS;
     for (entity, mut overlay, mut background) in &mut overlays {
@@ -160,8 +172,8 @@ fn fade_overlay(
             continue;
         }
         background.0 = Color::BLACK.with_alpha(OVERLAY_ALPHA * overlay.shown);
-        for (fades, mut background) in &mut faders {
-            background.0 = fades.0.with_alpha(fades.0.alpha() * overlay.shown);
+        for (fades, mut image) in &mut faders {
+            image.color = fades.0.with_alpha(fades.0.alpha() * overlay.shown);
         }
     }
 }
