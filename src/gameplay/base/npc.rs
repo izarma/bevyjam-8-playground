@@ -1,5 +1,6 @@
 use bevy::prelude::*;
 use bevy_ahoy::{input::AccumulatedInput, prelude::AhoySystems};
+use bevy_yarnspinner::prelude::DialogueRunner;
 
 use crate::{GameplayScene, PausableSystems, gameplay::base::indoor_body, loading::NPCAssets};
 
@@ -15,12 +16,22 @@ pub(super) fn plugin(app: &mut App) {
                 .before(AhoySystems::MoveCharacters)
                 .in_set(PausableSystems)
                 .run_if(in_state(GameplayScene::Base)),
+        )
+        .add_systems(
+            Update,
+            end_npc_dialogue
+                .in_set(PausableSystems)
+                .run_if(in_state(GameplayScene::Base).and_then(any_with_component::<InDialogue>)),
         );
 }
 
 /// Identity marker for non-player characters.
 #[derive(Component)]
-struct Npc;
+pub(super) struct Npc;
+
+/// Marker for the NPC currently talking to the player.
+#[derive(Component)]
+pub(super) struct InDialogue;
 
 /// Waypoints an [`Npc`] walks through in order, looping back to the start once
 /// the last one is reached.
@@ -86,9 +97,20 @@ fn spawn_npc(
 }
 
 /// Steers each NPC toward its current waypoint by writing Ahoy's
-/// `AccumulatedInput::last_movement`.
-fn steer_npcs(mut npcs: Query<(&Transform, &mut NpcWaypoints, &mut AccumulatedInput)>) {
-    for (transform, mut waypoints, mut input) in &mut npcs {
+/// `AccumulatedInput::last_movement`. NPCs in a dialogue stand still.
+fn steer_npcs(
+    mut npcs: Query<(
+        &Transform,
+        &mut NpcWaypoints,
+        &mut AccumulatedInput,
+        Has<InDialogue>,
+    )>,
+) {
+    for (transform, mut waypoints, mut input, in_dialogue) in &mut npcs {
+        if in_dialogue {
+            input.last_movement = None;
+            continue;
+        }
         let Some(target) = waypoints.points.get(waypoints.next).copied() else {
             input.last_movement = None;
             continue;
@@ -106,5 +128,18 @@ fn steer_npcs(mut npcs: Query<(&Transform, &mut NpcWaypoints, &mut AccumulatedIn
 
         let direction = to_target.normalize();
         input.last_movement = Some(Vec2::new(direction.x, -direction.y));
+    }
+}
+
+fn end_npc_dialogue(
+    mut commands: Commands,
+    npcs: Query<Entity, With<InDialogue>>,
+    runners: Query<&DialogueRunner>,
+) {
+    if runners.iter().any(|runner| runner.is_running()) {
+        return;
+    }
+    for npc in &npcs {
+        commands.entity(npc).remove::<InDialogue>();
     }
 }

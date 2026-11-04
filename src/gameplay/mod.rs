@@ -1,6 +1,7 @@
 mod animation;
 mod base;
 pub(crate) mod clock;
+mod dialogue;
 pub(crate) mod herbs;
 pub(crate) mod inventory;
 mod outdoors;
@@ -18,6 +19,7 @@ pub(super) fn plugin(app: &mut App) {
         base::plugin,
         clock::plugin,
         inventory::plugin,
+        dialogue::plugin,
         outdoors::plugin,
     ));
 }

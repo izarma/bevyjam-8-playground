@@ -2,7 +2,8 @@ use bevy::prelude::*;
 
 pub(crate) mod font;
 pub(crate) mod input_prompt;
-mod interaction;
+
+pub(crate) mod interaction;
 pub(crate) mod menus;
 pub(crate) mod palette;
 pub(crate) mod scale;

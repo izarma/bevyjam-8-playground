@@ -5,19 +5,26 @@ use avian3d::prelude::LinearVelocity;
 use bevy::prelude::*;
 use bevy_ahoy::prelude::CharacterController;
 use bevy_sprite3d::Sprite3d;
+use bevy_yarnspinner::prelude::DialogueRunner;
 
+use super::npc::InDialogue;
 use crate::{
-    GameplayScene, PausableSystems,
-    gameplay::animation::{FRAME_INTERVAL, MOVING_SPEED_SQ},
+    GameplayScene,
+    gameplay::animation::{FRAME_INTERVAL, MOVING_SPEED_SQ, PlayerAnimationSystems},
     loading::NPCAssets,
 };
+
 pub(super) fn plugin(app: &mut App) {
     app.add_systems(
         Update,
-        (select_animation_state, animate)
-            .chain()
-            .in_set(PausableSystems)
-            .run_if(in_state(GameplayScene::Base)),
+        (
+            select_animation_state
+                .in_set(PlayerAnimationSystems::UpdateState)
+                .run_if(in_state(GameplayScene::Base)),
+            animate
+                .in_set(PlayerAnimationSystems::Apply)
+                .run_if(in_state(GameplayScene::Base)),
+        ),
     );
 }
 
@@ -120,19 +127,47 @@ impl IndoorCharAnimation {
             self.timer.reset();
         }
     }
+
+    /// Point the sprite toward a world-space direction (XZ plane), using the
+    /// same facing rules as movement.
+    pub(super) fn face_towards(&mut self, direction: Vec2) {
+        if direction.length_squared() <= 0.0 {
+            return;
+        }
+        let direction = direction.normalize();
+        if direction.y.abs() >= direction.x.abs() {
+            self.facing = if direction.y >= 0.0 {
+                IndoorCharFacing::Front
+            } else {
+                IndoorCharFacing::Back
+            };
+            self.flip = false;
+        } else {
+            self.facing = IndoorCharFacing::Side;
+            self.flip = direction.x < 0.0;
+        }
+    }
 }
 
 /// Selects animation state and facing from the owning character's velocity.
+/// While a dialogue is running, the speaking NPC is held in its idle pose.
 fn select_animation_state(
-    roots: Query<(&LinearVelocity, &Children), With<CharacterController>>,
+    roots: Query<(&LinearVelocity, &Children, Has<InDialogue>), With<CharacterController>>,
     mut animations: Query<&mut IndoorCharAnimation>,
+    runners: Query<&DialogueRunner>,
 ) {
-    for (velocity, children) in &roots {
+    let dialogue_active = runners.iter().any(|runner| runner.is_running());
+    for (velocity, children, in_dialogue) in &roots {
+        let velocity = if dialogue_active && in_dialogue {
+            Vec3::ZERO
+        } else {
+            **velocity
+        };
         for child in children {
             let Ok(mut animation) = animations.get_mut(*child) else {
                 continue;
             };
-            animation.update_state(**velocity);
+            animation.update_state(velocity);
         }
     }
 }
