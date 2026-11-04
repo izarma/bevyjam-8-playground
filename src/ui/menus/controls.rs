@@ -1,0 +1,92 @@
+// menu inputs / non-player inputs
+use bevy::prelude::*;
+use bevy_enhanced_input::prelude::*;
+
+use crate::{GameState, Pause, ui::menus::Menu};
+
+use super::pause::open_pause_menu;
+
+pub(super) fn plugin(app: &mut App) {
+    app.add_input_context::<MenuControls>()
+        .add_systems(Startup, spawn_controls)
+        .add_observer(back)
+        .add_observer(toggle_pause)
+        .add_observer(toggle_inventory);
+}
+
+#[derive(Component)]
+struct MenuControls;
+
+#[derive(Debug, InputAction)]
+#[action_output(bool)]
+struct Back;
+
+#[derive(Debug, InputAction)]
+#[action_output(bool)]
+struct TogglePause;
+
+#[derive(Debug, InputAction)]
+#[action_output(bool)]
+struct ToggleInventory;
+
+fn spawn_controls(mut commands: Commands) {
+    commands
+        .spawn((Name::new("Menu Controls"), MenuControls))
+        .queue_spawn_related_scenes::<Actions<MenuControls>>(bsn_list! {
+            Action::<Back>::new()
+            Bindings [ Binding(KeyCode::Escape) ]
+            --
+            Action::<TogglePause>::new()
+            Bindings [ Binding(KeyCode::KeyP) ]
+            --
+            Action::<ToggleInventory>::new()
+            Bindings [ Binding(KeyCode::KeyI) ]
+        });
+}
+
+fn back(
+    _: On<Start<Back>>,
+    mut commands: Commands,
+    menu: Res<State<Menu>>,
+    screen: Res<State<GameState>>,
+) {
+    let in_game = *screen.get() == GameState::Gameplay;
+    match menu.get() {
+        Menu::None if in_game => open_pause_menu(&mut commands),
+        Menu::Pause | Menu::Inventory => commands.set_state(Menu::None),
+        Menu::Settings if in_game => commands.set_state(Menu::Pause),
+        Menu::Settings | Menu::Credits => commands.set_state(Menu::Main),
+        _ => {}
+    }
+}
+
+fn toggle_pause(
+    _: On<Start<TogglePause>>,
+    mut commands: Commands,
+    menu: Res<State<Menu>>,
+    screen: Res<State<GameState>>,
+) {
+    if *screen.get() != GameState::Gameplay {
+        return;
+    }
+    match menu.get() {
+        Menu::None => open_pause_menu(&mut commands),
+        _ => commands.set_state(Menu::None),
+    }
+}
+
+fn toggle_inventory(
+    _: On<Start<ToggleInventory>>,
+    mut commands: Commands,
+    menu: Res<State<Menu>>,
+    screen: Res<State<GameState>>,
+) {
+    match menu.get() {
+        Menu::None if *screen.get() == GameState::Gameplay => {
+            commands.set_state(Pause(true));
+            commands.set_state(Menu::Inventory);
+        }
+        Menu::Inventory => commands.set_state(Menu::None),
+        _ => {}
+    }
+}

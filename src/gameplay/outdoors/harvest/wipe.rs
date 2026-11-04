@@ -2,7 +2,11 @@ use bevy::{prelude::*, ui::UiGlobalTransform, window::PrimaryWindow};
 use pixel_art::PixelSprite;
 
 use super::{Fades, Won};
-use crate::ui::{menus::Menu, scale::TEXEL};
+use crate::ui::{
+    input_prompt::{MOUSE, prompt},
+    menus::Menu,
+    scale::{TEXEL, texels},
+};
 
 // how many ui texels wide each sprite texel is
 const TEXEL_SCALE: u32 = 8;
@@ -52,6 +56,22 @@ pub(super) fn spawn(
             ChildOf(overlay),
         ))
         .id();
+    // input hint adjacent to the tooltip billboard
+    let hint = commands
+        .spawn((
+            Node {
+                position_type: PositionType::Absolute,
+                left: percent(100),
+                bottom: px(0),
+                margin: UiRect::left(texels(4)),
+                ..default()
+            },
+            ChildOf(board),
+        ))
+        .id();
+    commands
+        .spawn_scene(prompt(MOUSE))
+        .insert((Fades(Color::WHITE), ChildOf(hint)));
 
     let mut stuck = vec![None; (size.x * size.y) as usize];
     for y in 0..size.y {
@@ -96,7 +116,7 @@ fn square(at: Vec2) -> impl Bundle {
             height: snapped(TEXEL_SCALE as f32),
             ..default()
         },
-        BackgroundColor(Color::NONE),
+        ImageNode::solid_color(Color::NONE),
         Pickable::IGNORE,
     )
 }

@@ -69,6 +69,7 @@ pub fn plugin(app: &mut App) {
         graphics::plugin,
         render_scale::plugin,
         audio::plugin,
+        bevy_enhanced_input::EnhancedInputPlugin,
         ui::plugin,
         AhoyPlugins::default(),
         gameplay::plugin,

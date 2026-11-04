@@ -2,8 +2,10 @@ use bevy::prelude::*;
 
 use crate::GameState;
 
+mod controls;
 mod credits;
 mod gameover;
+mod inventory;
 mod mainmenu;
 mod pause;
 mod settings;
@@ -11,10 +13,12 @@ mod settings;
 pub(super) fn plugin(app: &mut App) {
     app.init_state::<Menu>();
     app.add_plugins((
+        controls::plugin,
         mainmenu::plugin,
         pause::plugin,
         credits::plugin,
         gameover::plugin,
+        inventory::plugin,
         settings::plugin,
     ));
 }
@@ -28,6 +32,7 @@ pub enum Menu {
     Settings,
     Pause,
     GameOver,
+    Inventory,
     // right now theres only one minigame, idk if others need addtl states
     Minigame,
 }

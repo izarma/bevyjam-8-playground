@@ -1,17 +1,16 @@
 mod animation;
 mod base;
+pub(crate) mod herbs;
 pub(crate) mod inventory;
 mod outdoors;
 
 pub(crate) use animation::{PlayerAnimation, PlayerAnimationSystems};
-use bevy_enhanced_input::EnhancedInputPlugin;
 
 use bevy::prelude::*;
 use bevy_sprite3d::Sprite3dPlugin;
 
 pub(super) fn plugin(app: &mut App) {
     app.add_plugins((
-        EnhancedInputPlugin,
         Sprite3dPlugin,
         pixel_art::PixelArtPlugin,
         animation::plugin,

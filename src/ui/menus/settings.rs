@@ -1,4 +1,4 @@
-use bevy::{input::common_conditions::input_just_pressed, prelude::*};
+use bevy::prelude::*;
 
 use crate::{
     GameState,
@@ -12,10 +12,6 @@ use crate::{
 
 pub(super) fn plugin(app: &mut App) {
     app.add_systems(OnEnter(Menu::Settings), spawn_settings_menu.spawn());
-    app.add_systems(
-        Update,
-        go_back.run_if(in_state(Menu::Settings).and_then(input_just_pressed(KeyCode::Escape))),
-    );
 
     app.add_systems(
         Update,
@@ -331,14 +327,6 @@ fn go_back_on_click(
     screen: Res<State<GameState>>,
     mut next_menu: ResMut<NextState<Menu>>,
 ) {
-    next_menu.set(if screen.get() == &GameState::Title {
-        Menu::Main
-    } else {
-        Menu::Pause
-    });
-}
-
-fn go_back(screen: Res<State<GameState>>, mut next_menu: ResMut<NextState<Menu>>) {
     next_menu.set(if screen.get() == &GameState::Title {
         Menu::Main
     } else {
