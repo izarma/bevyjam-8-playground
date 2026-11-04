@@ -14,8 +14,8 @@ pub(super) fn plugin(app: &mut App) {
 }
 
 /// Palette for widget interactions. Add this to an entity that supports
-/// [`Interaction`]s, such as a button, to change its [`BackgroundColor`] based
-/// on the current interaction state.
+/// [`Interaction`]s, such as a button, to tint its [`ImageNode`] based on the
+/// current interaction state.
 #[derive(Component, Debug, Reflect, Clone, Default)]
 #[reflect(Component)]
 pub struct InteractionPalette {
@@ -26,46 +26,46 @@ pub struct InteractionPalette {
 
 fn apply_interaction_palette_on_click(
     click: On<PointerClick>,
-    mut palette_query: Query<(&InteractionPalette, &mut BackgroundColor)>,
+    mut palette_query: Query<(&InteractionPalette, &mut ImageNode)>,
 ) {
-    let Ok((palette, mut bg)) = palette_query.get_mut(click.event_target()) else {
+    let Ok((palette, mut image)) = palette_query.get_mut(click.event_target()) else {
         return;
     };
 
-    *bg = palette.pressed.into();
+    image.color = palette.pressed;
 }
 
 fn apply_interaction_palette_on_release(
     click: On<PointerRelease>,
-    mut palette_query: Query<(&InteractionPalette, &mut BackgroundColor)>,
+    mut palette_query: Query<(&InteractionPalette, &mut ImageNode)>,
 ) {
-    let Ok((palette, mut bg)) = palette_query.get_mut(click.event_target()) else {
+    let Ok((palette, mut image)) = palette_query.get_mut(click.event_target()) else {
         return;
     };
 
-    *bg = palette.hovered.into();
+    image.color = palette.hovered;
 }
 
 fn apply_interaction_palette_on_over(
     over: On<PointerOver>,
-    mut palette_query: Query<(&InteractionPalette, &mut BackgroundColor)>,
+    mut palette_query: Query<(&InteractionPalette, &mut ImageNode)>,
 ) {
-    let Ok((palette, mut bg)) = palette_query.get_mut(over.event_target()) else {
+    let Ok((palette, mut image)) = palette_query.get_mut(over.event_target()) else {
         return;
     };
 
-    *bg = palette.hovered.into();
+    image.color = palette.hovered;
 }
 
 fn apply_interaction_palette_on_out(
     out: On<PointerOut>,
-    mut palette_query: Query<(&InteractionPalette, &mut BackgroundColor)>,
+    mut palette_query: Query<(&InteractionPalette, &mut ImageNode)>,
 ) {
-    let Ok((palette, mut bg)) = palette_query.get_mut(out.event_target()) else {
+    let Ok((palette, mut image)) = palette_query.get_mut(out.event_target()) else {
         return;
     };
 
-    *bg = palette.none.into();
+    image.color = palette.none;
 }
 
 fn play_sound_effect_on_click(

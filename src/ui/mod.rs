@@ -1,10 +1,17 @@
 use bevy::prelude::*;
 
+pub(crate) mod font;
 mod interaction;
 pub(crate) mod menus;
 pub(crate) mod palette;
-mod widget;
+pub(crate) mod scale;
+pub(crate) mod widget;
 
 pub(super) fn plugin(app: &mut App) {
-    app.add_plugins((interaction::plugin, menus::plugin));
+    app.add_plugins((
+        font::plugin,
+        interaction::plugin,
+        menus::plugin,
+        scale::plugin,
+    ));
 }

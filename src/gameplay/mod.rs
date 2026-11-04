@@ -1,5 +1,6 @@
 mod animation;
 mod base;
+pub(crate) mod inventory;
 mod outdoors;
 mod player;
 
@@ -16,6 +17,7 @@ pub(super) fn plugin(app: &mut App) {
         animation::plugin,
         player::plugin,
         base::plugin,
+        inventory::plugin,
         outdoors::plugin,
     ));
 }

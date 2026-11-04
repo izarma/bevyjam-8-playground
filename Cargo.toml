@@ -64,6 +64,7 @@ image = { version = "0.25", default-features = false }
 log = { version = "0.4", features = ["max_level_debug", "release_max_level_warn"] }
 bevy_sprite3d = "10.1.0"
 pixel_art = { path = "crates/pixel_art" }
+plants = { path = "crates/plants" }
 # bevy-inspector-egui = "0.38.0"
 bevy_enhanced_input = "0.27"
 jackdaw_runtime = { version = "0.20", default-features = false, features = ["terrain"] }

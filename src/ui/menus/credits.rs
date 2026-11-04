@@ -2,7 +2,7 @@ use bevy::{input::common_conditions::input_just_pressed, prelude::*};
 
 use crate::{
     loading::UIAssets,
-    ui::{menus::Menu, widget},
+    ui::{menus::Menu, scale::texels, widget},
 };
 
 use super::{open_main_menu, open_main_menu_on_click};
@@ -65,7 +65,7 @@ fn assets() -> impl Scene {
 }
 
 fn grid(content: Vec<(&'static str, Option<&'static str>, &'static str)>) -> impl Scene {
-    let cols: Vec<RepeatedGridTrack> = RepeatedGridTrack::px(2, 400.0);
+    let cols: Vec<RepeatedGridTrack> = RepeatedGridTrack::auto(2);
     let ch = content
         .into_iter()
         .flat_map(|(name, url, credit)| {
@@ -100,8 +100,8 @@ fn grid(content: Vec<(&'static str, Option<&'static str>, &'static str)>) -> imp
         #Grid
         Node {
             display: Display::Grid,
-            row_gap: px(10),
-            column_gap: px(30),
+            row_gap: texels(4),
+            column_gap: texels(12),
             grid_template_columns: cols,
         }
 
@@ -109,24 +109,19 @@ fn grid(content: Vec<(&'static str, Option<&'static str>, &'static str)>) -> imp
     }
 }
 
-/// Footer pinned to the bottom of the menu.
 fn made_with_bevy(logo: Handle<Image>) -> impl Scene {
     bsn! {
         #MadeWithBevy
         Node {
-            position_type: PositionType::Absolute,
-            bottom: px(10),
-            width: percent(100),
             align_items: AlignItems::Center,
-            justify_content: JustifyContent::Center,
-            column_gap: px(12),
+            column_gap: texels(6),
         }
         Children [
             // Logo
             ImageNode { image: logo }
             Node {
-                width: px(32),
-                height: px(32),
+                width: texels(16),
+                height: texels(16),
             }
             --
             @widget::label("Made with")
