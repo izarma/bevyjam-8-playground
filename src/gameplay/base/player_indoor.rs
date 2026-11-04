@@ -5,7 +5,7 @@ use bevy_enhanced_input::prelude::*;
 use pixel_art::PixelSprite;
 
 use crate::{
-    GameplayScene, PausableSystems, Pause,
+    GameplayScene, InControl, PausableSystems,
     camera::SceneCamera,
     gameplay::{
         Player, PlayerAnimation,
@@ -31,7 +31,7 @@ struct IndoorPlayerSprite;
 pub(super) fn plugin(app: &mut App) {
     app.add_observer(spawn_player_base)
         .add_input_context::<IndoorPlayer>()
-        .sync_context_to_state::<IndoorPlayer, Pause>()
+        .sync_context_to_state::<IndoorPlayer, InControl>()
         .add_systems(
             Update,
             (
@@ -102,7 +102,7 @@ fn spawn_player_base(
             Transform::from_translation(spawn)
             collider
             controller
-            ~ActiveInStates::<IndoorPlayer, Pause>::single(Pause(false))
+            ~ActiveInStates::<IndoorPlayer, InControl>::single(InControl)
             DespawnOnExit::<GameplayScene>(GameplayScene::Base)
         })
         .insert(children![(

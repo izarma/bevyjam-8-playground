@@ -33,8 +33,6 @@ pub enum Menu {
     Pause,
     GameOver,
     Inventory,
-    // right now theres only one minigame, idk if others need addtl states
-    Minigame,
 }
 
 pub(super) fn open_main_menu(mut next_menu: ResMut<NextState<Menu>>) {

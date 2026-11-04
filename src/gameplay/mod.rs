@@ -1,5 +1,6 @@
 mod animation;
 mod base;
+pub(crate) mod clock;
 pub(crate) mod herbs;
 pub(crate) mod inventory;
 mod outdoors;
@@ -15,6 +16,7 @@ pub(super) fn plugin(app: &mut App) {
         pixel_art::PixelArtPlugin,
         animation::plugin,
         base::plugin,
+        clock::plugin,
         inventory::plugin,
         outdoors::plugin,
     ));
