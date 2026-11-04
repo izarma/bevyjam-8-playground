@@ -14,6 +14,8 @@
 
 - **Dungeon tileset**: [Dungeon Tileset](https://opengameart.org/content/dungeon-tileset-1) by Calciumtrice, usable under [Creative Commons Attribution 3.0](https://creativecommons.org/licenses/by/3.0/) license.
 
+- **Input prompts (`ui/input_prompts.png`)**: [Input Prompts Pixel 16×](https://kenney.nl/assets/input-prompts-pixel-16) by [Kenney](https://www.kenney.nl/), [CC0](https://creativecommons.org/publicdomain/zero/1.0/). The packed tilemap, unmodified.
+
 - **Grass and dirt textures (16 px)**: [16x16 Grass Textures](https://opengameart.org/content/16x16-grass-textures) by [SpringySpringo](https://opengameart.org/users/springyspringo), [CC-BY 4.0](https://creativecommons.org/licenses/by/4.0/) or [CC0](https://creativecommons.org/publicdomain/zero/1.0/).
 
 - **Font (`fonts/BoldPixels.ttf`)**: [BoldPixels](https://yukipixels.itch.io/boldpixels) by [YukiPixels](https://yukipixels.itch.io/), [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/). Unmodified.

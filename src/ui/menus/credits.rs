@@ -1,19 +1,14 @@
-use bevy::{input::common_conditions::input_just_pressed, prelude::*};
+use bevy::prelude::*;
 
 use crate::{
     loading::UIAssets,
     ui::{menus::Menu, scale::texels, widget},
 };
 
-use super::{open_main_menu, open_main_menu_on_click};
+use super::open_main_menu_on_click;
 
 pub(super) fn plugin(app: &mut App) {
     app.add_systems(OnEnter(Menu::Credits), spawn_credits_menu);
-    app.add_systems(
-        Update,
-        open_main_menu
-            .run_if(in_state(Menu::Credits).and_then(input_just_pressed(KeyCode::Escape))),
-    );
 }
 
 fn spawn_credits_menu(mut commands: Commands, textures: Res<UIAssets>) {
