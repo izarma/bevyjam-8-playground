@@ -1,18 +1,19 @@
+use avian3d::prelude::LinearVelocity;
 use bevy::prelude::*;
 use bevy_ahoy::prelude::*;
 use bevy_enhanced_input::prelude::*;
+use pixel_art::PixelSprite;
 
 use crate::{
     GameplayScene, PausableSystems, Pause,
     camera::SceneCamera,
     gameplay::{
+        Player, PlayerAnimation,
+        animation::PlayerAnimationSystems,
         base::{BODY_HEIGHT, indoor_body},
-        player::Player,
     },
-    loading::NPCAssets,
+    loading::{PLAYER_FRAME, PlayerAssets},
 };
-
-use super::anim::indoor_visual_bundle;
 
 const WALK_SPEED: f32 = 5.0;
 
@@ -23,13 +24,21 @@ pub struct IndoorPlayerSpawn;
 #[derive(Component, Clone, Default)]
 struct IndoorPlayer;
 
+/// Marker for the indoor player's sprite child
+#[derive(Component)]
+struct IndoorPlayerSprite;
+
 pub(super) fn plugin(app: &mut App) {
     app.add_observer(spawn_player_base)
         .add_input_context::<IndoorPlayer>()
         .sync_context_to_state::<IndoorPlayer, Pause>()
         .add_systems(
             Update,
-            (sync_camera_x, exit_to_outdoors)
+            (
+                sync_camera_x,
+                exit_to_outdoors,
+                update_player_animation.in_set(PlayerAnimationSystems::UpdateState),
+            )
                 .in_set(PausableSystems)
                 .run_if(in_state(GameplayScene::Base)),
         );
@@ -70,15 +79,20 @@ fn spawn_player_base(
     spawn: On<Insert<IndoorPlayerSpawn>>,
     mut commands: Commands,
     transforms: Query<&GlobalTransform>,
-    assets: Res<NPCAssets>,
-    mut texture_atlas_layouts: ResMut<Assets<TextureAtlasLayout>>,
+    player_assets: Res<PlayerAssets>,
 ) {
     let Ok(feet) = transforms.get(spawn.entity) else {
         return;
     };
     let spawn = feet.translation() + Vec3::Y * BODY_HEIGHT / 2.0;
 
-    let (animation, sprite, sprite3d) = indoor_visual_bundle(&assets, &mut texture_atlas_layouts);
+    let animation = PlayerAnimation::default();
+    let sprite = PixelSprite {
+        image: player_assets.player_sheet.clone(),
+        size: Some(PLAYER_FRAME),
+        cell: animation.frame_index() as u32,
+        ..default()
+    };
     let (collider, controller) = indoor_body(WALK_SPEED);
 
     commands
@@ -92,10 +106,10 @@ fn spawn_player_base(
             DespawnOnExit::<GameplayScene>(GameplayScene::Base)
         })
         .insert(children![(
-            Transform::IDENTITY,
+            IndoorPlayerSprite,
+            Transform::from_xyz(0.0, -BODY_HEIGHT / 2.0, 0.0),
             animation,
             sprite,
-            sprite3d,
         )])
         .queue_spawn_related_scenes::<Actions<IndoorPlayer>>(bsn_list! {
             Action::<Movement>::new()
@@ -106,4 +120,13 @@ fn spawn_player_base(
                 {preset::axial::left_stick()}
             ]
         });
+}
+
+fn update_player_animation(
+    camera: Single<&Transform, SceneCamera>,
+    player: Single<(&LinearVelocity, &CharacterControllerState), With<IndoorPlayer>>,
+    mut animation: Single<&mut PlayerAnimation, With<IndoorPlayerSprite>>,
+) {
+    let (velocity, state) = *player;
+    animation.update(**velocity, camera.rotation, state.grounded.is_some());
 }

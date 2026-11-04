@@ -13,13 +13,12 @@ use pixel_art::PixelSprite;
 use crate::{
     GameplayScene, PausableSystems, Pause,
     camera::{CameraSensitivity, SceneCamera, face_camera},
-    gameplay::{PlayerAnimation, player::Player, tick_player_animation},
+    gameplay::{Player, PlayerAnimation, animation::PlayerAnimationSystems},
     loading::{PLAYER_FRAME, PlayerAssets},
     ui::menus::Menu,
 };
 
-const WALK_SPEED: f32 = 4.0;
-const RUN_SPEED: f32 = 7.0;
+const WALK_SPEED: f32 = 7.0;
 // body sized to the sprite: a 32 texel frame is 2 m at 16 texels per meter
 const CAPSULE_RADIUS: f32 = 0.5;
 const CAPSULE_HEIGHT: f32 = 2.0;
@@ -42,7 +41,7 @@ pub(super) fn plugin(app: &mut App) {
         )
         .add_systems(
             RunFixedMainLoop,
-            (rotate_camera, apply_look, apply_run)
+            (rotate_camera, apply_look)
                 .chain()
                 .in_set(PausableSystems)
                 .in_set(RunFixedMainLoopSystems::BeforeFixedMainLoop)
@@ -52,11 +51,8 @@ pub(super) fn plugin(app: &mut App) {
             Update,
             (
                 follow_player.before(face_camera),
-                tick_player_animation,
-                update_animation,
-                apply_animation,
+                update_animation.in_set(PlayerAnimationSystems::UpdateState),
             )
-                .chain()
                 .in_set(PausableSystems)
                 .run_if(in_state(GameplayScene::Outdoors)),
         );
@@ -71,10 +67,6 @@ struct ExamplePlayer;
 
 #[derive(Component)]
 struct ExamplePlayerSprite;
-
-#[derive(Debug, InputAction)]
-#[action_output(bool)]
-struct Run;
 
 #[derive(Debug, InputAction)]
 #[action_output(bool)]
@@ -146,15 +138,6 @@ fn spawn_player(
                 Binding(GamepadButton::South)
             ]
             --
-            Action::<Run>::new()
-            Bindings [
-                Binding(KeyCode::ShiftLeft)
-                --
-                Binding(KeyCode::ShiftRight)
-                --
-                Binding(GamepadButton::LeftThumb)
-            ]
-            --
             Action::<Harvest>::new()
             Bindings [
                 Binding(KeyCode::KeyF)
@@ -189,13 +172,6 @@ fn apply_look(
     look.yaw = yaw;
 }
 
-fn apply_run(
-    run: Single<&Action<Run>>,
-    mut controller: Single<&mut CharacterController, With<ExamplePlayer>>,
-) {
-    controller.speed = if ***run { RUN_SPEED } else { WALK_SPEED };
-}
-
 fn follow_player(
     player: Single<&Transform, (With<ExamplePlayer>, Without<Camera3d>)>,
     mut camera: Single<&mut Transform, SceneCamera>,
@@ -206,17 +182,11 @@ fn follow_player(
 
 fn update_animation(
     camera: Single<&Transform, SceneCamera>,
-    run: Single<&Action<Run>>,
     player: Single<(&LinearVelocity, &CharacterControllerState), With<ExamplePlayer>>,
     mut animation: Single<&mut PlayerAnimation, With<ExamplePlayerSprite>>,
 ) {
     let (velocity, state) = *player;
-    animation.update(
-        **velocity,
-        camera.rotation,
-        ***run,
-        state.grounded.is_some(),
-    );
+    animation.update(**velocity, camera.rotation, state.grounded.is_some());
 }
 
 fn set_cursor_locked<const LOCKED: bool>(
@@ -228,16 +198,4 @@ fn set_cursor_locked<const LOCKED: bool>(
         CursorGrabMode::None
     };
     cursor.visible = !LOCKED;
-}
-
-fn apply_animation(mut sprites: Query<(&PlayerAnimation, &mut PixelSprite)>) {
-    for (animation, mut sprite) in &mut sprites {
-        let cell = animation.frame_index() as u32;
-        let flip_x = animation.flipped();
-
-        if sprite.cell != cell || sprite.flip_x != flip_x {
-            sprite.cell = cell;
-            sprite.flip_x = flip_x;
-        }
-    }
 }

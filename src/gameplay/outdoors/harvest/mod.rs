@@ -6,7 +6,7 @@ use plants::Growing;
 use super::player::Harvest;
 use crate::{
     GameplayScene, Pause,
-    gameplay::{inventory::Inventory, player::Player},
+    gameplay::{Player, inventory::Inventory},
     ui::menus::Menu,
 };
 

@@ -49,7 +49,7 @@ fn spawn_npcs(
         &assets,
         &mut texture_atlas_layouts,
         &mut commands,
-        Vec3::new(1.0, 1.0, 0.0),
+        Vec3::new(1.0, 2.0, 0.0),
         points,
     );
 }
