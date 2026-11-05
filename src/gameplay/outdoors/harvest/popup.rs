@@ -2,11 +2,10 @@
 use bevy::prelude::*;
 use plants::Plant;
 
-use super::billboard::Billboards;
 use crate::{
     GameplayScene, PausableSystems,
     gameplay::herbs,
-    ui::{font, scale::TEXEL},
+    ui::{billboard::Billboards, font, scale::TEXEL},
 };
 
 const CANVAS: UVec2 = UVec2::new(128, 16);
@@ -50,6 +49,7 @@ pub(super) fn spawn(billboards: &mut Billboards, at: Vec3, plant: Plant) {
                     Pickable::IGNORE
                 ]
             },
+            GameplayScene::Outdoors,
         )
         .insert((
             Name::new("Popup"),

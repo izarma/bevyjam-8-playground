@@ -3,13 +3,22 @@ use bevy_enhanced_input::prelude::*;
 use bevy_yarnspinner::prelude::DialogueRunner;
 
 use super::{
+    BODY_HEIGHT,
     anim::IndoorCharAnimation,
     npc::{InDialogue, Npc},
     player_indoor::Touch,
 };
 use crate::{
-    GameplayScene, PausableSystems,
+    GameplayScene, InControl, PausableSystems,
     gameplay::{Player, PlayerAnimation, PlayerAnimationSystems},
+    ui::{
+        billboard::Billboards,
+        font,
+        input_prompt::{KEY_F, prompt},
+        palette::LABEL_TEXT,
+        scale::texels,
+        widget,
+    },
 };
 
 const REACH: f32 = 2.0;
@@ -23,17 +32,24 @@ pub(super) fn plugin(app: &mut App) {
     )
     .add_systems(
         Update,
-        face_each_other
+        show_talk_prompt
+            .after(find_npc_in_reach)
+            .run_if(in_state(GameplayScene::Base)),
+    )
+    .add_systems(
+        Update,
+        face_in_reach
             .before(PlayerAnimationSystems::UpdateState)
             .in_set(PausableSystems)
             .run_if(in_state(GameplayScene::Base)),
     )
-    .add_observer(start_interaction);
+    .add_observer(start_interaction)
+    .add_observer(face_npc);
 }
 
 /// The nearest NPC the player can currently interact with.
 #[derive(Component)]
-struct InReach;
+pub(super) struct InReach;
 
 fn find_npc_in_reach(
     mut commands: Commands,
@@ -55,6 +71,87 @@ fn find_npc_in_reach(
         } else if !in_reach && Some(npc) == nearest {
             commands.entity(npc).insert(InReach);
         }
+    }
+}
+
+/// World-space "Talk" prompt floating over the nearest interactable NPC.
+#[derive(Component)]
+struct TalkPrompt {
+    npc: Entity,
+}
+
+const TALK_CANVAS: UVec2 = UVec2::new(64, 26);
+
+fn show_talk_prompt(
+    mut commands: Commands,
+    in_reach: Option<Single<Entity, With<InReach>>>,
+    in_control: Option<Res<State<InControl>>>,
+    runners: Query<&DialogueRunner>,
+    prompts: Query<(Entity, &TalkPrompt)>,
+    npcs: Query<&GlobalTransform, With<Npc>>,
+    mut billboards: Billboards,
+) {
+    // hidden while a menu is up or a dialogue is running
+    let talking = runners.iter().any(|runner| runner.is_running());
+    let target = in_reach
+        .map(|npc| *npc)
+        .filter(|_| in_control.is_some() && !talking);
+    for (prompt, shown) in &prompts {
+        if Some(shown.npc) != target {
+            commands.entity(prompt).despawn();
+        }
+    }
+    let Some(npc) = target else {
+        return;
+    };
+    if prompts.iter().any(|(_, shown)| shown.npc == npc) {
+        return;
+    }
+    let Ok(at) = npcs.get(npc) else {
+        return;
+    };
+    let above = at.translation() + Vec3::Y * (BODY_HEIGHT / 2.5);
+    billboards
+        .spawn(TALK_CANVAS, above, talk_panel(), GameplayScene::Base)
+        .insert((Name::new("Talk Prompt"), TalkPrompt { npc }));
+}
+
+fn talk_panel() -> impl Scene {
+    bsn! {
+        #TalkCanvas
+        Node {
+            width: percent(100),
+            height: percent(100),
+            justify_content: JustifyContent::Center,
+        }
+        Pickable::IGNORE
+        Children [
+            Node {
+                align_items: AlignItems::Center,
+            }
+            Children [
+                Node {
+                    padding: UiRect::all(texels(5)),
+                }
+                @widget::panel()
+                Pickable::IGNORE
+                Children [
+                    Text("Talk")
+                    @font::text(1)
+                    TextColor(LABEL_TEXT)
+                    Pickable::IGNORE
+                ]
+                --
+                Node {
+                    position_type: PositionType::Absolute,
+                    left: percent(100),
+                    top: texels(5),
+                    margin: UiRect::left(texels(2)),
+                }
+                --
+                @prompt(KEY_F)
+            ]
+        ]
     }
 }
 
@@ -95,25 +192,40 @@ fn start_interaction(
     }
 }
 
-/// Turns the player and the in-dialogue NPC toward each other once, on the
-/// frame the dialogue starts, so their sprites read as facing one another.
-fn face_each_other(
-    runners: Query<&DialogueRunner>,
-    player: Query<&GlobalTransform, With<Player>>,
-    npcs: Query<(&GlobalTransform, &Children), With<InDialogue>>,
-    mut player_animations: Query<&mut PlayerAnimation>,
+/// Turns an NPC with an active talk prompt toward the player, so it reads as
+/// facing the player before and throughout the dialogue.
+fn face_in_reach(
+    player: Option<Single<&GlobalTransform, With<Player>>>,
+    npcs: Query<(&GlobalTransform, &Children), With<InReach>>,
     mut npc_animations: Query<&mut IndoorCharAnimation>,
-    mut applied: Local<bool>,
 ) {
-    let running = runners.iter().any(|runner| runner.is_running());
-    if !running || *applied {
-        *applied = running;
+    let Some(player) = player else {
         return;
+    };
+    let player_pos = Vec2::new(player.translation().x, player.translation().z);
+    for (npc, children) in &npcs {
+        let npc_pos = Vec2::new(npc.translation().x, npc.translation().z);
+        let to_player = player_pos - npc_pos;
+        for child in children {
+            if let Ok(mut animation) = npc_animations.get_mut(*child) {
+                animation.face_towards(to_player);
+            }
+        }
     }
+}
+
+/// Turns the player toward the in-dialogue NPC once, on the frame the
+/// dialogue starts.
+fn face_npc(
+    _: On<Add<InDialogue>>,
+    player: Query<&GlobalTransform, With<Player>>,
+    npcs: Query<&GlobalTransform, With<InDialogue>>,
+    mut player_animations: Query<&mut PlayerAnimation>,
+) {
     let Ok(player) = player.single() else {
         return;
     };
-    let Some((npc, children)) = npcs.iter().next() else {
+    let Some(npc) = npcs.iter().next() else {
         return;
     };
 
@@ -123,12 +235,4 @@ fn face_each_other(
     if let Ok(mut animation) = player_animations.single_mut() {
         animation.face_towards(npc_pos - player_pos);
     }
-
-    let to_player = player_pos - npc_pos;
-    for child in children {
-        if let Ok(mut animation) = npc_animations.get_mut(*child) {
-            animation.face_towards(to_player);
-        }
-    }
-    *applied = true;
 }

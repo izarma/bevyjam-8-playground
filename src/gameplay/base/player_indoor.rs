@@ -77,11 +77,17 @@ fn sync_camera_x(
 
 fn exit_to_outdoors(
     player: Query<&Transform, With<IndoorPlayer>>,
+    runners: Query<&DialogueRunner>,
     mut next_scene: ResMut<NextState<GameplayScene>>,
 ) {
     let Ok(player) = player.single() else {
         return;
     };
+    // Don't leave the base mid-conversation; movement is frozen, but the exit
+    // check should also be explicit rather than relying on that side effect.
+    if runners.iter().any(|runner| runner.is_running()) {
+        return;
+    }
     if player.translation.x >= EXIT_X {
         next_scene.set(GameplayScene::Outdoors);
     }

@@ -7,10 +7,9 @@ use super::player::Harvest;
 use crate::{
     GameplayScene, Harvesting,
     gameplay::{Player, clock::Clock, inventory::Inventory},
+    ui::billboard::Billboards,
 };
 
-mod billboard;
-use billboard::Billboards;
 mod popup;
 mod wipe;
 mod yields;
@@ -21,24 +20,19 @@ const OVERLAY_ALPHA: f32 = 0.6;
 const HOURS_PER_HARVEST: f32 = 2.0;
 
 pub(super) fn plugin(app: &mut App) {
-    app.add_plugins((
-        billboard::plugin,
-        popup::plugin,
-        wipe::plugin,
-        yields::plugin,
-    ))
-    .add_systems(
-        Update,
-        find_in_reach.run_if(in_state(GameplayScene::Outdoors)),
-    )
-    .add_observer(start_harvest)
-    .add_observer(collect)
-    .add_systems(
-        Update,
-        bank_progress.run_if(in_state(GameplayScene::Outdoors)),
-    )
-    .add_systems(OnExit(Harvesting(true)), close_overlays)
-    .add_systems(Update, fade_overlay);
+    app.add_plugins((popup::plugin, wipe::plugin, yields::plugin))
+        .add_systems(
+            Update,
+            find_in_reach.run_if(in_state(GameplayScene::Outdoors)),
+        )
+        .add_observer(start_harvest)
+        .add_observer(collect)
+        .add_systems(
+            Update,
+            bank_progress.run_if(in_state(GameplayScene::Outdoors)),
+        )
+        .add_systems(OnExit(Harvesting(true)), close_overlays)
+        .add_systems(Update, fade_overlay);
 }
 
 // the nearest plant you can harvest

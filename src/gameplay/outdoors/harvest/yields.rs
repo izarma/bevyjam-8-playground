@@ -3,11 +3,12 @@ use bevy::prelude::*;
 use pixel_art::PixelSprite;
 use plants::{Growing, Plant};
 
-use super::{InReach, billboard::Billboards};
+use super::InReach;
 use crate::{
     GameplayScene, InControl,
     gameplay::herbs,
     ui::{
+        billboard::Billboards,
         input_prompt::{KEY_F, prompt},
         scale::texels,
     },
@@ -59,7 +60,7 @@ fn show_panel(
         return;
     };
     billboards
-        .spawn(CANVAS, above, panel(*kind))
+        .spawn(CANVAS, above, panel(*kind), GameplayScene::Outdoors)
         .insert((Name::new("Yield Panel"), YieldPanel { plant }));
 }
 

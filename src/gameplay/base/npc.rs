@@ -4,7 +4,7 @@ use bevy_yarnspinner::prelude::DialogueRunner;
 
 use crate::{GameplayScene, PausableSystems, gameplay::base::indoor_body, loading::NPCAssets};
 
-use super::anim::indoor_visual_bundle;
+use super::{anim::indoor_visual_bundle, interact::InReach};
 
 const NPC_SPEED: f32 = 4.0;
 
@@ -49,20 +49,27 @@ fn spawn_npcs(
     mut texture_atlas_layouts: ResMut<Assets<TextureAtlasLayout>>,
     mut commands: Commands,
 ) {
-    let points = vec![
+    let base_points = [
         Vec2::new(1.0, 1.0),
         Vec2::new(2.0, 1.0),
         Vec2::new(2.0, 0.0),
         Vec2::new(1.0, 0.0),
     ];
 
-    spawn_npc(
-        &assets,
-        &mut texture_atlas_layouts,
-        &mut commands,
-        Vec3::new(1.0, 2.0, 0.0),
-        points,
-    );
+    for x_shift in [0.0, 2.0, 4.0, 8.0, 16.0] {
+        let points = base_points
+            .iter()
+            .map(|p| Vec2::new(p.x + x_shift, p.y))
+            .collect();
+
+        spawn_npc(
+            &assets,
+            &mut texture_atlas_layouts,
+            &mut commands,
+            Vec3::new(1.0 + x_shift, 2.0, 0.0),
+            points,
+        );
+    }
 }
 
 fn spawn_npc(
@@ -97,17 +104,19 @@ fn spawn_npc(
 }
 
 /// Steers each NPC toward its current waypoint by writing Ahoy's
-/// `AccumulatedInput::last_movement`. NPCs in a dialogue stand still.
+/// `AccumulatedInput::last_movement`. NPCs stand still while their talk
+/// prompt is shown and throughout a dialogue.
 fn steer_npcs(
     mut npcs: Query<(
         &Transform,
         &mut NpcWaypoints,
         &mut AccumulatedInput,
+        Has<InReach>,
         Has<InDialogue>,
     )>,
 ) {
-    for (transform, mut waypoints, mut input, in_dialogue) in &mut npcs {
-        if in_dialogue {
+    for (transform, mut waypoints, mut input, in_reach, in_dialogue) in &mut npcs {
+        if in_reach || in_dialogue {
             input.last_movement = None;
             continue;
         }
