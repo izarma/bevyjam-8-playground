@@ -20,7 +20,6 @@ use crate::{
     },
 };
 
-/// Maximum XZ distance at which the "Talk" prompt appears.
 const REACH: f32 = 2.0;
 
 pub(super) fn plugin(app: &mut App) {

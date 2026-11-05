@@ -62,9 +62,6 @@ impl Default for OptionButton {
 #[derive(Resource, Default)]
 pub(super) struct PresentedOptions(Vec<DialogueOption>);
 
-/// Reveals the current line grapheme-by-grapheme. Its lifetime mirrors the
-/// dialogue UI: initialized on [`DialogueStarted`] and removed on
-/// [`DialogueCompleted`].
 #[derive(Resource)]
 pub(super) struct Typewriter {
     current_text: String,
@@ -229,8 +226,6 @@ fn present_line(
     **indicator = Visibility::Hidden;
 }
 
-/// Reveals graphemes over time and shows the continue indicator once the line
-/// has fully appeared.
 fn write_text(
     mut typewriter: ResMut<Typewriter>,
     mut line: Single<&mut Text, With<DialogueTextNode>>,
@@ -337,8 +332,6 @@ fn continue_dialogue(
         typewriter.fast_forward();
         return;
     }
-    // When the last line before a choice finishes typing, present the options
-    // automatically instead of waiting for the player to press a key first.
     let auto_advance =
         typewriter.last_before_options && typewriter.is_finished() && presented_options.is_none();
     if !advance && !auto_advance {
