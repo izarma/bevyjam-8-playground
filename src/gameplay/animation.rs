@@ -11,13 +11,13 @@ pub(crate) const FRAME_INTERVAL: Duration = Duration::from_millis(250);
 /// Squared horizontal speed below which the character counts as idle: (0.1 m/s)².
 pub(crate) const MOVING_SPEED_SQ: f32 = 0.01;
 
-/// Ordered sets of the player-animation pipeline, shared by every scene.
+/// Ordered sets of the character-animation pipeline, shared by every scene.
 #[derive(SystemSet, Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub(crate) enum PlayerAnimationSystems {
     Tick,
-    /// Update animation state from the player's movement.
+    /// Update animation state from the character's movement.
     UpdateState,
-    /// Write the current frame to the player sprites.
+    /// Write the current frame to the character sprites.
     Apply,
 }
 
@@ -205,6 +205,13 @@ impl PlayerAnimation {
         if self.state != previous_state {
             self.frame = 0;
             self.timer.reset();
+        }
+    }
+
+    /// Point the sprite toward a world-space direction (XZ plane).
+    pub(crate) fn face_towards(&mut self, direction: Vec2) {
+        if direction.length_squared() > 0.0 {
+            self.heading = direction.normalize();
         }
     }
 }

@@ -1,0 +1,54 @@
+title: Monk
+---
+Aruna: How are u today monk from rival school?
+Monk: I'm dying.
+-> Some cool option
+-> Some other cool option
+Now we'll jump to another node!
+<<jump AnotherNode>>
+===
+
+title: Woman
+---
+Woman: buhh
+===
+
+title: OldMan
+---
+Old Man: I have explosive diarrhea
+===
+
+title: OldWoman
+---
+Old Woman: me got space herpes
+===
+
+title: Kid
+---
+Kid: i shit my pants
+Aruna: So did I!
+Kid: Twinnnnn
+Aruna: Twinnnnn
+===
+title: AnotherNode
+---
+Now, a character will talk. Notice how the upper left corner of the dialogue will show their name.
+Let's set a condition. Do you prefer dogs or cats?
+-> Dogs
+    <<set $animal = "dog">>
+-> Cats
+    <<set $animal = "cats">>
+-> Turtles
+    I, uuuh... okay, why not.
+    <<set $animal = "turtles">>
+Now let's print the result of the condition. Your preference is...
+(Drum roll)
+<<if $animal == "dog">>
+Dogs! Arf Arf!
+<<elseif $animal == "cats">>
+Cats! (Can't say I agree, but you do you)
+<<else>>
+Turtles! Solid choice.
+<<endif>>
+Et voilà! That was all. Thanks for checking out Yarn Spinner for Rust! Continuing
+===

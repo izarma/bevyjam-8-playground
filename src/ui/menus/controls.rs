@@ -2,7 +2,7 @@
 use bevy::prelude::*;
 use bevy_enhanced_input::prelude::*;
 
-use crate::{GameState, Pause, ui::menus::Menu};
+use crate::{GameState, Harvesting, Pause, ui::menus::Menu};
 
 use super::pause::open_pause_menu;
 
@@ -49,9 +49,12 @@ fn back(
     mut commands: Commands,
     menu: Res<State<Menu>>,
     screen: Res<State<GameState>>,
+    harvesting: Option<Res<State<Harvesting>>>,
 ) {
     let in_game = *screen.get() == GameState::Gameplay;
+    let harvesting = harvesting.is_some_and(|harvesting| harvesting.0);
     match menu.get() {
+        Menu::None if harvesting => commands.set_state(Harvesting(false)),
         Menu::None if in_game => open_pause_menu(&mut commands),
         Menu::Pause | Menu::Inventory => commands.set_state(Menu::None),
         Menu::Settings if in_game => commands.set_state(Menu::Pause),
@@ -80,9 +83,11 @@ fn toggle_inventory(
     mut commands: Commands,
     menu: Res<State<Menu>>,
     screen: Res<State<GameState>>,
+    harvesting: Option<Res<State<Harvesting>>>,
 ) {
+    let harvesting = harvesting.is_some_and(|harvesting| harvesting.0);
     match menu.get() {
-        Menu::None if *screen.get() == GameState::Gameplay => {
+        Menu::None if *screen.get() == GameState::Gameplay && !harvesting => {
             commands.set_state(Pause(true));
             commands.set_state(Menu::Inventory);
         }

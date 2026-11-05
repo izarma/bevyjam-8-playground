@@ -5,13 +5,11 @@ use plants::Growing;
 
 use super::player::Harvest;
 use crate::{
-    GameplayScene, Pause,
-    gameplay::{Player, inventory::Inventory},
-    ui::menus::Menu,
+    GameplayScene, Harvesting,
+    gameplay::{Player, clock::Clock, inventory::Inventory},
+    ui::billboard::Billboards,
 };
 
-mod billboard;
-use billboard::Billboards;
 mod popup;
 mod wipe;
 mod yields;
@@ -19,22 +17,22 @@ mod yields;
 const REACH: f32 = 1.5;
 const FADE_SECONDS: f32 = 0.3;
 const OVERLAY_ALPHA: f32 = 0.6;
+const HOURS_PER_HARVEST: f32 = 2.0;
 
 pub(super) fn plugin(app: &mut App) {
-    app.add_plugins((
-        billboard::plugin,
-        popup::plugin,
-        wipe::plugin,
-        yields::plugin,
-    ))
-    .add_systems(
-        Update,
-        find_in_reach.run_if(in_state(GameplayScene::Outdoors)),
-    )
-    .add_observer(start_harvest)
-    .add_observer(collect)
-    .add_systems(OnExit(Menu::Minigame), close_overlays)
-    .add_systems(Update, fade_overlay);
+    app.add_plugins((popup::plugin, wipe::plugin, yields::plugin))
+        .add_systems(
+            Update,
+            find_in_reach.run_if(in_state(GameplayScene::Outdoors)),
+        )
+        .add_observer(start_harvest)
+        .add_observer(collect)
+        .add_systems(
+            Update,
+            bank_progress.run_if(in_state(GameplayScene::Outdoors)),
+        )
+        .add_systems(OnExit(Harvesting(true)), close_overlays)
+        .add_systems(Update, fade_overlay);
 }
 
 // the nearest plant you can harvest
@@ -48,6 +46,13 @@ struct Won {
 
 #[derive(Component)]
 struct Fades(Color);
+
+#[derive(Component, Default)]
+struct Progress {
+    done: f32,
+    // we dont apply all progress immediately, letting us smooth it
+    banked: f32,
+}
 
 #[derive(Component)]
 struct Overlay {
@@ -85,8 +90,6 @@ fn start_harvest(
     mut commands: Commands,
     plants: Query<(Entity, &PixelSprite), With<InReach>>,
     images: Res<Assets<Image>>,
-    mut next_pause: ResMut<NextState<Pause>>,
-    mut next_menu: ResMut<NextState<Menu>>,
 ) {
     let Some((plant, sprite)) = plants.iter().next() else {
         return;
@@ -109,7 +112,7 @@ fn start_harvest(
                 ..default()
             },
             BackgroundColor(Color::NONE),
-            GlobalZIndex(2),
+            Progress::default(),
             DespawnOnExit(GameplayScene::Outdoors),
         ))
         .id();
@@ -118,8 +121,7 @@ fn start_harvest(
         commands.entity(overlay).despawn();
         return;
     }
-    next_pause.set(Pause(true));
-    next_menu.set(Menu::Minigame);
+    commands.set_state(Harvesting(true));
 }
 
 fn collect(
@@ -128,10 +130,9 @@ fn collect(
     overlays: Query<&Overlay>,
     plants: Query<(&Growing, &GlobalTransform, &PixelSprite)>,
     mut inventory: Single<&mut Inventory>,
-    mut next_menu: ResMut<NextState<Menu>>,
     mut billboards: Billboards,
 ) {
-    next_menu.set(Menu::None);
+    commands.set_state(Harvesting(false));
     let Ok(overlay) = overlays.get(won.entity) else {
         return;
     };
@@ -151,6 +152,16 @@ fn collect(
 fn close_overlays(mut overlays: Query<&mut Overlay>) {
     for mut overlay in &mut overlays {
         overlay.closing = true;
+    }
+}
+
+fn bank_progress(mut minigames: Query<&mut Progress>, mut clock: Single<&mut Clock>) {
+    for mut progress in &mut minigames {
+        let fresh = progress.done - progress.banked;
+        if fresh > 0.0 {
+            progress.banked = progress.done;
+            clock.bank += fresh * HOURS_PER_HARVEST;
+        }
     }
 }
 

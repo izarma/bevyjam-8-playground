@@ -1,14 +1,15 @@
 use avian3d::prelude::LinearVelocity;
 use bevy::prelude::*;
-use bevy_ahoy::prelude::*;
+use bevy_ahoy::{input::AccumulatedInput, prelude::*};
 use bevy_enhanced_input::prelude::*;
+use bevy_yarnspinner::prelude::DialogueRunner;
 use pixel_art::PixelSprite;
 
 use crate::{
-    GameplayScene, PausableSystems, Pause,
+    GameplayScene, InControl, PausableSystems,
     camera::SceneCamera,
     gameplay::{
-        Player, PlayerAnimation,
+        CharacterName, Player, PlayerAnimation, SpeakerSprite,
         animation::PlayerAnimationSystems,
         base::{BODY_HEIGHT, indoor_body},
     },
@@ -24,14 +25,19 @@ pub struct IndoorPlayerSpawn;
 #[derive(Component, Clone, Default)]
 struct IndoorPlayer;
 
-/// Marker for the indoor player's sprite child
+/// Marker for the indoor player's sprite child.
 #[derive(Component)]
+#[require(SpeakerSprite)]
 struct IndoorPlayerSprite;
+
+#[derive(Debug, InputAction)]
+#[action_output(bool)]
+pub(super) struct Touch;
 
 pub(super) fn plugin(app: &mut App) {
     app.add_observer(spawn_player_base)
         .add_input_context::<IndoorPlayer>()
-        .sync_context_to_state::<IndoorPlayer, Pause>()
+        .sync_context_to_state::<IndoorPlayer, InControl>()
         .add_systems(
             Update,
             (
@@ -39,6 +45,13 @@ pub(super) fn plugin(app: &mut App) {
                 exit_to_outdoors,
                 update_player_animation.in_set(PlayerAnimationSystems::UpdateState),
             )
+                .in_set(PausableSystems)
+                .run_if(in_state(GameplayScene::Base)),
+        )
+        .add_systems(
+            FixedPostUpdate,
+            stop_player_during_dialogue
+                .before(AhoySystems::MoveCharacters)
                 .in_set(PausableSystems)
                 .run_if(in_state(GameplayScene::Base)),
         );
@@ -65,11 +78,17 @@ fn sync_camera_x(
 
 fn exit_to_outdoors(
     player: Query<&Transform, With<IndoorPlayer>>,
+    runners: Query<&DialogueRunner>,
     mut next_scene: ResMut<NextState<GameplayScene>>,
 ) {
     let Ok(player) = player.single() else {
         return;
     };
+    // Don't leave the base mid-conversation; movement is frozen, but the exit
+    // check should also be explicit rather than relying on that side effect.
+    if runners.iter().any(|runner| runner.is_running()) {
+        return;
+    }
     if player.translation.x >= EXIT_X {
         next_scene.set(GameplayScene::Outdoors);
     }
@@ -102,9 +121,10 @@ fn spawn_player_base(
             Transform::from_translation(spawn)
             collider
             controller
-            ~ActiveInStates::<IndoorPlayer, Pause>::single(Pause(false))
+            ~ActiveInStates::<IndoorPlayer, InControl>::single(InControl)
             DespawnOnExit::<GameplayScene>(GameplayScene::Base)
         })
+        .insert(CharacterName("Aruna"))
         .insert(children![(
             IndoorPlayerSprite,
             Transform::from_xyz(0.0, -BODY_HEIGHT / 2.0, 0.0),
@@ -119,6 +139,13 @@ fn spawn_player_base(
                 --
                 {preset::axial::left_stick()}
             ]
+            --
+            Action::<Touch>::new()
+            Bindings [
+                Binding(KeyCode::KeyF)
+                --
+                Binding(GamepadButton::West)
+            ]
         });
 }
 
@@ -126,7 +153,31 @@ fn update_player_animation(
     camera: Single<&Transform, SceneCamera>,
     player: Single<(&LinearVelocity, &CharacterControllerState), With<IndoorPlayer>>,
     mut animation: Single<&mut PlayerAnimation, With<IndoorPlayerSprite>>,
+    runners: Query<&DialogueRunner>,
 ) {
     let (velocity, state) = *player;
-    animation.update(**velocity, camera.rotation, state.grounded.is_some());
+
+    let velocity = if runners.iter().any(|runner| runner.is_running()) {
+        Vec3::ZERO
+    } else {
+        **velocity
+    };
+    animation.update(velocity, camera.rotation, state.grounded.is_some());
+}
+
+/// Cancels the player's horizontal movement while a dialogue is running so
+/// they can't walk away mid-conversation
+fn stop_player_during_dialogue(
+    mut player: Query<(&mut AccumulatedInput, &mut LinearVelocity), With<IndoorPlayer>>,
+    runners: Query<&DialogueRunner>,
+) {
+    let dialogue_active = runners.iter().any(|runner| runner.is_running());
+    if !dialogue_active {
+        return;
+    }
+    for (mut input, mut velocity) in &mut player {
+        input.last_movement = None;
+        velocity.x = 0.0;
+        velocity.z = 0.0;
+    }
 }

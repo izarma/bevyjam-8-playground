@@ -3,7 +3,9 @@ use bevy::prelude::*;
 use crate::ui::scale::texels;
 
 // cell indices in the spritesheet
+pub(crate) const KEY_ESCAPE: u32 = 17;
 pub(crate) const KEY_F: u32 = 123;
+pub(crate) const KEY_LEFT: u32 = 169;
 pub(crate) const MOUSE: u32 = 76;
 
 const TILE: u32 = 16;

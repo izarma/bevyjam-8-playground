@@ -52,6 +52,22 @@ enum GameResult {
 #[source(GameState = GameState::Gameplay)]
 pub(crate) struct Pause(pub bool);
 
+#[derive(SubStates, Copy, Clone, Eq, PartialEq, Hash, Debug, Default)]
+#[source(GameplayScene = GameplayScene::Outdoors)]
+pub(crate) struct Harvesting(pub bool);
+
+// not harvesting, not paused
+#[derive(Copy, Clone, Eq, PartialEq, Hash, Debug)]
+pub(crate) struct InControl;
+
+impl ComputedStates for InControl {
+    type SourceStates = (Pause, Option<Harvesting>);
+
+    fn compute((pause, harvesting): (Pause, Option<Harvesting>)) -> Option<Self> {
+        (!pause.0 && harvesting != Some(Harvesting(true))).then_some(Self)
+    }
+}
+
 /// A system set for systems that shouldn't run while the game is paused.
 #[derive(SystemSet, Copy, Clone, Eq, PartialEq, Hash, Debug)]
 pub(crate) struct PausableSystems;
@@ -62,6 +78,8 @@ pub fn plugin(app: &mut App) {
     app.init_state::<GameState>();
     app.add_sub_state::<Pause>();
     app.add_sub_state::<GameplayScene>();
+    app.add_sub_state::<Harvesting>();
+    app.add_computed_state::<InControl>();
 
     app.add_plugins((
         loading::plugin,

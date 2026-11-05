@@ -1,11 +1,13 @@
 use bevy::{prelude::*, ui::UiGlobalTransform, window::PrimaryWindow};
 use pixel_art::PixelSprite;
 
-use super::{Fades, Won};
-use crate::ui::{
-    input_prompt::{MOUSE, prompt},
-    menus::Menu,
-    scale::{TEXEL, texels},
+use super::{Fades, Progress, Won};
+use crate::{
+    Harvesting, PausableSystems, Pause,
+    ui::{
+        input_prompt::{KEY_ESCAPE, KEY_LEFT, MOUSE, prompt},
+        scale::{TEXEL, texels},
+    },
 };
 
 // how many ui texels wide each sprite texel is
@@ -16,8 +18,13 @@ const POP: f32 = 80.0;
 const HAND_RADIUS: f32 = 1.5;
 
 pub(super) fn plugin(app: &mut App) {
-    app.add_systems(Update, wipe.run_if(in_state(Menu::Minigame)))
-        .add_systems(Update, fall);
+    app.add_systems(
+        Update,
+        wipe.in_set(PausableSystems)
+            .run_if(in_state(Harvesting(true))),
+    )
+    .add_systems(OnEnter(Pause(true)), forget_cursor)
+    .add_systems(Update, fall);
 }
 
 #[derive(Component)]
@@ -25,6 +32,7 @@ struct Board {
     columns: u32,
     // the collection of still-in-place texels
     stuck: Vec<Option<Entity>>,
+    texels: usize,
     last_cursor: Option<Vec2>,
 }
 
@@ -72,6 +80,23 @@ pub(super) fn spawn(
     commands
         .spawn_scene(prompt(MOUSE))
         .insert((Fades(Color::WHITE), ChildOf(hint)));
+    let back = commands
+        .spawn((
+            Node {
+                position_type: PositionType::Absolute,
+                left: texels(4),
+                bottom: texels(4),
+                column_gap: texels(1),
+                ..default()
+            },
+            ChildOf(overlay),
+        ))
+        .id();
+    for key in [KEY_LEFT, KEY_ESCAPE] {
+        commands
+            .spawn_scene(prompt(key))
+            .insert((Fades(Color::WHITE), ChildOf(back)));
+    }
 
     let mut stuck = vec![None; (size.x * size.y) as usize];
     for y in 0..size.y {
@@ -100,6 +125,7 @@ pub(super) fn spawn(
     }
     commands.entity(board).insert(Board {
         columns: size.x,
+        texels: stuck.iter().flatten().count(),
         stuck,
         last_cursor: None,
     });
@@ -130,6 +156,7 @@ fn wipe(
     mut commands: Commands,
     window: Single<&Window, With<PrimaryWindow>>,
     mut boards: Query<(&mut Board, &ComputedNode, &UiGlobalTransform, &ChildOf)>,
+    mut progress: Query<&mut Progress>,
 ) {
     let cursor = window
         .cursor_position()
@@ -166,11 +193,22 @@ fn wipe(
                 ));
             }
         }
-        if board.stuck.iter().all(Option::is_none) {
+        let left = board.stuck.iter().flatten().count();
+        if let Ok(mut progress) = progress.get_mut(overlay.parent()) {
+            progress.done = 1.0 - left as f32 / board.texels.max(1) as f32;
+        }
+        if left == 0 {
             commands.trigger(Won {
                 entity: overlay.parent(),
             });
         }
+    }
+}
+
+// reset the minigame's view of the cursor between pauses
+fn forget_cursor(mut boards: Query<&mut Board>) {
+    for mut board in &mut boards {
+        board.last_cursor = None;
     }
 }
 

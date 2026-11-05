@@ -11,11 +11,10 @@ use bevy_enhanced_input::prelude::*;
 use pixel_art::PixelSprite;
 
 use crate::{
-    GameplayScene, PausableSystems, Pause,
+    GameplayScene, InControl, PausableSystems,
     camera::{CameraSensitivity, SceneCamera, face_camera},
-    gameplay::{Player, PlayerAnimation, animation::PlayerAnimationSystems},
+    gameplay::{CharacterName, Player, PlayerAnimation, animation::PlayerAnimationSystems},
     loading::{PLAYER_FRAME, PlayerAssets},
-    ui::menus::Menu,
 };
 
 const WALK_SPEED: f32 = 7.0;
@@ -28,23 +27,23 @@ const CAM_LOOK_OFFSET: Vec3 = Vec3::new(0.0, 1.0, 0.0);
 pub(super) fn plugin(app: &mut App) {
     app.add_observer(spawn_player)
         .add_input_context::<ExamplePlayer>()
-        .sync_context_to_state::<ExamplePlayer, Pause>()
+        .sync_context_to_state::<ExamplePlayer, InControl>()
         .add_systems(OnEnter(GameplayScene::Outdoors), set_cursor_locked::<true>)
         .add_systems(OnExit(GameplayScene::Outdoors), set_cursor_locked::<false>)
         .add_systems(
-            OnExit(Menu::None),
+            OnExit(InControl),
             set_cursor_locked::<false>.run_if(in_state(GameplayScene::Outdoors)),
         )
         .add_systems(
-            OnEnter(Menu::None),
+            OnEnter(InControl),
             set_cursor_locked::<true>.run_if(in_state(GameplayScene::Outdoors)),
         )
         .add_systems(
             RunFixedMainLoop,
             (rotate_camera, apply_look)
                 .chain()
-                .in_set(PausableSystems)
                 .in_set(RunFixedMainLoopSystems::BeforeFixedMainLoop)
+                .run_if(in_state(InControl))
                 .run_if(in_state(GameplayScene::Outdoors)),
         )
         .add_systems(
@@ -108,10 +107,11 @@ fn spawn_player(
                 min_ledge_grab_space: Cuboid::new(0.2, 0.1, 0.2),
                 ..CharacterController::default()
             }
-            ~ActiveInStates::<ExamplePlayer, Pause>::single(Pause(false))
+            ~ActiveInStates::<ExamplePlayer, InControl>::single(InControl)
             CharacterLook::default()
             DespawnOnExit::<GameplayScene>(GameplayScene::Outdoors)
         })
+        .insert(CharacterName("Aruna"))
         .insert((
             ExamplePlayer,
             children![(

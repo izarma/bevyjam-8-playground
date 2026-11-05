@@ -3,13 +3,13 @@ use bevy::prelude::*;
 use pixel_art::PixelSprite;
 use plants::{Growing, Plant};
 
-use super::{InReach, billboard::Billboards};
+use super::InReach;
 use crate::{
-    GameplayScene,
+    GameplayScene, InControl,
     gameplay::herbs,
     ui::{
+        billboard::Billboards,
         input_prompt::{KEY_F, prompt},
-        menus::Menu,
         scale::texels,
     },
 };
@@ -33,7 +33,7 @@ struct YieldPanel {
 fn show_panel(
     mut commands: Commands,
     in_reach: Option<Single<Entity, With<InReach>>>,
-    menu: Res<State<Menu>>,
+    in_control: Option<Res<State<InControl>>>,
     panels: Query<(Entity, &YieldPanel)>,
     plants: Query<(&Growing, &GlobalTransform, &PixelSprite)>,
     mut billboards: Billboards,
@@ -41,7 +41,7 @@ fn show_panel(
     // hidden while a menu or minigame is up
     let target = in_reach
         .map(|plant| *plant)
-        .filter(|_| *menu.get() == Menu::None);
+        .filter(|_| in_control.is_some());
     for (panel, shown) in &panels {
         if Some(shown.plant) != target {
             commands.entity(panel).despawn();
@@ -60,7 +60,7 @@ fn show_panel(
         return;
     };
     billboards
-        .spawn(CANVAS, above, panel(*kind))
+        .spawn(CANVAS, above, panel(*kind), GameplayScene::Outdoors)
         .insert((Name::new("Yield Panel"), YieldPanel { plant }));
 }
 
