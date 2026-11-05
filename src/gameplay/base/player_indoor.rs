@@ -9,7 +9,7 @@ use crate::{
     GameplayScene, InControl, PausableSystems,
     camera::SceneCamera,
     gameplay::{
-        Player, PlayerAnimation,
+        CharacterName, Player, PlayerAnimation, SpeakerSprite,
         animation::PlayerAnimationSystems,
         base::{BODY_HEIGHT, indoor_body},
     },
@@ -25,8 +25,9 @@ pub struct IndoorPlayerSpawn;
 #[derive(Component, Clone, Default)]
 struct IndoorPlayer;
 
-/// Marker for the indoor player's sprite child
+/// Marker for the indoor player's sprite child.
 #[derive(Component)]
+#[require(SpeakerSprite)]
 struct IndoorPlayerSprite;
 
 #[derive(Debug, InputAction)]
@@ -123,6 +124,7 @@ fn spawn_player_base(
             ~ActiveInStates::<IndoorPlayer, InControl>::single(InControl)
             DespawnOnExit::<GameplayScene>(GameplayScene::Base)
         })
+        .insert(CharacterName("Aruna"))
         .insert(children![(
             IndoorPlayerSprite,
             Transform::from_xyz(0.0, -BODY_HEIGHT / 2.0, 0.0),

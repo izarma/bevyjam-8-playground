@@ -10,7 +10,10 @@ use bevy_yarnspinner::prelude::DialogueRunner;
 use super::npc::InDialogue;
 use crate::{
     GameplayScene,
-    gameplay::animation::{FRAME_INTERVAL, MOVING_SPEED_SQ, PlayerAnimationSystems},
+    gameplay::{
+        SpeakerSprite,
+        animation::{FRAME_INTERVAL, MOVING_SPEED_SQ, PlayerAnimationSystems},
+    },
     loading::NPCAssets,
 };
 
@@ -29,6 +32,7 @@ pub(super) fn plugin(app: &mut App) {
 }
 
 #[derive(Component, Debug, Clone)]
+#[require(SpeakerSprite)]
 pub(super) struct IndoorCharAnimation {
     timer: Timer,
     frame: usize,

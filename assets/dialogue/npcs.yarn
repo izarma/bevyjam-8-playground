@@ -1,13 +1,35 @@
-title: HelloWorld
+title: Monk
 ---
-Mr Fox: I'm Mr Fox, and im dying.
+Aruna: How are u today monk from rival school?
+Monk: I'm dying.
 -> Some cool option
 -> Some other cool option
 Now we'll jump to another node!
 <<jump AnotherNode>>
-
 ===
 
+title: Woman
+---
+Woman: buhh
+===
+
+title: OldMan
+---
+Old Man: I have explosive diarrhea
+===
+
+title: OldWoman
+---
+Old Woman: me got space herpes
+===
+
+title: Kid
+---
+Kid: i shit my pants
+Aruna: So did I!
+Kid: Twinnnnn
+Aruna: Twinnnnn
+===
 title: AnotherNode
 ---
 Now, a character will talk. Notice how the upper left corner of the dialogue will show their name.
@@ -28,5 +50,5 @@ Cats! (Can't say I agree, but you do you)
 <<else>>
 Turtles! Solid choice.
 <<endif>>
-Et voilà! That was all. Thanks for checking out Yarn Spinner for Rust! Continuing from the last node will exit the dialogue.
+Et voilà! That was all. Thanks for checking out Yarn Spinner for Rust! Continuing
 ===

@@ -2,7 +2,11 @@ use bevy::prelude::*;
 use bevy_ahoy::{input::AccumulatedInput, prelude::AhoySystems};
 use bevy_yarnspinner::prelude::DialogueRunner;
 
-use crate::{GameplayScene, PausableSystems, gameplay::base::indoor_body, loading::NPCAssets};
+use crate::{
+    GameplayScene, PausableSystems,
+    gameplay::{CharacterName, base::indoor_body},
+    loading::NPCAssets,
+};
 
 use super::{anim::indoor_visual_bundle, interact::InReach};
 
@@ -33,6 +37,17 @@ pub(super) struct Npc;
 #[derive(Component)]
 pub(super) struct InDialogue;
 
+#[derive(Component, Clone, Copy)]
+pub(super) struct TalkTarget(pub(super) &'static str);
+
+const NPC_TALK_TARGETS: [TalkTarget; 5] = [
+    TalkTarget("Monk"),
+    TalkTarget("Woman"),
+    TalkTarget("OldMan"),
+    TalkTarget("OldWoman"),
+    TalkTarget("Kid"),
+];
+
 /// Waypoints an [`Npc`] walks through in order, looping back to the start once
 /// the last one is reached.
 #[derive(Component)]
@@ -56,7 +71,7 @@ fn spawn_npcs(
         Vec2::new(1.0, 0.0),
     ];
 
-    for x_shift in [0.0, 2.0, 4.0, 8.0, 16.0] {
+    for (index, x_shift) in [0.0, 2.0, 4.0, 8.0, 16.0].into_iter().enumerate() {
         let points = base_points
             .iter()
             .map(|p| Vec2::new(p.x + x_shift, p.y))
@@ -68,6 +83,7 @@ fn spawn_npcs(
             &mut commands,
             Vec3::new(1.0 + x_shift, 2.0, 0.0),
             points,
+            NPC_TALK_TARGETS[index],
         );
     }
 }
@@ -78,6 +94,7 @@ fn spawn_npc(
     commands: &mut Commands,
     start: Vec3,
     points: Vec<Vec2>,
+    talk: TalkTarget,
 ) {
     let (animation, sprite, sprite3d) = indoor_visual_bundle(assets, texture_atlas_layouts);
     let (collider, controller) = indoor_body(NPC_SPEED);
@@ -85,6 +102,8 @@ fn spawn_npc(
     commands
         .spawn((
             Npc,
+            talk,
+            CharacterName(talk.0),
             Transform::from_translation(start),
             collider,
             controller,

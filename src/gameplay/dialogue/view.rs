@@ -1,10 +1,11 @@
-use bevy::prelude::*;
+use bevy::{platform::time::Instant, prelude::*};
 use bevy_yarnspinner::{
     events::{DialogueCompleted, DialogueStarted, PresentLine, PresentOptions},
-    prelude::{DialogueOption, DialogueRunner, OptionId},
+    prelude::{DialogueOption, DialogueRunner, LocalizedLine, OptionId},
 };
+use unicode_segmentation::UnicodeSegmentation;
 
-use super::YarnSpinnerDialogueViewSystemSet;
+use super::{SpeakerChangeEvent, YarnSpinnerDialogueViewSystemSet};
 use crate::{
     GameplayScene,
     ui::{
@@ -24,7 +25,12 @@ pub(super) fn plugin(app: &mut App) {
         .add_observer(select_option_clicked)
         .add_systems(
             Update,
-            (continue_dialogue, select_option_by_key).in_set(YarnSpinnerDialogueViewSystemSet),
+            (
+                write_text.run_if(resource_exists::<Typewriter>),
+                continue_dialogue.run_if(resource_exists::<Typewriter>),
+                select_option_by_key.run_if(resource_exists::<Typewriter>),
+            )
+                .in_set(YarnSpinnerDialogueViewSystemSet),
         );
 }
 
@@ -56,7 +62,74 @@ impl Default for OptionButton {
 #[derive(Resource, Default)]
 pub(super) struct PresentedOptions(Vec<DialogueOption>);
 
+/// Reveals the current line grapheme-by-grapheme. Its lifetime mirrors the
+/// dialogue UI: initialized on [`DialogueStarted`] and removed on
+/// [`DialogueCompleted`].
+#[derive(Resource)]
+pub(super) struct Typewriter {
+    current_text: String,
+    graphemes_left: Vec<String>,
+    elapsed: f32,
+    start: Instant,
+    fast_typing: bool,
+    character_name: Option<String>,
+    last_before_options: bool,
+}
+
+impl Default for Typewriter {
+    fn default() -> Self {
+        Self {
+            current_text: String::new(),
+            graphemes_left: Vec::new(),
+            elapsed: 0.0,
+            start: Instant::now(),
+            fast_typing: false,
+            character_name: None,
+            last_before_options: false,
+        }
+    }
+}
+
+impl Typewriter {
+    fn set_line(&mut self, line: &LocalizedLine) {
+        *self = Self {
+            current_text: String::new(),
+            graphemes_left: line
+                .text_without_character_name()
+                .graphemes(true)
+                .map(|grapheme| grapheme.to_string())
+                .collect(),
+            character_name: line.character_name().map(|name| name.to_string()),
+            last_before_options: line.is_last_line_before_options(),
+            ..default()
+        };
+    }
+
+    fn is_finished(&self) -> bool {
+        self.graphemes_left.is_empty() && !self.current_text.is_empty()
+    }
+
+    /// Reveal the rest of the line much faster on subsequent updates.
+    fn fast_forward(&mut self) {
+        self.fast_typing = true;
+    }
+
+    fn update_current_text(&mut self) {
+        if self.is_finished() {
+            return;
+        }
+        self.elapsed += self.start.elapsed().as_secs_f32();
+        self.start = Instant::now();
+        let graphemes_per_second = if self.fast_typing { 120.0 } else { 40.0 };
+        let take = (graphemes_per_second * self.elapsed).floor() as usize;
+        let take = take.min(self.graphemes_left.len());
+        self.elapsed -= take as f32 / graphemes_per_second;
+        self.current_text.extend(self.graphemes_left.drain(..take));
+    }
+}
+
 fn spawn_dialogue_ui(_: On<DialogueStarted>, mut commands: Commands) {
+    commands.init_resource::<Typewriter>();
     commands.spawn_scene(bsn! {
         #DialogueRoot
         DialogueRoot
@@ -74,16 +147,10 @@ fn spawn_dialogue_ui(_: On<DialogueStarted>, mut commands: Commands) {
         Pickable::IGNORE
         DespawnOnExit::<GameplayScene>(GameplayScene::Base)
         Children [
-            #DialogueName
-            Text({ String::new() })
-            @font::text(1)
-            TextColor(HEADER_TEXT)
-            DialogueNameNode
-            Pickable::IGNORE
-            --
             #DialogueBox
             Node {
                 width: percent(90),
+                height: percent(25),
                 padding: UiRect::new(texels(8), texels(8), texels(4), texels(4)),
             }
             @widget::panel()
@@ -97,6 +164,18 @@ fn spawn_dialogue_ui(_: On<DialogueStarted>, mut commands: Commands) {
                     max_width: percent(100),
                 }
                 DialogueTextNode
+                Pickable::IGNORE
+                --
+                #DialogueName
+                Text({ String::new() })
+                @font::text(1)
+                TextColor(HEADER_TEXT)
+                Node {
+                    position_type: PositionType::Absolute,
+                    right: texels(8),
+                    bottom: texels(4),
+                }
+                DialogueNameNode
                 Pickable::IGNORE
             ]
             --
@@ -129,17 +208,51 @@ fn despawn_dialogue_ui(
 ) {
     commands.entity(*root).despawn();
     commands.remove_resource::<PresentedOptions>();
+    commands.remove_resource::<Typewriter>();
 }
 
 fn present_line(
     event: On<PresentLine>,
     mut name: Single<&mut Text, (With<DialogueNameNode>, Without<DialogueTextNode>)>,
-    mut line: Single<&mut Text, (With<DialogueTextNode>, Without<DialogueNameNode>)>,
     mut indicator: Single<&mut Visibility, With<DialogueContinueNode>>,
+    mut typewriter: ResMut<Typewriter>,
+    mut speaker_change: MessageWriter<SpeakerChangeEvent>,
 ) {
     name.0 = event.line.character_name().unwrap_or_default().to_string();
-    line.0 = event.line.text_without_character_name();
-    **indicator = Visibility::Inherited;
+    if let Some(character_name) = event.line.character_name() {
+        speaker_change.write(SpeakerChangeEvent {
+            character_name: character_name.to_string(),
+            speaking: true,
+        });
+    }
+    typewriter.set_line(&event.line);
+    **indicator = Visibility::Hidden;
+}
+
+/// Reveals graphemes over time and shows the continue indicator once the line
+/// has fully appeared.
+fn write_text(
+    mut typewriter: ResMut<Typewriter>,
+    mut line: Single<&mut Text, With<DialogueTextNode>>,
+    mut indicator: Single<&mut Visibility, With<DialogueContinueNode>>,
+    mut was_finished: Local<bool>,
+    mut speaker_change: MessageWriter<SpeakerChangeEvent>,
+) {
+    typewriter.update_current_text();
+    line.0 = typewriter.current_text.clone();
+    let finished = typewriter.is_finished();
+    if finished && !*was_finished {
+        if !typewriter.last_before_options {
+            **indicator = Visibility::Inherited;
+        }
+        if let Some(character_name) = typewriter.character_name.as_deref() {
+            speaker_change.write(SpeakerChangeEvent {
+                character_name: character_name.to_string(),
+                speaking: false,
+            });
+        }
+    }
+    *was_finished = finished;
 }
 
 fn present_options(
@@ -213,12 +326,22 @@ fn continue_dialogue(
     mouse: Res<ButtonInput<MouseButton>>,
     touches: Res<Touches>,
     mut runners: Query<&mut DialogueRunner>,
+    mut typewriter: ResMut<Typewriter>,
+    presented_options: Option<Res<PresentedOptions>>,
 ) {
     let advance = keys.just_pressed(KeyCode::Space)
         || keys.just_pressed(KeyCode::Enter)
         || mouse.just_pressed(MouseButton::Left)
         || touches.any_just_pressed();
-    if !advance {
+    if advance && !typewriter.is_finished() {
+        typewriter.fast_forward();
+        return;
+    }
+    // When the last line before a choice finishes typing, present the options
+    // automatically instead of waiting for the player to press a key first.
+    let auto_advance =
+        typewriter.last_before_options && typewriter.is_finished() && presented_options.is_none();
+    if !advance && !auto_advance {
         return;
     }
     for mut runner in &mut runners {

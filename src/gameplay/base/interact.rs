@@ -5,7 +5,7 @@ use bevy_yarnspinner::prelude::DialogueRunner;
 use super::{
     BODY_HEIGHT,
     anim::IndoorCharAnimation,
-    npc::{InDialogue, Npc},
+    npc::{InDialogue, Npc, TalkTarget},
     player_indoor::Touch,
 };
 use crate::{
@@ -17,10 +17,10 @@ use crate::{
         input_prompt::{KEY_F, prompt},
         palette::LABEL_TEXT,
         scale::texels,
-        widget,
     },
 };
 
+/// Maximum XZ distance at which the "Talk" prompt appears.
 const REACH: f32 = 2.0;
 
 pub(super) fn plugin(app: &mut App) {
@@ -130,17 +130,10 @@ fn talk_panel() -> impl Scene {
                 align_items: AlignItems::Center,
             }
             Children [
-                Node {
-                    padding: UiRect::all(texels(5)),
-                }
-                @widget::panel()
+                Text("Talk")
+                @font::text(1)
+                TextColor(LABEL_TEXT)
                 Pickable::IGNORE
-                Children [
-                    Text("Talk")
-                    @font::text(1)
-                    TextColor(LABEL_TEXT)
-                    Pickable::IGNORE
-                ]
                 --
                 Node {
                     position_type: PositionType::Absolute,
@@ -155,16 +148,14 @@ fn talk_panel() -> impl Scene {
     }
 }
 
-/// Yarn node shown when the player interacts with an NPC.
-const NPC_DIALOGUE_NODE: &str = "HelloWorld";
-
+/// Starts the Yarn node assigned to the in-reach NPC when the player interacts.
 fn start_interaction(
     _: On<Start<Touch>>,
-    npcs: Query<Entity, With<InReach>>,
+    npcs: Query<(Entity, &TalkTarget), With<InReach>>,
     mut runner: Query<&mut DialogueRunner>,
     mut commands: Commands,
 ) {
-    let Some(npc) = npcs.iter().next() else {
+    let Some((npc, talk)) = npcs.iter().next() else {
         return;
     };
     let Ok(mut runner) = runner.single_mut() else {
@@ -173,13 +164,14 @@ fn start_interaction(
     if runner.is_running() {
         return;
     }
-    if !runner.node_exists(NPC_DIALOGUE_NODE) {
+    let node = talk.0;
+    if !runner.node_exists(node) {
         error!(
-            "Refusing to start dialogue with {npc:?}: node \"{NPC_DIALOGUE_NODE}\" is missing from the compiled Yarn project"
+            "Refusing to start dialogue with {npc:?}: node \"{node}\" is missing from the compiled Yarn project"
         );
         return;
     }
-    match runner.try_start_node(NPC_DIALOGUE_NODE) {
+    match runner.try_start_node(node) {
         Ok(_) => {
             info!("interacting with NPC {npc:?}");
             commands.entity(npc).insert(InDialogue);

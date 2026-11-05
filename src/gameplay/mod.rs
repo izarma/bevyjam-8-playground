@@ -27,3 +27,11 @@ pub(super) fn plugin(app: &mut App) {
 /// Marker for both indoor & outdoor player
 #[derive(Component, Clone, Default)]
 pub struct Player;
+
+/// The name a character is addressed by in Yarn dialogue (their speaker label).
+#[derive(Component, Clone, Copy)]
+pub(crate) struct CharacterName(pub(crate) &'static str);
+
+/// Marks the visual child entity of a character that is lifted while it speaks.
+#[derive(Component, Default)]
+pub(crate) struct SpeakerSprite;

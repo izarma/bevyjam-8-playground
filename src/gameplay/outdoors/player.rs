@@ -13,7 +13,7 @@ use pixel_art::PixelSprite;
 use crate::{
     GameplayScene, InControl, PausableSystems,
     camera::{CameraSensitivity, SceneCamera, face_camera},
-    gameplay::{Player, PlayerAnimation, animation::PlayerAnimationSystems},
+    gameplay::{CharacterName, Player, PlayerAnimation, animation::PlayerAnimationSystems},
     loading::{PLAYER_FRAME, PlayerAssets},
 };
 
@@ -111,6 +111,7 @@ fn spawn_player(
             CharacterLook::default()
             DespawnOnExit::<GameplayScene>(GameplayScene::Outdoors)
         })
+        .insert(CharacterName("Aruna"))
         .insert((
             ExamplePlayer,
             children![(

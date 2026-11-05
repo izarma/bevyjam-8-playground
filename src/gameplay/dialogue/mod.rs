@@ -1,3 +1,4 @@
+mod speaker;
 mod view;
 
 use bevy::prelude::*;
@@ -7,11 +8,21 @@ use bevy_yarnspinner::prelude::{
 
 use crate::{GameState, GameplayScene, Pause};
 
+/// Signals that the character speaking in the dialogue has changed.
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Reflect, Message)]
+#[reflect(Debug, PartialEq, Hash)]
+pub struct SpeakerChangeEvent {
+    pub character_name: String,
+    pub speaking: bool,
+}
+
 pub(super) fn plugin(app: &mut App) {
     app.add_plugins((
         YarnSpinnerPlugin::with_yarn_sources([YarnFileSource::file("dialogue/npcs.yarn")]),
         view::plugin,
+        speaker::plugin,
     ))
+    .add_message::<SpeakerChangeEvent>()
     .configure_sets(
         Update,
         YarnSpinnerDialogueViewSystemSet
@@ -49,6 +60,7 @@ fn stop_dialogue_runner(mut commands: Commands, mut runners: Query<&mut Dialogue
         }
     }
     commands.remove_resource::<view::PresentedOptions>();
+    commands.remove_resource::<view::Typewriter>();
 }
 
 fn despawn_dialogue_runner(mut commands: Commands, runners: Query<Entity, With<DialogueRunner>>) {
