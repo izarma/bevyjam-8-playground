@@ -44,12 +44,11 @@ fn animate_speaker(
         };
 
         if event.speaking {
-            if active.sprite != Some(sprite) {
-                if let Some(previous) = active.sprite {
-                    if let Ok((_, _, mut transform)) = sprites.get_mut(previous) {
-                        transform.translation.y = active.rest_y;
-                    }
-                }
+            if active.sprite != Some(sprite)
+                && let Some(previous) = active.sprite
+                && let Ok((_, _, mut transform)) = sprites.get_mut(previous)
+            {
+                transform.translation.y = active.rest_y;
             }
             active.rest_y = sprites
                 .get(sprite)
@@ -79,10 +78,10 @@ fn reset_speaker(
     mut active: ResMut<ActiveSpeaker>,
     mut transforms: Query<&mut Transform>,
 ) {
-    if let Some(sprite) = active.sprite {
-        if let Ok(mut transform) = transforms.get_mut(sprite) {
-            transform.translation.y = active.rest_y;
-        }
+    if let Some(sprite) = active.sprite
+        && let Ok(mut transform) = transforms.get_mut(sprite)
+    {
+        transform.translation.y = active.rest_y;
     }
     active.sprite = None;
 }
