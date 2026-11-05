@@ -13,7 +13,9 @@ mod dev_tooling;
 mod gameplay;
 mod graphics;
 mod loading;
+mod loading_screen;
 mod render_scale;
+mod scene_ready;
 mod ui;
 
 /// Application-level states. See `gameplay` for gameplay-owned state.
@@ -84,8 +86,10 @@ pub fn plugin(app: &mut App) {
     app.add_plugins((
         loading::plugin,
         camera::plugin,
+        loading_screen::plugin,
         graphics::plugin,
         render_scale::plugin,
+        scene_ready::plugin,
         audio::plugin,
         bevy_enhanced_input::EnhancedInputPlugin,
         ui::plugin,
@@ -97,13 +101,10 @@ pub fn plugin(app: &mut App) {
     ));
 
     // Gameplay simulation runs across several schedules, and all of them must
-    // respect pause.
-    app.configure_sets(Update, PausableSystems.run_if(in_state(Pause(false))))
-        .configure_sets(FixedUpdate, PausableSystems.run_if(in_state(Pause(false))))
-        .configure_sets(
-            RunFixedMainLoop,
-            PausableSystems.run_if(in_state(Pause(false))),
-        )
+    // respect pause or loading states.
+    app.configure_sets(Update, PausableSystems.run_if(simulating))
+        .configure_sets(FixedUpdate, PausableSystems.run_if(simulating))
+        .configure_sets(RunFixedMainLoop, PausableSystems.run_if(simulating))
         .configure_sets(
             FixedPostUpdate,
             (
@@ -111,14 +112,12 @@ pub fn plugin(app: &mut App) {
                 AhoySystems::MoveCharacters,
                 AhoySystems::ApplyForcesToDynamicRigidBodies,
             )
-                .run_if(in_state(Pause(false))),
+                .run_if(simulating),
         );
-
-    // For Physics `Pause`
-    app.add_systems(OnEnter(Pause(true)), pause_physics_time)
-        .add_systems(OnEnter(Pause(false)), unpause_physics_time)
-        .add_systems(OnExit(GameState::Gameplay), unpause_physics_time);
-    app.add_systems(Startup, unpause_physics_time);
+    app.add_systems(
+        RunFixedMainLoop,
+        hold_physics_time.in_set(RunFixedMainLoopSystems::BeforeFixedMainLoop),
+    );
 
     #[cfg(debug_assertions)]
     {
@@ -130,12 +129,21 @@ pub fn plugin(app: &mut App) {
     }
 }
 
-fn pause_physics_time(mut time: ResMut<Time<Physics>>) {
-    time.pause();
+fn simulating(pause: Option<Res<State<Pause>>>, loading: Query<(), scene_ready::Loading>) -> bool {
+    pause.is_some_and(|pause| !pause.0) && loading.is_empty()
 }
 
-fn unpause_physics_time(mut time: ResMut<Time<Physics>>) {
-    if time.is_paused() {
-        time.unpause();
+fn hold_physics_time(
+    pause: Option<Res<State<Pause>>>,
+    loading: Query<(), scene_ready::Loading>,
+    mut time: ResMut<Time<Physics>>,
+) {
+    let held = !simulating(pause, loading);
+    if held != time.is_paused() {
+        if held {
+            time.pause();
+        } else {
+            time.unpause();
+        }
     }
 }
