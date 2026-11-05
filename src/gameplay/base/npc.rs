@@ -4,7 +4,7 @@ use bevy_yarnspinner::prelude::DialogueRunner;
 
 use crate::{
     GameplayScene, PausableSystems,
-    gameplay::{CharacterName, base::indoor_body},
+    gameplay::{CharacterName, base::indoor_body, herbs::Element},
     loading::NPCAssets,
 };
 
@@ -35,7 +35,7 @@ pub(super) struct Npc;
 
 /// Marker for the NPC currently talking to the player.
 #[derive(Component)]
-pub(super) struct InDialogue;
+pub(crate) struct InDialogue;
 
 #[derive(Component, Clone, Copy)]
 pub(super) struct TalkTarget(pub(super) &'static str);
@@ -47,6 +47,67 @@ const NPC_TALK_TARGETS: [TalkTarget; 5] = [
     TalkTarget("OldWoman"),
     TalkTarget("Kid"),
 ];
+
+pub(crate) const BALANCED: u8 = 5;
+
+#[derive(Component, Clone, Copy, Debug, PartialEq, Eq)]
+pub(crate) struct Health {
+    wood: u8,
+    fire: u8,
+    earth: u8,
+    metal: u8,
+    water: u8,
+}
+
+impl Health {
+    pub(crate) fn get(self, element: Element) -> u8 {
+        match element {
+            Element::Wood => self.wood,
+            Element::Fire => self.fire,
+            Element::Earth => self.earth,
+            Element::Metal => self.metal,
+            Element::Water => self.water,
+        }
+    }
+    pub(crate) fn offset(&mut self, delta: i8) {
+        let values = [
+            &mut self.wood,
+            &mut self.fire,
+            &mut self.earth,
+            &mut self.metal,
+            &mut self.water,
+        ];
+        for value in values {
+            *value = (*value as i16 + i16::from(delta)).clamp(1, 10) as u8;
+        }
+    }
+
+    #[allow(dead_code)]
+    pub(crate) fn offset_elements(&mut self, deltas: &[(Element, i8)]) {
+        for &(element, delta) in deltas {
+            let value = match element {
+                Element::Wood => &mut self.wood,
+                Element::Fire => &mut self.fire,
+                Element::Earth => &mut self.earth,
+                Element::Metal => &mut self.metal,
+                Element::Water => &mut self.water,
+            };
+            *value = (*value as i16 + i16::from(delta)).clamp(1, 10) as u8;
+        }
+    }
+}
+
+impl Default for Health {
+    fn default() -> Self {
+        Self {
+            wood: BALANCED,
+            fire: BALANCED,
+            earth: BALANCED,
+            metal: BALANCED,
+            water: BALANCED,
+        }
+    }
+}
 
 /// Waypoints an [`Npc`] walks through in order, looping back to the start once
 /// the last one is reached.
@@ -103,6 +164,7 @@ fn spawn_npc(
         .spawn((
             Npc,
             talk,
+            Health::default(),
             CharacterName(talk.0),
             Transform::from_translation(start),
             collider,

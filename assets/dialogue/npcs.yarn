@@ -2,7 +2,7 @@ title: Monk
 ---
 Aruna: How are u today monk from rival school?
 Monk: I'm dying.
--> Some cool option
+-> Diagnose Me
 -> Some other cool option
 Now we'll jump to another node!
 <<jump AnotherNode>>
@@ -11,24 +11,30 @@ Now we'll jump to another node!
 title: Woman
 ---
 Woman: buhh
+-> Diagnose Me
+-> Bye
 ===
 
 title: OldMan
 ---
 Old Man: I have explosive diarrhea
+-> Diagnose Me
+-> Bye
 ===
 
 title: OldWoman
 ---
 Old Woman: me got space herpes
+-> Diagnose Me
+-> Bye
 ===
 
 title: Kid
 ---
 Kid: i shit my pants
-Aruna: So did I!
-Kid: Twinnnnn
-Aruna: Twinnnnn
+-> Diagnose Me
+-> So did I!
+-> Bye
 ===
 title: AnotherNode
 ---
