@@ -42,10 +42,12 @@ pub(super) fn plugin(app: &mut App) {
             Update,
             (
                 sync_camera_x,
-                exit_to_outdoors,
-                update_player_animation.in_set(PlayerAnimationSystems::UpdateState),
+                (
+                    exit_to_outdoors,
+                    update_player_animation.in_set(PlayerAnimationSystems::UpdateState),
+                )
+                    .in_set(PausableSystems),
             )
-                .in_set(PausableSystems)
                 .run_if(in_state(GameplayScene::Base)),
         )
         .add_systems(

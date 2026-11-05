@@ -50,9 +50,10 @@ pub(super) fn plugin(app: &mut App) {
             Update,
             (
                 follow_player.before(face_camera),
-                update_animation.in_set(PlayerAnimationSystems::UpdateState),
+                update_animation
+                    .in_set(PlayerAnimationSystems::UpdateState)
+                    .in_set(PausableSystems),
             )
-                .in_set(PausableSystems)
                 .run_if(in_state(GameplayScene::Outdoors)),
         );
 }
