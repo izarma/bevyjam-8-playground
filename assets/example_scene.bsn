@@ -48,6 +48,11 @@ bevy_ecs::hierarchy::Children [
             y: 0.0,
             z: -31.614242553710938,
         },
+        scale: glam::Vec3 {
+            x: 1.0,
+            y: 1.0,
+            z: 1.0015586614608765,
+        },
     }
     jackdaw_scene_types::node_id::SceneNodeId(3989745432912132253)
     jackdaw_scene_types::types::Terrain {
@@ -973,13 +978,13 @@ bevy_ecs::hierarchy::Children [
     bevy_transform::components::transform::Transform {
         translation: glam::Vec3 {
             x: 0.0,
-            y: -0.06,
+            y: -0.05999999865889549,
             z: 0.0,
         },
         scale: glam::Vec3 {
             x: 60.0,
             y: 3.0,
-            z: 60.0,
+            z: 64.10868072509766,
         },
     }
     jackdaw_scene_types::node_id::SceneNodeId(7177024000003245663)

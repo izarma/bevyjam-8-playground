@@ -119,8 +119,6 @@ fn exit_to_outdoors(
     let Ok(player) = player.single() else {
         return;
     };
-    // Don't leave the base mid-conversation; movement is frozen, but the exit
-    // check should also be explicit rather than relying on that side effect.
     if runners.iter().any(|runner| runner.is_running()) {
         return;
     }
