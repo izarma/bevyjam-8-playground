@@ -1,0 +1,54 @@
+name: Upload package to itch.io
+
+on:
+  workflow_call:
+    inputs:
+      platform:
+        required: true
+        type: string
+      version:
+        required: true
+        type: string
+      itch_page:
+        required: true
+        type: string
+    secrets:
+      BUTLER_CREDENTIALS:
+        required: true
+
+permissions:
+  contents: read
+
+jobs:
+  upload:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download package
+        uses: actions/download-artifact@v4
+        with:
+          name: package-${{ inputs.platform }}
+          path: tmp
+
+      - name: Install butler
+        run: |
+          curl --fail -L -o butler.zip 'https://broth.itch.zone/butler/linux-amd64/LATEST/archive/default'
+          unzip butler.zip
+          chmod +x butler
+          ./butler -V
+
+      - name: Upload package to itch.io
+        env:
+          BUTLER_API_KEY: ${{ secrets.BUTLER_CREDENTIALS }}
+          VERSION: ${{ inputs.version }}
+          ITCH_PAGE: ${{ inputs.itch_page }}
+          PLATFORM: ${{ inputs.platform }}
+        run: |
+          if [ -z "$BUTLER_API_KEY" ]; then
+            echo '::error::The BUTLER_CREDENTIALS repository secret must be configured.'
+            exit 1
+          fi
+          ./butler push \
+            --fix-permissions \
+            --userversion="$VERSION" \
+            tmp/* \
+            "$ITCH_PAGE:$PLATFORM"
