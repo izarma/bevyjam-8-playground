@@ -113,11 +113,6 @@ fn mix_slot(index: usize) -> impl Scene {
         @on(clear_slot)
         Children [
             MixMark
-            Node {
-                position_type: PositionType::Absolute,
-                width: percent(100),
-                height: percent(100),
-            }
             @widget::panel_face()
             Visibility::Hidden
             Pickable::IGNORE

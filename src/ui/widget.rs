@@ -197,6 +197,14 @@ pub fn panel() -> impl Scene {
 // but just color this png instead
 pub fn panel_face() -> impl Scene {
     bsn! {
+        Node {
+            position_type: PositionType::Absolute,
+            left: px(0),
+            top: px(0),
+            width: percent(100),
+            height: percent(100),
+        }
+        Pickable::IGNORE
         ImageNode {
             image: "ui/9slice_fill.png",
             image_mode: { panel_slicing() },
