@@ -47,6 +47,9 @@ struct Won {
     entity: Entity,
 }
 
+#[derive(Event)]
+pub(crate) struct HarvestScratch;
+
 #[derive(Component)]
 struct Fades(Color);
 

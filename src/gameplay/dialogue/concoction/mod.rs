@@ -4,8 +4,10 @@ use std::sync::{
     Arc,
     atomic::{AtomicBool, Ordering},
 };
+use std::time::Duration;
 
 use bevy::prelude::*;
+use bevy_kira_audio::prelude::*;
 use plants::Plant;
 
 use super::{YarnSpinnerDialogueViewSystemSet, view::DialogueOptionsNode};
@@ -15,6 +17,7 @@ use crate::gameplay::{
     inventory::Inventory,
     remedy::{Mark, Remedy, SLOTS, grade},
 };
+use crate::loading::ConcoctionAssets;
 
 const HOURS_PER_DOSE: f32 = 2.0;
 
@@ -27,8 +30,12 @@ const STAMP_AT: f32 = LIFT + SHAKE + DROP;
 const SETTLE: f32 = 0.12;
 const SLOT_SECONDS: f32 = 1.3;
 
+#[derive(Resource)]
+struct Anticipation;
+
 pub(super) fn plugin(app: &mut App) {
-    app.add_plugins(panel::plugin)
+    app.add_audio_channel::<Anticipation>()
+        .add_plugins(panel::plugin)
         .add_observer(release_dialogue)
         .add_systems(
             Update,
@@ -62,7 +69,9 @@ enum Stage {
 /// What one [`Concoction::advance`] did.
 #[derive(Default)]
 struct Step {
+    anticipating: bool,
     stamped: Option<Plant>,
+    revealed: Option<Mark>,
     drunk: bool,
 }
 
@@ -173,8 +182,10 @@ impl Concoction {
         let mut step = Step::default();
         let before = *elapsed;
         *elapsed += seconds;
+        step.anticipating = before < LIFT && *elapsed >= LIFT && *elapsed < STAMP_AT;
         if before < STAMP_AT && *elapsed >= STAMP_AT {
             step.stamped = self.mix[*slot];
+            step.revealed = Some(marks[*slot]);
         }
         if *elapsed >= SLOT_SECONDS {
             *slot += 1;
@@ -209,7 +220,14 @@ pub(super) fn offer_concoction(
     done
 }
 
-fn release_dialogue(remove: On<Remove<Concoction>>, concoctions: Query<&Concoction>) {
+fn release_dialogue(
+    remove: On<Remove<Concoction>>,
+    concoctions: Query<&Concoction>,
+    anticipation: Res<AudioChannel<Anticipation>>,
+) {
+    anticipation
+        .stop()
+        .fade_out(AudioTween::linear(Duration::from_millis(10)));
     if let Ok(concoction) = concoctions.get(remove.entity) {
         concoction.done.store(true, Ordering::Relaxed);
     }
@@ -221,8 +239,32 @@ fn brew(
     mut concoction: Single<&mut Concoction>,
     mut visitors: Query<&mut Health>,
     mut clock: Single<&mut Clock>,
+    assets: Res<ConcoctionAssets>,
+    audio: Res<Audio>,
+    mut next_result: Local<[usize; 3]>,
+    anticipation: Res<AudioChannel<Anticipation>>,
+    mut next_anticipation: Local<usize>,
 ) {
     let step = concoction.advance(time.delta_secs());
+    if step.anticipating && !assets.herb_anticipation.is_empty() {
+        let clips = &assets.herb_anticipation;
+        anticipation.play(clips[*next_anticipation % clips.len()].clone());
+        *next_anticipation = (*next_anticipation + 1) % clips.len();
+    }
+    if let Some(mark) = step.revealed {
+        anticipation
+            .stop()
+            .fade_out(AudioTween::linear(Duration::from_millis(10)));
+        let (clips, index) = match mark {
+            Mark::Correct => (&assets.herb_good, 0),
+            Mark::Misplaced => (&assets.herb_neutral, 1),
+            Mark::Absent => (&assets.herb_bad, 2),
+        };
+        if !clips.is_empty() {
+            audio.play(clips[next_result[index] % clips.len()].clone());
+            next_result[index] = (next_result[index] + 1) % clips.len();
+        }
+    }
     if let Some(plant) = step.stamped
         && let Ok(mut health) = visitors.get_mut(concoction.visitor)
     {

@@ -14,6 +14,9 @@ pub(super) fn plugin(app: &mut App) {
             .load_collection::<UIAssets>()
             .load_collection::<MusicAssets>()
             .load_collection::<PlayerAssets>()
+            .load_collection::<FootstepAssets>()
+            .load_collection::<HarvestingAssets>()
+            .load_collection::<ConcoctionAssets>()
             .load_collection::<NPCAssets>(),
     );
 }
@@ -50,18 +53,153 @@ pub const PLAYER_SHEET_COLUMNS: u32 = 13;
 pub struct PlayerAssets {
     #[asset(path = "textures/character/monk-sheet.png")]
     pub player_sheet: Handle<Image>,
-    #[asset(path = "audio/sfx/step1.ogg")]
-    pub step1: Handle<AudioSource>,
-    #[asset(path = "audio/sfx/step2.ogg")]
-    pub step2: Handle<AudioSource>,
-    #[asset(path = "audio/sfx/step3.ogg")]
-    pub step3: Handle<AudioSource>,
-    #[asset(path = "audio/sfx/step4.ogg")]
-    pub step4: Handle<AudioSource>,
+}
+
+#[derive(AssetCollection, Resource, Default)]
+pub struct FootstepAssets {
+    #[asset(path = "audio/sfx/jump.ogg")]
+    pub jump: Handle<AudioSource>,
+    #[asset(
+        paths(
+            "audio/sfx/footsteps/dirt/walk_dirt_1.ogg",
+            "audio/sfx/footsteps/dirt/walk_dirt_2.ogg",
+            "audio/sfx/footsteps/dirt/walk_dirt_3.ogg",
+            "audio/sfx/footsteps/dirt/walk_dirt_4.ogg",
+            "audio/sfx/footsteps/dirt/walk_dirt_5.ogg",
+            "audio/sfx/footsteps/dirt/walk_dirt_6.ogg",
+            "audio/sfx/footsteps/dirt/walk_dirt_7.ogg",
+            "audio/sfx/footsteps/dirt/walk_dirt_8.ogg",
+        ),
+        collection(typed)
+    )]
+    pub dirt: Vec<Handle<AudioSource>>,
+    #[asset(
+        paths(
+            "audio/sfx/footsteps/wood/walk_wood_1.ogg",
+            "audio/sfx/footsteps/wood/walk_wood_2.ogg",
+            "audio/sfx/footsteps/wood/walk_wood_3.ogg",
+            "audio/sfx/footsteps/wood/walk_wood_4.ogg",
+            "audio/sfx/footsteps/wood/walk_wood_5.ogg",
+            "audio/sfx/footsteps/wood/walk_wood_6.ogg",
+            "audio/sfx/footsteps/wood/walk_wood_7.ogg",
+            "audio/sfx/footsteps/wood/walk_wood_8.ogg",
+        ),
+        collection(typed)
+    )]
+    pub wood: Vec<Handle<AudioSource>>,
+    pub wet_dirt: Vec<Handle<AudioSource>>,
+    #[asset(
+        paths(
+            "audio/sfx/footsteps/grass/walk_grass_1.ogg",
+            "audio/sfx/footsteps/grass/walk_grass_2.ogg",
+            "audio/sfx/footsteps/grass/walk_grass_3.ogg",
+            "audio/sfx/footsteps/grass/walk_grass_4.ogg",
+            "audio/sfx/footsteps/grass/walk_grass_5.ogg",
+            "audio/sfx/footsteps/grass/walk_grass_6.ogg",
+            "audio/sfx/footsteps/grass/walk_grass_7.ogg",
+            "audio/sfx/footsteps/grass/walk_grass_8.ogg",
+        ),
+        collection(typed)
+    )]
+    pub grass: Vec<Handle<AudioSource>>,
+    #[asset(
+        paths(
+            "audio/sfx/footsteps/water/walk_water_1.ogg",
+            "audio/sfx/footsteps/water/walk_water_2.ogg",
+            "audio/sfx/footsteps/water/walk_water_3.ogg",
+            "audio/sfx/footsteps/water/walk_water_4.ogg",
+            "audio/sfx/footsteps/water/walk_water_5.ogg",
+            "audio/sfx/footsteps/water/walk_water_6.ogg",
+            "audio/sfx/footsteps/water/walk_water_7.ogg",
+            "audio/sfx/footsteps/water/walk_water_8.ogg",
+        ),
+        collection(typed)
+    )]
+    pub water: Vec<Handle<AudioSource>>,
+}
+
+#[derive(AssetCollection, Resource)]
+pub struct HarvestingAssets {
+    #[asset(
+        paths(
+            "audio/sfx/harvesting/harvesting_1.ogg",
+            "audio/sfx/harvesting/harvesting_2.ogg",
+            "audio/sfx/harvesting/harvesting_3.ogg",
+            "audio/sfx/harvesting/harvesting_4.ogg",
+            "audio/sfx/harvesting/harvesting_5.ogg",
+            "audio/sfx/harvesting/harvesting_6.ogg",
+            "audio/sfx/harvesting/harvesting_7.ogg",
+            "audio/sfx/harvesting/harvesting_8.ogg",
+        ),
+        collection(typed)
+    )]
+    pub scratches: Vec<Handle<AudioSource>>,
+}
+
+#[derive(AssetCollection, Resource)]
+pub struct ConcoctionAssets {
+    #[asset(
+        paths(
+            "audio/sfx/herb_drop/herb_drop_1.ogg",
+            "audio/sfx/herb_drop/herb_drop_2.ogg",
+            "audio/sfx/herb_drop/herb_drop_3.ogg",
+            "audio/sfx/herb_drop/herb_drop_4.ogg",
+            "audio/sfx/herb_drop/herb_drop_5.ogg",
+            "audio/sfx/herb_drop/herb_drop_6.ogg",
+            "audio/sfx/herb_drop/herb_drop_7.ogg",
+            "audio/sfx/herb_drop/herb_drop_8.ogg",
+        ),
+        collection(typed)
+    )]
+    pub herb_drops: Vec<Handle<AudioSource>>,
+    #[asset(
+        paths(
+            "audio/sfx/herb_anticipation/herb_anticipation_1.ogg",
+            "audio/sfx/herb_anticipation/herb_anticipation_2.ogg",
+            "audio/sfx/herb_anticipation/herb_anticipation_3.ogg",
+            "audio/sfx/herb_anticipation/herb_anticipation_4.ogg",
+        ),
+        collection(typed)
+    )]
+    pub herb_anticipation: Vec<Handle<AudioSource>>,
+    #[asset(
+        paths(
+            "audio/sfx/herb_heal/herb_heal_1.ogg",
+            "audio/sfx/herb_heal/herb_heal_2.ogg",
+            "audio/sfx/herb_heal/herb_heal_3.ogg",
+            "audio/sfx/herb_heal/herb_heal_4.ogg",
+        ),
+        collection(typed)
+    )]
+    pub herb_good: Vec<Handle<AudioSource>>,
+    #[asset(
+        paths(
+            "audio/sfx/herb_neutral/herb_neutral_1.ogg",
+            "audio/sfx/herb_neutral/herb_neutral_2.ogg",
+            "audio/sfx/herb_neutral/herb_neutral_3.ogg",
+            "audio/sfx/herb_neutral/herb_neutral_4.ogg",
+        ),
+        collection(typed)
+    )]
+    pub herb_neutral: Vec<Handle<AudioSource>>,
+    #[asset(
+        paths(
+            "audio/sfx/herb_bad/herb_bad_1.ogg",
+            "audio/sfx/herb_bad/herb_bad_2.ogg",
+            "audio/sfx/herb_bad/herb_bad_3.ogg",
+            "audio/sfx/herb_bad/herb_bad_4.ogg",
+        ),
+        collection(typed)
+    )]
+    pub herb_bad: Vec<Handle<AudioSource>>,
 }
 
 #[derive(AssetCollection, Resource)]
 pub struct NPCAssets {
+    #[asset(path = "audio/sfx/dialogue_open.ogg")]
+    pub dialogue_open: Handle<AudioSource>,
+    #[asset(path = "audio/sfx/dialogue_close.ogg")]
+    pub dialogue_close: Handle<AudioSource>,
     #[asset(path = "textures/character/fox.png")]
     pub fox: Handle<Image>,
 }

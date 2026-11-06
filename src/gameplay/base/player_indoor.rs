@@ -175,6 +175,8 @@ fn spawn_player_base(
             --
             Action::<Touch>::new()
             Bindings [
+                Binding(KeyCode::KeyZ)
+                --
                 Binding(KeyCode::KeyF)
                 --
                 Binding(GamepadButton::West)
