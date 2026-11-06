@@ -10,7 +10,7 @@ mod interact;
 mod npc;
 mod player_indoor;
 
-pub(crate) use npc::{BALANCED, Health, InDialogue};
+pub(crate) use npc::{BodyOf, InDialogue};
 
 pub(super) fn plugin(app: &mut App) {
     app.add_plugins((
@@ -24,10 +24,14 @@ pub(super) fn plugin(app: &mut App) {
 
 fn spawn_lab_scene(mut commands: Commands, asset_server: Res<AssetServer>) {
     commands.spawn((
+        LabScene,
         JackdawSceneRoot(asset_server.load("lab_scene.bsn")),
         DespawnOnExit(GameplayScene::Base),
     ));
 }
+
+#[derive(Component)]
+struct LabScene;
 
 const BODY_WIDTH_X: f32 = 0.8;
 pub(super) const BODY_HEIGHT: f32 = 2.0;

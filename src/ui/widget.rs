@@ -188,14 +188,27 @@ pub fn panel() -> impl Scene {
     bsn! {
         ImageNode {
             image: "ui/9slice.png",
-            image_mode: {
-                // these settings are specific to how the 9slice png is authored
-                NodeImageMode::Sliced(TextureSlicer {
-                    border: BorderRect::all(7.0),
-                    max_corner_scale: TEXEL,
-                    ..default()
-                })
-            },
+            image_mode: { panel_slicing() },
         }
     }
+}
+
+// i couldve done submission bgs with a mask or something
+// but just color this png instead
+pub fn panel_face() -> impl Scene {
+    bsn! {
+        ImageNode {
+            image: "ui/9slice_fill.png",
+            image_mode: { panel_slicing() },
+        }
+    }
+}
+
+// specific to how the 9slice pngs are authored
+fn panel_slicing() -> NodeImageMode {
+    NodeImageMode::Sliced(TextureSlicer {
+        border: BorderRect::all(7.0),
+        max_corner_scale: TEXEL,
+        ..default()
+    })
 }

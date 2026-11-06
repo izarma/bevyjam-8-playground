@@ -11,33 +11,52 @@ use rand::seq::IndexedRandom;
 #[derive(Reflect, Clone, Copy, Debug, Default, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum Plant {
     #[default]
-    Plant01,
-    Plant06,
-    Plant13,
+    Basil,
+    Chili,
+    Lemongrass,
+    Ginseng,
+    Chrysanthemum,
+    Wolfberry,
+    Lotus,
+    Licorice,
+    BlueHibiscus,
 }
 
+// `Plant::ALL` is in the same order that these are left to right
+pub const SHEET: &str = "sprites/Herbs-Sheet.png";
+pub const CELL: u32 = 16;
+pub const COLUMNS: u32 = Plant::ALL.len() as u32;
+// the sheet row of picked herbs (row 0 growing, 1 harvested)
+const PICKED: u32 = 2;
+
 impl Plant {
-    /// What this plant looks like.
+    pub const ALL: [Plant; 9] = [
+        Plant::Basil,
+        Plant::Chili,
+        Plant::Lemongrass,
+        Plant::Ginseng,
+        Plant::Chrysanthemum,
+        Plant::Wolfberry,
+        Plant::Lotus,
+        Plant::Licorice,
+        Plant::BlueHibiscus,
+    ];
+
+    pub fn column(self) -> u32 {
+        self as u32
+    }
+
+    /// The picked herb's cell in [`SHEET`].
+    pub fn picked_cell(self) -> u32 {
+        PICKED * COLUMNS + self.column()
+    }
+
     pub fn sprite(self, assets: &AssetServer) -> PixelSprite {
-        match self {
-            Plant::Plant01 => PixelSprite {
-                image: assets.load("sprites/plants.png"),
-                size: Some(UVec2::splat(16)),
-                cell: 0,
-                ..default()
-            },
-            Plant::Plant06 => PixelSprite {
-                image: assets.load("sprites/plants.png"),
-                size: Some(UVec2::splat(16)),
-                cell: 5,
-                ..default()
-            },
-            Plant::Plant13 => PixelSprite {
-                image: assets.load("sprites/plants.png"),
-                size: Some(UVec2::splat(16)),
-                cell: 12,
-                ..default()
-            },
+        PixelSprite {
+            image: assets.load(SHEET),
+            size: Some(UVec2::splat(CELL)),
+            cell: self.column(),
+            ..default()
         }
     }
 }

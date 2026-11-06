@@ -1,4 +1,4 @@
-use bevy::prelude::*;
+use bevy::{prelude::*, ui::InteractionDisabled};
 use bevy_kira_audio::prelude::{Audio, AudioControl};
 
 use crate::loading::UIAssets;
@@ -26,7 +26,7 @@ pub struct InteractionPalette {
 
 fn apply_interaction_palette_on_click(
     click: On<PointerClick>,
-    mut palette_query: Query<(&InteractionPalette, &mut ImageNode)>,
+    mut palette_query: Query<(&InteractionPalette, &mut ImageNode), Without<InteractionDisabled>>,
 ) {
     let Ok((palette, mut image)) = palette_query.get_mut(click.event_target()) else {
         return;
@@ -37,7 +37,7 @@ fn apply_interaction_palette_on_click(
 
 fn apply_interaction_palette_on_release(
     click: On<PointerRelease>,
-    mut palette_query: Query<(&InteractionPalette, &mut ImageNode)>,
+    mut palette_query: Query<(&InteractionPalette, &mut ImageNode), Without<InteractionDisabled>>,
 ) {
     let Ok((palette, mut image)) = palette_query.get_mut(click.event_target()) else {
         return;
@@ -48,7 +48,7 @@ fn apply_interaction_palette_on_release(
 
 fn apply_interaction_palette_on_over(
     over: On<PointerOver>,
-    mut palette_query: Query<(&InteractionPalette, &mut ImageNode)>,
+    mut palette_query: Query<(&InteractionPalette, &mut ImageNode), Without<InteractionDisabled>>,
 ) {
     let Ok((palette, mut image)) = palette_query.get_mut(over.event_target()) else {
         return;
@@ -59,7 +59,7 @@ fn apply_interaction_palette_on_over(
 
 fn apply_interaction_palette_on_out(
     out: On<PointerOut>,
-    mut palette_query: Query<(&InteractionPalette, &mut ImageNode)>,
+    mut palette_query: Query<(&InteractionPalette, &mut ImageNode), Without<InteractionDisabled>>,
 ) {
     let Ok((palette, mut image)) = palette_query.get_mut(out.event_target()) else {
         return;
@@ -72,7 +72,7 @@ fn play_sound_effect_on_click(
     on: On<PointerClick>,
     ui_asset: If<Res<UIAssets>>,
     audio: Res<Audio>,
-    interaction_entities: Query<Entity, With<InteractionPalette>>,
+    interaction_entities: Query<Entity, (With<InteractionPalette>, Without<InteractionDisabled>)>,
 ) {
     if interaction_entities.contains(on.event_target()) {
         audio.play(ui_asset.button_click.clone());
@@ -83,7 +83,7 @@ fn play_sound_effect_on_over(
     on: On<PointerOver>,
     ui_asset: If<Res<UIAssets>>,
     audio: Res<Audio>,
-    interaction_entities: Query<Entity, With<InteractionPalette>>,
+    interaction_entities: Query<Entity, (With<InteractionPalette>, Without<InteractionDisabled>)>,
 ) {
     if interaction_entities.contains(on.event_target()) {
         audio.play(ui_asset.button_hover.clone());

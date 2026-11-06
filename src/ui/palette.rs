@@ -17,8 +17,13 @@ pub const BUTTON_TEXT: Color = Color::srgb(0.925, 0.925, 0.925);
 pub const BUTTON_HOVERED_TINT: Color = Color::srgb(0.384, 0.600, 0.820);
 /// #3d4999
 pub const BUTTON_PRESSED_TINT: Color = Color::srgb(0.239, 0.286, 0.600);
+/// #737373
+pub const BUTTON_DISABLED_TINT: Color = Color::srgb(0.451, 0.451, 0.451);
 
 /// #7bd66b
 pub const GAIN_TEXT: Color = Color::srgb(0.482, 0.839, 0.420);
 /// #e06c5f
 pub const LOSS_TEXT: Color = Color::srgb(0.878, 0.424, 0.373);
+
+/// #f2c230
+pub const CAUTION: Color = Color::srgb(0.949, 0.761, 0.188);

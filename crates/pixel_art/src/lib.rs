@@ -14,6 +14,12 @@ pub use model::PixelModel;
 pub use sprite::PixelSprite;
 pub use water::PixelWater;
 
+// // given a "cell" index, provides its `URect` on a particular sheet configuration
+pub fn grid_rect(cell: u32, columns: u32, size: UVec2) -> URect {
+    let min = UVec2::new(cell % columns, cell / columns) * size;
+    URect::from_corners(min, min + size)
+}
+
 // should be shared by everything
 pub const TEXELS_PER_METER: f32 = 16.0;
 
