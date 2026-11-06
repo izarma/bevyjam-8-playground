@@ -1,0 +1,26 @@
+// jackdaw 0.20.0 | bevy 0.20
+#"Sun Rig"
+bevy_transform::components::transform::Transform
+bevy_camera::visibility::Visibility::Inherited
+Children [
+    #Sun
+    bevy_transform::components::transform::Transform {
+        translation: glam::Vec3 {
+            x: 0.45362281799316406,
+            y: 62.4146614074707,
+            z: 47.03993511199951,
+        },
+        rotation: glam::Quat {
+            x: -0.38165590167045593,
+            y: 0.1829865723848343,
+            z: -0.07736548036336899,
+            w: 0.9027010798454285,
+        },
+    }
+    jackdaw_scene_types::node_id::SceneNodeId(3989745432912132250)
+    bevy_light::cascade::CascadeShadowConfig
+    bevy_light::directional_light::DirectionalLight {
+        color: bevy_color::color::Color::LinearRgba(bevy_color::linear_rgba::LinearRgba { red: 1.0, green: 1.0, blue: 1.0, alpha: 1.0 }),
+        shadow_maps_enabled: true,
+    }
+]

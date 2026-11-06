@@ -1,27 +1,5 @@
 // jackdaw 0.20.0 | bevy 0.20
-bevy_ecs::hierarchy::Children [
-    #"Directional Light"
-    jackdaw_scene_types::node_id::SceneNodeId(6413514645213545415)
-    bevy_light::cascade::CascadeShadowConfig
-    bevy_transform::components::transform::Transform {
-        translation: glam::Vec3 {
-            x: 0.0,
-            y: 10.0,
-            z: 0.0,
-        },
-        rotation: glam::Quat {
-            x: -0.38165590167045593,
-            y: 0.1829865723848343,
-            z: -0.07736548036336899,
-            w: 0.9027010798454285,
-        },
-    }
-    bevy_light::directional_light::DirectionalLight {
-        color: bevy_color::color::Color::LinearRgba(bevy_color::linear_rgba::LinearRgba { red: 1.0, green: 1.0, blue: 1.0, alpha: 1.0 }),
-        shadow_maps_enabled: true,
-    }
-    --
-    #Camera
+bevy_ecs::hierarchy::Children [    #Camera
     bevy_camera::camera::CameraMainTextureUsages
     jackdaw_scene_types::node_id::SceneNodeId(4298439444789603623)
     bevy_transform::components::transform::Transform {
@@ -542,30 +520,19 @@ bevy_ecs::hierarchy::Children [
         lap_speed: 0.25,
     }
     --
-    #Environment
+    #"Sun"
+    jackdaw_scene_types::node_id::SceneNodeId(3117122848111186592)
     bevy_transform::components::transform::Transform
-    jackdaw_scene_types::node_id::SceneNodeId(4010382979775436504)
-    jackdaw_scene_types::environment::Environment {
-        sky: jackdaw_scene_types::environment::Sky {
-            enabled: true,
-            zenith: bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.20477008819580078, green: 0.41999998688697815, blue: 0.5697605609893799, alpha: 1.0 }),
-        },
-        ambient: jackdaw_scene_types::environment::Ambient {
-            reflections: jackdaw_scene_types::environment::Reflections::Trilight,
-            mode: jackdaw_scene_types::environment::AmbientMode::Flat,
-            color: bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.7025279402732849, green: 0.6842367649078369, blue: 0.619969367980957, alpha: 1.0 }),
-            brightness: 200.0,
-        },
-        post: jackdaw_scene_types::environment::PostProcess {
-            tonemapper: jackdaw_scene_types::environment::Tonemapper::AcesFitted,
-            enabled: true,
-            shadow_filtering: jackdaw_scene_types::environment::ShadowFiltering::Hardware2x2,
-        },
-        fog: jackdaw_scene_types::environment::Fog {
-            mode: jackdaw_scene_types::environment::FogMode::Linear,
-            start: 10.0,
-            end: 50.0,
-            density: 0.029999999329447746,
-        },
+    jackdaw::prefab::components::IsA {
+        source: "sun.bsn",
+        deleted: [],
+    }
+    --
+    #"Outdoor Environment"
+    jackdaw_scene_types::node_id::SceneNodeId(4977659659605109418)
+    bevy_transform::components::transform::Transform
+    jackdaw::prefab::components::IsA {
+        source: "outdoor_environment.bsn",
+        deleted: [],
     }
 ]

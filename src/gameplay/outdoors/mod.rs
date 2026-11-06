@@ -6,14 +6,12 @@ use crate::GameplayScene;
 mod camera_effects;
 mod harvest;
 mod player;
-mod time_of_day;
 
 pub(super) fn plugin(app: &mut App) {
     app.add_plugins((
         player::plugin,
         camera_effects::plugin,
         harvest::plugin,
-        time_of_day::plugin,
         plants::PlantsPlugin {
             pick: plants::Pick::Random,
         },

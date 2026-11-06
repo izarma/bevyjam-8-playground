@@ -7,12 +7,11 @@ use crate::{
     GameplayScene, PausableSystems,
     gameplay::{
         CharacterName,
-        base::{BODY_HEIGHT, LabScene, indoor_body},
+        base::{BODY_HEIGHT, LabScene, ground_below, indoor_body},
         clock::Clock,
         visitors::{Died, VISITORS, Visitor, lineup},
     },
     loading::NPCAssets,
-    scene_ready::SceneSettled,
 };
 
 use super::{
@@ -25,25 +24,20 @@ const NPC_SPEED: f32 = 4.0;
 const ARRIVAL: f32 = 0.15;
 
 pub(super) fn plugin(app: &mut App) {
-    app.add_systems(
-        Update,
-        sync_lineup
-            .in_set(PausableSystems)
-            .run_if(in_state(GameplayScene::Base)),
-    )
-    .add_systems(
-        FixedPostUpdate,
-        steer_npcs
-            .before(AhoySystems::MoveCharacters)
-            .in_set(PausableSystems)
-            .run_if(in_state(GameplayScene::Base)),
-    )
-    .add_systems(
-        Update,
-        end_npc_dialogue
-            .in_set(PausableSystems)
-            .run_if(in_state(GameplayScene::Base).and_then(any_with_component::<InDialogue>)),
-    );
+    app.add_systems(Update, sync_lineup.run_if(in_state(GameplayScene::Base)))
+        .add_systems(
+            FixedPostUpdate,
+            steer_npcs
+                .before(AhoySystems::MoveCharacters)
+                .in_set(PausableSystems)
+                .run_if(in_state(GameplayScene::Base)),
+        )
+        .add_systems(
+            Update,
+            end_npc_dialogue
+                .in_set(PausableSystems)
+                .run_if(in_state(GameplayScene::Base).and_then(any_with_component::<InDialogue>)),
+        );
 }
 
 /// Marker for the NPC currently talking to the player.
@@ -52,6 +46,7 @@ pub(crate) struct InDialogue;
 
 #[derive(Component)]
 #[relationship(relationship_target = Body)]
+#[require(Visibility)]
 pub(crate) struct BodyOf(pub(crate) Entity);
 
 #[derive(Component)]
@@ -76,7 +71,7 @@ struct NpcTarget(Vec2);
 // time passed while you were outside, update npc standing positions
 fn sync_lineup(
     mut commands: Commands,
-    lab: Single<(Entity, Has<LineupShown>), (With<LabScene>, With<SceneSettled>)>,
+    lab: Single<(Entity, Has<LineupShown>), With<LabScene>>,
     clock: Single<&Clock>,
     door: Single<&GlobalTransform, With<NpcDoor>>,
     slots: Query<(&NpcSlot, &GlobalTransform)>,
@@ -111,6 +106,7 @@ fn sync_lineup(
                 let (animation, sprite, sprite3d) =
                     indoor_visual_bundle(&assets, &mut texture_atlas_layouts);
                 let (collider, mut controller) = indoor_body(NPC_SPEED);
+                let sprite_at = ground_below(&controller) + BODY_HEIGHT / 2.0;
                 // NPCs pass through each other
                 let others = !LayerMask::from(Layer::Npc);
                 controller.filter.mask = others;
@@ -123,7 +119,12 @@ fn sync_lineup(
                     CollisionLayers::new(Layer::Npc, others),
                     controller,
                     DespawnOnExit(GameplayScene::Base),
-                    children![(Transform::IDENTITY, animation, sprite, sprite3d)],
+                    children![(
+                        Transform::from_xyz(0.0, sprite_at, 0.0),
+                        animation,
+                        sprite,
+                        sprite3d
+                    )],
                 ));
             }
             (Some(place), Some(body)) => {
