@@ -44,7 +44,7 @@ pub struct PixelSprite {
     pub anchor: Vec2,
 
     pub unlit: bool,
-    
+
     pub billboard: bool,
 }
 
