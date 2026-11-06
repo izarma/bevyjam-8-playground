@@ -8,10 +8,14 @@ use unicode_segmentation::UnicodeSegmentation;
 use super::{SpeakerChangeEvent, YarnSpinnerDialogueViewSystemSet};
 use crate::{
     GameplayScene,
+    gameplay::{BALANCED, Health, InDialogue, herbs::Element},
     ui::{
         font,
         interaction::InteractionPalette,
-        palette::{BUTTON_HOVERED_TINT, BUTTON_PRESSED_TINT, BUTTON_TEXT, HEADER_TEXT, LABEL_TEXT},
+        palette::{
+            BUTTON_HOVERED_TINT, BUTTON_PRESSED_TINT, BUTTON_TEXT, GAIN_TEXT, HEADER_TEXT,
+            LABEL_TEXT, LOSS_TEXT,
+        },
         scale::texels,
         widget,
     },
@@ -29,6 +33,8 @@ pub(super) fn plugin(app: &mut App) {
                 write_text.run_if(resource_exists::<Typewriter>),
                 continue_dialogue.run_if(resource_exists::<Typewriter>),
                 select_option_by_key.run_if(resource_exists::<Typewriter>),
+                update_health_bars.run_if(resource_exists::<Typewriter>),
+                bob_continue.run_if(resource_exists::<Typewriter>),
             )
                 .in_set(YarnSpinnerDialogueViewSystemSet),
         );
@@ -48,6 +54,9 @@ struct DialogueOptionsNode;
 
 #[derive(Component, Clone, Default)]
 struct DialogueContinueNode;
+
+#[derive(Component, Clone, Copy, Default)]
+struct DialogueHealthFill(Element);
 
 #[derive(Component, Clone)]
 struct OptionButton(OptionId);
@@ -125,8 +134,13 @@ impl Typewriter {
     }
 }
 
-fn spawn_dialogue_ui(_: On<DialogueStarted>, mut commands: Commands) {
+fn spawn_dialogue_ui(
+    _: On<DialogueStarted>,
+    mut commands: Commands,
+    npc: Query<&Health, With<InDialogue>>,
+) {
     commands.init_resource::<Typewriter>();
+    let health = npc.iter().next().copied().unwrap_or_default();
     commands.spawn_scene(bsn! {
         #DialogueRoot
         DialogueRoot
@@ -136,7 +150,7 @@ fn spawn_dialogue_ui(_: On<DialogueStarted>, mut commands: Commands) {
             height: percent(100),
             flex_direction: FlexDirection::Column,
             align_items: AlignItems::Center,
-            justify_content: JustifyContent::FlexStart,
+            justify_content: JustifyContent::FlexEnd,
             row_gap: texels(2),
             padding: UiRect::top(texels(14)),
         }
@@ -144,6 +158,54 @@ fn spawn_dialogue_ui(_: On<DialogueStarted>, mut commands: Commands) {
         Pickable::IGNORE
         DespawnOnExit::<GameplayScene>(GameplayScene::Base)
         Children [
+            #DialogueTop
+            Node {
+                width: percent(90),
+                flex_direction: FlexDirection::Row,
+                justify_content: JustifyContent::SpaceBetween,
+                align_items: AlignItems::FlexEnd,
+                margin: UiRect {
+                    top: texels(2),
+                    bottom: texels(6),
+                },
+            }
+            Pickable::IGNORE
+            Children [
+                #DialogueOptions
+                Node {
+                    flex_direction: FlexDirection::Column,
+                    align_items: AlignItems::FlexStart,
+                    row_gap: texels(2),
+                }
+                DialogueOptionsNode
+                Pickable::IGNORE
+                --
+                #DialogueHealth
+                Node {
+                    flex_direction: FlexDirection::Column,
+                    align_items: AlignItems::FlexStart,
+                    width: percent(30),
+                    row_gap: texels(1),
+                    padding: UiRect::all(texels(4)),
+                }
+                @widget::panel()
+                Pickable::IGNORE
+                Children [
+                    #DialogueHealthTitle
+                    Text("Health")
+                    @font::text(1)
+                    TextColor(HEADER_TEXT)
+                    Node {
+                        margin: UiRect {
+                            bottom: texels(2),
+                        },
+                    }
+                    Pickable::IGNORE
+                    --
+                    { health_rows(health) }
+                ]
+            ]
+            --
             #DialogueBox
             Node {
                 width: percent(90),
@@ -175,17 +237,6 @@ fn spawn_dialogue_ui(_: On<DialogueStarted>, mut commands: Commands) {
                 DialogueNameNode
                 Pickable::IGNORE
             ]
-            --
-            #DialogueOptions
-            Node {
-                width: percent(90),
-                flex_direction: FlexDirection::Column,
-                align_items: AlignItems::FlexStart,
-                row_gap: texels(2),
-                margin: UiRect::top(texels(2)),
-            }
-            DialogueOptionsNode
-            Pickable::IGNORE
             --
             #DialogueContinue
             Text({ "▼".to_string() })
@@ -248,6 +299,18 @@ fn write_text(
         }
     }
     *was_finished = finished;
+}
+
+fn bob_continue(
+    time: Res<Time>,
+    visibility: Single<&Visibility, With<DialogueContinueNode>>,
+    mut style: Single<&mut Node, With<DialogueContinueNode>>,
+) {
+    if *visibility == Visibility::Hidden {
+        return;
+    }
+    let pixels = (time.elapsed_secs() * 3.0).sin().powi(2) * 5.0;
+    style.bottom = Val::Px(pixels);
 }
 
 fn present_options(
@@ -373,6 +436,84 @@ fn select_option_by_key(
 fn clear_options(commands: &mut Commands, options_node: Entity) {
     commands.entity(options_node).despawn_related::<Children>();
     commands.remove_resource::<PresentedOptions>();
+}
+
+/// Health values span from [`MIN_HEALTH`] to [`MAX_HEALTH`], with
+/// [`BALANCED`] as the healthy middle.
+const MIN_HEALTH: u8 = 1;
+const MAX_HEALTH: u8 = 10;
+
+fn health_rows(health: Health) -> Vec<Box<dyn Scene>> {
+    [
+        Element::Wood,
+        Element::Fire,
+        Element::Earth,
+        Element::Metal,
+        Element::Water,
+    ]
+    .into_iter()
+    .map(|element| -> Box<dyn Scene> {
+        let value = health.get(element);
+        let width = value.clamp(MIN_HEALTH, MAX_HEALTH) as f32 / MAX_HEALTH as f32 * 100.0;
+        Box::new(bsn! {
+            Node {
+                width: percent(100),
+                flex_direction: FlexDirection::Row,
+                align_items: AlignItems::Center,
+                justify_content: JustifyContent::SpaceBetween,
+            }
+            Pickable::IGNORE
+            Children [
+                Text({ element.name().to_string() })
+                @font::text(1)
+                TextColor(LABEL_TEXT)
+                Pickable::IGNORE
+                --
+                Node {
+                    width: texels(64),
+                    height: texels(5),
+                }
+                BackgroundColor(Color::srgba(0.0, 0.0, 0.0, 0.5))
+                Pickable::IGNORE
+                Children [
+                    Node {
+                        width: percent(width),
+                        height: percent(100),
+                    }
+                    DialogueHealthFill(element)
+                    BackgroundColor(health_bar_color(value))
+                    Pickable::IGNORE
+                ]
+            ]
+        })
+    })
+    .collect()
+}
+
+fn update_health_bars(
+    npc: Query<&Health, (With<InDialogue>, Changed<Health>)>,
+    mut fills: Query<(&DialogueHealthFill, &mut Node, &mut BackgroundColor)>,
+) {
+    let Some(health) = npc.iter().next().copied() else {
+        return;
+    };
+    for (fill, mut node, mut background) in &mut fills {
+        let value = health.get(fill.0);
+        let width = value.clamp(MIN_HEALTH, MAX_HEALTH) as f32 / MAX_HEALTH as f32 * 100.0;
+        node.width = percent(width);
+        *background = BackgroundColor(health_bar_color(value));
+    }
+}
+
+/// Green at the balanced value (5), fading to red at either extreme (1 or 10).
+fn health_bar_color(value: u8) -> Color {
+    let value = value.clamp(MIN_HEALTH, MAX_HEALTH);
+    let t = if value >= BALANCED {
+        f32::from(value - BALANCED) / f32::from(MAX_HEALTH - BALANCED)
+    } else {
+        f32::from(BALANCED - value) / f32::from(BALANCED - MIN_HEALTH)
+    };
+    GAIN_TEXT.mix(&LOSS_TEXT, t)
 }
 
 fn number_key_pressed(keys: &ButtonInput<KeyCode>) -> Option<usize> {

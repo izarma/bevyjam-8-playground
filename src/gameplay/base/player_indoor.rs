@@ -16,6 +16,8 @@ use crate::{
     loading::{PLAYER_FRAME, PlayerAssets},
 };
 
+use super::npc::InDialogue;
+
 const WALK_SPEED: f32 = 5.0;
 
 #[derive(Component, Reflect, Default)]
@@ -41,7 +43,7 @@ pub(super) fn plugin(app: &mut App) {
         .add_systems(
             Update,
             (
-                sync_camera_x,
+                sync_camera,
                 (
                     exit_to_outdoors,
                     update_player_animation.in_set(PlayerAnimationSystems::UpdateState),
@@ -62,19 +64,50 @@ pub(super) fn plugin(app: &mut App) {
 const CAM_X_MIN: f32 = -15.0;
 const CAM_X_MAX: f32 = 15.0;
 
+/// Camera y/z while the player is exploring the base (matches `lab_scene.bsn`).
+const CAM_REST_Y: f32 = 2.1;
+const CAM_REST_Z: f32 = 6.2;
+
+/// Camera y/z while the player is talking to an NPC: lower and closer.
+const CAM_DIALOGUE_Y: f32 = 1.4;
+const CAM_DIALOGUE_Z: f32 = 3.5;
+
+/// How quickly the camera eases between the rest and dialogue framing.
+const CAM_ZOOM_SPEED: f32 = 6.0;
+
 /// Past this X coordinate the player leaves the base through the right exit.
 const EXIT_X: f32 = 20.0;
 
-fn sync_camera_x(
+fn sync_camera(
     player: Query<&Transform, (With<IndoorPlayer>, Without<Camera3d>)>,
+    npc: Option<Single<&Transform, (With<InDialogue>, Without<Camera3d>)>>,
     mut cameras: Query<&mut Transform, SceneCamera>,
+    time: Res<Time>,
 ) {
     let Ok(player) = player.single() else {
         return;
     };
-    let x = player.translation.x.clamp(CAM_X_MIN, CAM_X_MAX);
+
+    let talking = npc.is_some();
+    // While zoomed into a conversation, frame the NPC instead of the player.
+    let focus_x = if let Some(npc) = npc {
+        npc.translation.x
+    } else {
+        player.translation.x
+    };
+    let x = focus_x.clamp(CAM_X_MIN, CAM_X_MAX);
+
+    let (target_y, target_z) = if talking {
+        (CAM_DIALOGUE_Y, CAM_DIALOGUE_Z)
+    } else {
+        (CAM_REST_Y, CAM_REST_Z)
+    };
+    let t = 1.0 - (-CAM_ZOOM_SPEED * time.delta_secs()).exp();
+
     for mut camera in &mut cameras {
         camera.translation.x = x;
+        camera.translation.y = camera.translation.y.lerp(target_y, t);
+        camera.translation.z = camera.translation.z.lerp(target_z, t);
     }
 }
 
@@ -86,8 +119,6 @@ fn exit_to_outdoors(
     let Ok(player) = player.single() else {
         return;
     };
-    // Don't leave the base mid-conversation; movement is frozen, but the exit
-    // check should also be explicit rather than relying on that side effect.
     if runners.iter().any(|runner| runner.is_running()) {
         return;
     }

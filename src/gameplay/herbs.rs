@@ -8,8 +8,9 @@ use crate::ui::{
     widget,
 };
 
-#[derive(Clone, Copy)]
-enum Element {
+#[derive(Clone, Copy, Default)]
+pub enum Element {
+    #[default]
     Wood,
     Fire,
     Earth,
@@ -18,7 +19,7 @@ enum Element {
 }
 
 impl Element {
-    fn name(self) -> &'static str {
+    pub(crate) fn name(self) -> &'static str {
         match self {
             Element::Wood => "Wood",
             Element::Fire => "Fire",

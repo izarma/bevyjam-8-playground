@@ -7,6 +7,7 @@ pub(crate) mod inventory;
 mod outdoors;
 
 pub(crate) use animation::{PlayerAnimation, PlayerAnimationSystems};
+pub(crate) use base::{BALANCED, Health, InDialogue};
 
 use bevy::prelude::*;
 use bevy_sprite3d::Sprite3dPlugin;
