@@ -5,9 +5,13 @@ mod dialogue;
 pub(crate) mod herbs;
 pub(crate) mod inventory;
 mod outdoors;
+mod remedy;
+mod visitors;
 
 pub(crate) use animation::{PlayerAnimation, PlayerAnimationSystems};
-pub(crate) use base::{BALANCED, Health, InDialogue};
+pub(crate) use base::{BodyOf, InDialogue};
+pub(crate) use dialogue::Concoction;
+pub(crate) use visitors::{BALANCED, Health, MAX_HEALTH, MIN_HEALTH};
 
 use bevy::prelude::*;
 use bevy_sprite3d::Sprite3dPlugin;
@@ -20,6 +24,8 @@ pub(super) fn plugin(app: &mut App) {
         base::plugin,
         clock::plugin,
         inventory::plugin,
+        remedy::plugin,
+        visitors::plugin,
         dialogue::plugin,
         outdoors::plugin,
     ));

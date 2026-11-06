@@ -1,5 +1,8 @@
+mod concoction;
 mod speaker;
 mod view;
+
+pub(crate) use concoction::Concoction;
 
 use bevy::prelude::*;
 use bevy_yarnspinner::prelude::{
@@ -21,6 +24,7 @@ pub(super) fn plugin(app: &mut App) {
         YarnSpinnerPlugin::with_yarn_sources([YarnFileSource::file("dialogue/npcs.yarn")]),
         view::plugin,
         speaker::plugin,
+        concoction::plugin,
     ))
     .add_message::<SpeakerChangeEvent>()
     .configure_sets(
@@ -49,7 +53,14 @@ pub struct YarnSpinnerDialogueViewSystemSet;
 /// Spawns the single [`DialogueRunner`] the game uses once the Yarn project has
 /// finished compiling. The runner is left idle until an interaction starts it.
 fn spawn_dialogue_runner(mut commands: Commands, project: Res<YarnProject>) {
-    let dialogue_runner = project.create_dialogue_runner(&mut commands);
+    let mut dialogue_runner = project.create_dialogue_runner(&mut commands);
+    let offer_concoction = commands.register_system(concoction::offer_concoction);
+    commands
+        .entity(offer_concoction.entity())
+        .insert(DespawnOnExit(GameState::Gameplay));
+    dialogue_runner
+        .commands_mut()
+        .add_command("offer_concoction", offer_concoction);
     commands.spawn(dialogue_runner);
 }
 

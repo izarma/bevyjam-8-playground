@@ -1,8 +1,9 @@
 // menu inputs / non-player inputs
 use bevy::prelude::*;
 use bevy_enhanced_input::prelude::*;
+use bevy_yarnspinner::prelude::DialogueRunner;
 
-use crate::{GameState, Harvesting, Pause, ui::menus::Menu};
+use crate::{GameState, Harvesting, Pause, gameplay::Concoction, ui::menus::Menu};
 
 use super::pause::open_pause_menu;
 
@@ -50,11 +51,24 @@ fn back(
     menu: Res<State<Menu>>,
     screen: Res<State<GameState>>,
     harvesting: Option<Res<State<Harvesting>>>,
+    mut runners: Query<&mut DialogueRunner>,
+    concoctions: Query<&Concoction>,
 ) {
     let in_game = *screen.get() == GameState::Gameplay;
     let harvesting = harvesting.is_some_and(|harvesting| harvesting.0);
+    let talking = runners.iter().any(|runner| runner.is_running());
+    // a brew, once started, plays out
+    let brewing = concoctions
+        .iter()
+        .any(|concoction| concoction.brewing().is_some());
     match menu.get() {
         Menu::None if harvesting => commands.set_state(Harvesting(false)),
+        Menu::None if brewing => {}
+        Menu::None if talking => {
+            for mut runner in &mut runners {
+                runner.stop();
+            }
+        }
         Menu::None if in_game => open_pause_menu(&mut commands),
         Menu::Pause | Menu::Inventory => commands.set_state(Menu::None),
         Menu::Settings if in_game => commands.set_state(Menu::Pause),

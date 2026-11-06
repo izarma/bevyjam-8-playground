@@ -544,6 +544,72 @@ bevy_ecs::hierarchy::Children [
     }
     bevy_game::gameplay::base::player_indoor::IndoorPlayerSpawn
     --
+    #"NPC Door"
+    jackdaw_scene_types::node_id::SceneNodeId(8624228120134786342)
+    bevy_transform::components::transform::Transform {
+        translation: glam::Vec3 {
+            x: 21.0,
+            y: 0.0,
+            z: 0.0,
+        },
+    }
+    bevy_game::gameplay::base::npc::NpcDoor
+    --
+    #"NPC Slot 0"
+    jackdaw_scene_types::node_id::SceneNodeId(4348501589424956995)
+    bevy_transform::components::transform::Transform {
+        translation: glam::Vec3 {
+            x: 2.0,
+            y: 0.0,
+            z: -3.355088710784912,
+        },
+    }
+    bevy_game::gameplay::base::npc::NpcSlot(0)
+    --
+    #"NPC Slot 1"
+    jackdaw_scene_types::node_id::SceneNodeId(6447184113227667592)
+    bevy_transform::components::transform::Transform {
+        translation: glam::Vec3 {
+            x: 4.0,
+            y: 0.0,
+            z: -3.355088710784912,
+        },
+    }
+    bevy_game::gameplay::base::npc::NpcSlot(1)
+    --
+    #"NPC Slot 2"
+    jackdaw_scene_types::node_id::SceneNodeId(856108072063875377)
+    bevy_transform::components::transform::Transform {
+        translation: glam::Vec3 {
+            x: 6.0,
+            y: 0.0,
+            z: -3.355088710784912,
+        },
+    }
+    bevy_game::gameplay::base::npc::NpcSlot(2)
+    --
+    #"NPC Slot 3"
+    jackdaw_scene_types::node_id::SceneNodeId(4015785459285247189)
+    bevy_transform::components::transform::Transform {
+        translation: glam::Vec3 {
+            x: 8.0,
+            y: 0.0,
+            z: -3.355088710784912,
+        },
+    }
+    bevy_game::gameplay::base::npc::NpcSlot(3)
+    --
+    #"NPC Slot 4"
+    jackdaw_scene_types::node_id::SceneNodeId(1435604647073738920)
+    bevy_transform::components::transform::Transform {
+        translation: glam::Vec3 {
+            x: 10.0,
+            y: 0.0,
+            z: -3.355088710784912,
+        },
+    }
+    bevy_game::gameplay::base::npc::NpcSlot(4)
+    --
     #Cube
     jackdaw_scene_types::node_id::SceneNodeId(5087273645328802128)
     bevy_transform::components::transform::Transform {

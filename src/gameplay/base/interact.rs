@@ -5,12 +5,12 @@ use bevy_yarnspinner::prelude::DialogueRunner;
 use super::{
     BODY_HEIGHT,
     anim::IndoorCharAnimation,
-    npc::{InDialogue, Npc, TalkTarget},
+    npc::{BodyOf, InDialogue},
     player_indoor::Touch,
 };
 use crate::{
     GameplayScene, InControl, PausableSystems,
-    gameplay::{Player, PlayerAnimation, PlayerAnimationSystems},
+    gameplay::{CharacterName, Player, PlayerAnimation, PlayerAnimationSystems},
     ui::{
         billboard::Billboards,
         font,
@@ -53,7 +53,7 @@ pub(super) struct InReach;
 fn find_npc_in_reach(
     mut commands: Commands,
     player: Option<Single<&GlobalTransform, With<Player>>>,
-    npcs: Query<(Entity, &GlobalTransform, Has<InReach>), With<Npc>>,
+    npcs: Query<(Entity, &GlobalTransform, Has<InReach>), With<BodyOf>>,
 ) {
     let ground = |at: &GlobalTransform| Vec2::new(at.translation().x, at.translation().z);
     let nearest = player.and_then(|player| {
@@ -87,7 +87,7 @@ fn show_talk_prompt(
     in_control: Option<Res<State<InControl>>>,
     runners: Query<&DialogueRunner>,
     prompts: Query<(Entity, &TalkPrompt)>,
-    npcs: Query<&GlobalTransform, With<Npc>>,
+    npcs: Query<&GlobalTransform, With<BodyOf>>,
     mut billboards: Billboards,
 ) {
     // hidden while a menu is up or a dialogue is running
@@ -147,14 +147,14 @@ fn talk_panel() -> impl Scene {
     }
 }
 
-/// Starts the Yarn node assigned to the in-reach NPC when the player interacts.
+/// Starts the Yarn node named after the in-reach NPC when the player interacts.
 fn start_interaction(
     _: On<Start<Touch>>,
-    npcs: Query<(Entity, &TalkTarget), With<InReach>>,
+    npcs: Query<(Entity, &CharacterName), With<InReach>>,
     mut runner: Query<&mut DialogueRunner>,
     mut commands: Commands,
 ) {
-    let Some((npc, talk)) = npcs.iter().next() else {
+    let Some((npc, name)) = npcs.iter().next() else {
         return;
     };
     let Ok(mut runner) = runner.single_mut() else {
@@ -163,7 +163,7 @@ fn start_interaction(
     if runner.is_running() {
         return;
     }
-    let node = talk.0;
+    let node = name.0;
     if !runner.node_exists(node) {
         error!(
             "Refusing to start dialogue with {npc:?}: node \"{node}\" is missing from the compiled Yarn project"

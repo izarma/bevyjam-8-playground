@@ -1,187 +1,159 @@
+use avian3d::prelude::{CollisionLayers, LayerMask, PhysicsLayer};
 use bevy::prelude::*;
 use bevy_ahoy::{input::AccumulatedInput, prelude::AhoySystems};
 use bevy_yarnspinner::prelude::DialogueRunner;
 
 use crate::{
     GameplayScene, PausableSystems,
-    gameplay::{CharacterName, base::indoor_body, herbs::Element},
+    gameplay::{
+        CharacterName,
+        base::{BODY_HEIGHT, LabScene, indoor_body},
+        clock::Clock,
+        visitors::{Died, VISITORS, Visitor, lineup},
+    },
     loading::NPCAssets,
+    scene_ready::SceneSettled,
 };
 
-use super::{anim::indoor_visual_bundle, interact::InReach};
+use super::{
+    anim::{IndoorCharAnimation, indoor_visual_bundle},
+    interact::InReach,
+};
 
 const NPC_SPEED: f32 = 4.0;
+// epilon distance for target seeking so npcs dont inch towards their goal forever
+const ARRIVAL: f32 = 0.15;
 
 pub(super) fn plugin(app: &mut App) {
-    app.add_systems(OnEnter(GameplayScene::Base), spawn_npcs)
-        .add_systems(
-            FixedPostUpdate,
-            steer_npcs
-                .before(AhoySystems::MoveCharacters)
-                .in_set(PausableSystems)
-                .run_if(in_state(GameplayScene::Base)),
-        )
-        .add_systems(
-            Update,
-            end_npc_dialogue
-                .in_set(PausableSystems)
-                .run_if(in_state(GameplayScene::Base).and_then(any_with_component::<InDialogue>)),
-        );
+    app.add_systems(
+        Update,
+        sync_lineup
+            .in_set(PausableSystems)
+            .run_if(in_state(GameplayScene::Base)),
+    )
+    .add_systems(
+        FixedPostUpdate,
+        steer_npcs
+            .before(AhoySystems::MoveCharacters)
+            .in_set(PausableSystems)
+            .run_if(in_state(GameplayScene::Base)),
+    )
+    .add_systems(
+        Update,
+        end_npc_dialogue
+            .in_set(PausableSystems)
+            .run_if(in_state(GameplayScene::Base).and_then(any_with_component::<InDialogue>)),
+    );
 }
-
-/// Identity marker for non-player characters.
-#[derive(Component)]
-pub(super) struct Npc;
 
 /// Marker for the NPC currently talking to the player.
 #[derive(Component)]
 pub(crate) struct InDialogue;
 
-#[derive(Component, Clone, Copy)]
-pub(super) struct TalkTarget(pub(super) &'static str);
-
-const NPC_TALK_TARGETS: [TalkTarget; 5] = [
-    TalkTarget("Monk"),
-    TalkTarget("Woman"),
-    TalkTarget("OldMan"),
-    TalkTarget("OldWoman"),
-    TalkTarget("Kid"),
-];
-
-pub(crate) const BALANCED: u8 = 5;
-
-#[derive(Component, Clone, Copy, Debug, PartialEq, Eq)]
-pub(crate) struct Health {
-    wood: u8,
-    fire: u8,
-    earth: u8,
-    metal: u8,
-    water: u8,
-}
-
-impl Health {
-    pub(crate) fn get(self, element: Element) -> u8 {
-        match element {
-            Element::Wood => self.wood,
-            Element::Fire => self.fire,
-            Element::Earth => self.earth,
-            Element::Metal => self.metal,
-            Element::Water => self.water,
-        }
-    }
-    pub(crate) fn offset(&mut self, delta: i8) {
-        let values = [
-            &mut self.wood,
-            &mut self.fire,
-            &mut self.earth,
-            &mut self.metal,
-            &mut self.water,
-        ];
-        for value in values {
-            *value = (*value as i16 + i16::from(delta)).clamp(1, 10) as u8;
-        }
-    }
-
-    #[allow(dead_code)]
-    pub(crate) fn offset_elements(&mut self, deltas: &[(Element, i8)]) {
-        for &(element, delta) in deltas {
-            let value = match element {
-                Element::Wood => &mut self.wood,
-                Element::Fire => &mut self.fire,
-                Element::Earth => &mut self.earth,
-                Element::Metal => &mut self.metal,
-                Element::Water => &mut self.water,
-            };
-            *value = (*value as i16 + i16::from(delta)).clamp(1, 10) as u8;
-        }
-    }
-}
-
-impl Default for Health {
-    fn default() -> Self {
-        Self {
-            wood: BALANCED,
-            fire: BALANCED,
-            earth: BALANCED,
-            metal: BALANCED,
-            water: BALANCED,
-        }
-    }
-}
-
-/// Waypoints an [`Npc`] walks through in order, looping back to the start once
-/// the last one is reached.
 #[derive(Component)]
-struct NpcWaypoints {
-    points: Vec<Vec2>,
-    next: usize,
-    /// Stop requesting movement within this distance (metres) of the current
-    /// waypoint. Smaller values make the NPC settle closer to the marker.
-    arrival_threshold: f32,
-}
+#[relationship(relationship_target = Body)]
+pub(crate) struct BodyOf(pub(crate) Entity);
 
-fn spawn_npcs(
+#[derive(Component)]
+#[relationship_target(relationship = BodyOf)]
+pub(crate) struct Body(Entity);
+#[derive(Component, Reflect, Default)]
+#[reflect(Component, Default)]
+pub struct NpcDoor;
+
+// place where npc stands
+#[derive(Component, Reflect, Default)]
+#[reflect(Component, Default)]
+pub struct NpcSlot(pub usize);
+
+// used to decide if npcs need to walk through the door (because we are inside) or not
+#[derive(Component)]
+pub(super) struct LineupShown;
+
+#[derive(Component)]
+struct NpcTarget(Vec2);
+
+// time passed while you were outside, update npc standing positions
+fn sync_lineup(
+    mut commands: Commands,
+    lab: Single<(Entity, Has<LineupShown>), (With<LabScene>, With<SceneSettled>)>,
+    clock: Single<&Clock>,
+    door: Single<&GlobalTransform, With<NpcDoor>>,
+    slots: Query<(&NpcSlot, &GlobalTransform)>,
+    visitors: Query<(Entity, &Visitor, Option<&Died>, Option<&Body>)>,
+    mut bodies: Query<(&Transform, &mut NpcTarget)>,
     assets: Res<NPCAssets>,
     mut texture_atlas_layouts: ResMut<Assets<TextureAtlasLayout>>,
-    mut commands: Commands,
 ) {
-    let base_points = [
-        Vec2::new(1.0, 1.0),
-        Vec2::new(2.0, 1.0),
-        Vec2::new(2.0, 0.0),
-        Vec2::new(1.0, 0.0),
-    ];
-
-    for (index, x_shift) in [0.0, 2.0, 4.0, 8.0, 16.0].into_iter().enumerate() {
-        let points = base_points
-            .iter()
-            .map(|p| Vec2::new(p.x + x_shift, p.y))
-            .collect();
-
-        spawn_npc(
-            &assets,
-            &mut texture_atlas_layouts,
-            &mut commands,
-            Vec3::new(1.0 + x_shift, 2.0, 0.0),
-            points,
-            NPC_TALK_TARGETS[index],
-        );
+    let (lab, shown) = *lab;
+    let door = door.translation();
+    let mut deaths = [None; VISITORS];
+    for (_, visitor, died, _) in &visitors {
+        deaths[visitor.0] = died.map(|died| died.0);
+    }
+    let lineup = lineup(clock.hours, deaths);
+    for (entity, visitor, _, body) in &visitors {
+        let place = lineup[visitor.0].and_then(|slot| {
+            let place = slots
+                .iter()
+                .find(|(marker, _)| marker.0 == slot)
+                .map(|(_, at)| at.translation());
+            debug_assert!(
+                place.is_some(),
+                "no NpcSlot({slot}) in the lab for {}",
+                visitor.name()
+            );
+            place
+        });
+        match (place, body.map(|body| body.0)) {
+            (Some(place), None) => {
+                let start = if shown { door } else { place };
+                let (animation, sprite, sprite3d) =
+                    indoor_visual_bundle(&assets, &mut texture_atlas_layouts);
+                let (collider, mut controller) = indoor_body(NPC_SPEED);
+                // NPCs pass through each other
+                let others = !LayerMask::from(Layer::Npc);
+                controller.filter.mask = others;
+                commands.spawn((
+                    BodyOf(entity),
+                    CharacterName(visitor.name()),
+                    Transform::from_translation(start + Vec3::Y * BODY_HEIGHT / 2.0),
+                    NpcTarget(place.xz()),
+                    collider,
+                    CollisionLayers::new(Layer::Npc, others),
+                    controller,
+                    DespawnOnExit(GameplayScene::Base),
+                    children![(Transform::IDENTITY, animation, sprite, sprite3d)],
+                ));
+            }
+            (Some(place), Some(body)) => {
+                if let Ok((_, mut target)) = bodies.get_mut(body) {
+                    target.0 = place.xz();
+                }
+            }
+            (None, Some(body)) => {
+                let Ok((at, mut target)) = bodies.get_mut(body) else {
+                    continue;
+                };
+                if at.translation.xz().distance_squared(door.xz()) <= ARRIVAL.powi(2) {
+                    commands.entity(body).despawn();
+                } else {
+                    target.0 = door.xz();
+                }
+            }
+            (None, None) => {}
+        }
+    }
+    if !shown {
+        commands.entity(lab).insert(LineupShown);
     }
 }
 
-fn spawn_npc(
-    assets: &NPCAssets,
-    texture_atlas_layouts: &mut Assets<TextureAtlasLayout>,
-    commands: &mut Commands,
-    start: Vec3,
-    points: Vec<Vec2>,
-    talk: TalkTarget,
-) {
-    let (animation, sprite, sprite3d) = indoor_visual_bundle(assets, texture_atlas_layouts);
-    let (collider, controller) = indoor_body(NPC_SPEED);
-
-    commands
-        .spawn((
-            Npc,
-            talk,
-            Health::default(),
-            CharacterName(talk.0),
-            Transform::from_translation(start),
-            collider,
-            controller,
-            NpcWaypoints {
-                points,
-                next: 0,
-                arrival_threshold: 0.15,
-            },
-            DespawnOnExit(GameplayScene::Base),
-        ))
-        .insert(children![(
-            Transform::IDENTITY,
-            animation,
-            sprite,
-            sprite3d
-        )]);
+#[derive(PhysicsLayer, Default)]
+enum Layer {
+    #[default]
+    Default,
+    Npc,
 }
 
 /// Steers each NPC toward its current waypoint by writing Ahoy's
@@ -190,32 +162,28 @@ fn spawn_npc(
 fn steer_npcs(
     mut npcs: Query<(
         &Transform,
-        &mut NpcWaypoints,
+        &NpcTarget,
         &mut AccumulatedInput,
+        &Children,
         Has<InReach>,
         Has<InDialogue>,
     )>,
+    mut animations: Query<&mut IndoorCharAnimation>,
 ) {
-    for (transform, mut waypoints, mut input, in_reach, in_dialogue) in &mut npcs {
+    for (transform, target, mut input, children, in_reach, in_dialogue) in &mut npcs {
+        input.last_movement = None;
         if in_reach || in_dialogue {
-            input.last_movement = None;
             continue;
         }
-        let Some(target) = waypoints.points.get(waypoints.next).copied() else {
-            input.last_movement = None;
-            continue;
-        };
-
-        // Only horizontal movement is scripted.
-        let position = Vec2::new(transform.translation.x, transform.translation.z);
-        let to_target = target - position;
-
-        if to_target.length_squared() <= waypoints.arrival_threshold.powi(2) {
-            waypoints.next = (waypoints.next + 1) % waypoints.points.len();
-            input.last_movement = None;
+        let to_target = target.0 - transform.translation.xz();
+        if to_target.length_squared() <= ARRIVAL.powi(2) {
+            for child in children {
+                if let Ok(mut animation) = animations.get_mut(*child) {
+                    animation.face_towards(Vec2::Y);
+                }
+            }
             continue;
         }
-
         let direction = to_target.normalize();
         input.last_movement = Some(Vec2::new(direction.x, -direction.y));
     }

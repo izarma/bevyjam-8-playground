@@ -5,18 +5,19 @@ use bevy_yarnspinner::{
 };
 use unicode_segmentation::UnicodeSegmentation;
 
-use super::{SpeakerChangeEvent, YarnSpinnerDialogueViewSystemSet};
+use super::{SpeakerChangeEvent, YarnSpinnerDialogueViewSystemSet, concoction::Concoction};
 use crate::{
     GameplayScene,
-    gameplay::{BALANCED, Health, InDialogue, herbs::Element},
+    gameplay::{BALANCED, BodyOf, Health, InDialogue, MAX_HEALTH, MIN_HEALTH, herbs::Element},
     ui::{
         font,
+        input_prompt::{KEY_ESCAPE, KEY_LEFT, prompt},
         interaction::InteractionPalette,
         palette::{
             BUTTON_HOVERED_TINT, BUTTON_PRESSED_TINT, BUTTON_TEXT, GAIN_TEXT, HEADER_TEXT,
             LABEL_TEXT, LOSS_TEXT,
         },
-        scale::texels,
+        scale::{TEXEL, texels},
         widget,
     },
 };
@@ -34,6 +35,8 @@ pub(super) fn plugin(app: &mut App) {
                 continue_dialogue.run_if(resource_exists::<Typewriter>),
                 select_option_by_key.run_if(resource_exists::<Typewriter>),
                 update_health_bars.run_if(resource_exists::<Typewriter>),
+                float_health_changes.run_if(resource_exists::<Typewriter>),
+                rise_health_changes,
                 bob_continue.run_if(resource_exists::<Typewriter>),
             )
                 .in_set(YarnSpinnerDialogueViewSystemSet),
@@ -41,7 +44,7 @@ pub(super) fn plugin(app: &mut App) {
 }
 
 #[derive(Component, Clone, Default)]
-struct DialogueRoot;
+pub(super) struct DialogueRoot;
 
 #[derive(Component, Clone, Default)]
 struct DialogueNameNode;
@@ -50,13 +53,25 @@ struct DialogueNameNode;
 struct DialogueTextNode;
 
 #[derive(Component, Clone, Default)]
-struct DialogueOptionsNode;
+pub(super) struct DialogueOptionsNode;
 
 #[derive(Component, Clone, Default)]
 struct DialogueContinueNode;
 
 #[derive(Component, Clone, Copy, Default)]
 struct DialogueHealthFill(Element);
+
+#[derive(Component, Clone, Default)]
+struct ShownHealth(Health);
+
+// the scrolling text indicating the impact a herb had
+#[derive(Component, Clone, Default)]
+struct RisingChange {
+    age: f32,
+}
+
+const RISE_SECONDS: f32 = 1.0;
+const RISE_TEXELS: f32 = 14.0;
 
 #[derive(Component, Clone)]
 struct OptionButton(OptionId);
@@ -137,10 +152,15 @@ impl Typewriter {
 fn spawn_dialogue_ui(
     _: On<DialogueStarted>,
     mut commands: Commands,
-    npc: Query<&Health, With<InDialogue>>,
+    npc: Query<&BodyOf, With<InDialogue>>,
+    visitors: Query<&Health>,
 ) {
     commands.init_resource::<Typewriter>();
-    let health = npc.iter().next().copied().unwrap_or_default();
+    let health = npc
+        .iter()
+        .find_map(|body| visitors.get(body.0).ok())
+        .copied()
+        .unwrap_or_default();
     commands.spawn_scene(bsn! {
         #DialogueRoot
         DialogueRoot
@@ -181,6 +201,7 @@ fn spawn_dialogue_ui(
                 Pickable::IGNORE
                 --
                 #DialogueHealth
+                ShownHealth(health)
                 Node {
                     flex_direction: FlexDirection::Column,
                     align_items: AlignItems::FlexStart,
@@ -236,6 +257,20 @@ fn spawn_dialogue_ui(
                 }
                 DialogueNameNode
                 Pickable::IGNORE
+                --
+                #DialogueBack
+                Node {
+                    position_type: PositionType::Absolute,
+                    left: texels(8),
+                    bottom: texels(4),
+                    column_gap: texels(1),
+                }
+                Pickable::IGNORE
+                Children [
+                    @prompt(KEY_LEFT)
+                    --
+                    @prompt(KEY_ESCAPE)
+                ]
             ]
             --
             #DialogueContinue
@@ -438,74 +473,126 @@ fn clear_options(commands: &mut Commands, options_node: Entity) {
     commands.remove_resource::<PresentedOptions>();
 }
 
-/// Health values span from [`MIN_HEALTH`] to [`MAX_HEALTH`], with
-/// [`BALANCED`] as the healthy middle.
-const MIN_HEALTH: u8 = 1;
-const MAX_HEALTH: u8 = 10;
-
 fn health_rows(health: Health) -> Vec<Box<dyn Scene>> {
-    [
-        Element::Wood,
-        Element::Fire,
-        Element::Earth,
-        Element::Metal,
-        Element::Water,
-    ]
-    .into_iter()
-    .map(|element| -> Box<dyn Scene> {
-        let value = health.get(element);
-        let width = value.clamp(MIN_HEALTH, MAX_HEALTH) as f32 / MAX_HEALTH as f32 * 100.0;
-        Box::new(bsn! {
-            Node {
-                width: percent(100),
-                flex_direction: FlexDirection::Row,
-                align_items: AlignItems::Center,
-                justify_content: JustifyContent::SpaceBetween,
-            }
-            Pickable::IGNORE
-            Children [
-                Text({ element.name().to_string() })
-                @font::text(1)
-                TextColor(LABEL_TEXT)
-                Pickable::IGNORE
-                --
+    Element::ALL
+        .into_iter()
+        .map(|element| -> Box<dyn Scene> {
+            let value = health.get(element);
+            let width = bar_width(value);
+            Box::new(bsn! {
                 Node {
-                    width: texels(64),
-                    height: texels(5),
+                    width: percent(100),
+                    flex_direction: FlexDirection::Row,
+                    align_items: AlignItems::Center,
+                    justify_content: JustifyContent::SpaceBetween,
                 }
-                BackgroundColor(Color::srgba(0.0, 0.0, 0.0, 0.5))
                 Pickable::IGNORE
                 Children [
-                    Node {
-                        width: percent(width),
-                        height: percent(100),
-                    }
-                    DialogueHealthFill(element)
-                    BackgroundColor(health_bar_color(value))
+                    Text({ element.name().to_string() })
+                    @font::text(1)
+                    TextColor(LABEL_TEXT)
                     Pickable::IGNORE
+                    --
+                    Node {
+                        width: texels(64),
+                        height: texels(5),
+                    }
+                    BackgroundColor(Color::srgba(0.0, 0.0, 0.0, 0.5))
+                    Pickable::IGNORE
+                    Children [
+                        Node {
+                            width: percent(width),
+                            height: percent(100),
+                        }
+                        DialogueHealthFill(element)
+                        BackgroundColor(health_bar_color(value))
+                        Pickable::IGNORE
+                    ]
                 ]
-            ]
+            })
         })
-    })
-    .collect()
+        .collect()
 }
 
+// shows the visitor health optionally with the currently selected concoction
 fn update_health_bars(
-    npc: Query<&Health, (With<InDialogue>, Changed<Health>)>,
+    npc: Query<&BodyOf, With<InDialogue>>,
+    visitors: Query<&Health>,
+    concoction: Option<Single<&Concoction>>,
     mut fills: Query<(&DialogueHealthFill, &mut Node, &mut BackgroundColor)>,
 ) {
-    let Some(health) = npc.iter().next().copied() else {
+    let Some(&health) = npc.iter().find_map(|body| visitors.get(body.0).ok()) else {
         return;
     };
+    let health = concoction.map_or(health, |concoction| concoction.preview(health));
     for (fill, mut node, mut background) in &mut fills {
         let value = health.get(fill.0);
-        let width = value.clamp(MIN_HEALTH, MAX_HEALTH) as f32 / MAX_HEALTH as f32 * 100.0;
+        let width = bar_width(value);
         node.width = percent(width);
         *background = BackgroundColor(health_bar_color(value));
     }
 }
 
-/// Green at the balanced value (5), fading to red at either extreme (1 or 10).
+fn float_health_changes(
+    mut commands: Commands,
+    npc: Query<&BodyOf, With<InDialogue>>,
+    visitors: Query<&Health>,
+    mut shown: Single<&mut ShownHealth>,
+    fills: Query<(&DialogueHealthFill, &ChildOf)>,
+) {
+    let Some(&health) = npc.iter().find_map(|body| visitors.get(body.0).ok()) else {
+        return;
+    };
+    if shown.0 == health {
+        return;
+    }
+    for (&DialogueHealthFill(element), bar) in &fills {
+        let (now, before) = (health.get(element), shown.0.get(element));
+        if now == before {
+            continue;
+        }
+        let change = i16::from(now) - i16::from(before);
+        let bar = bar.parent();
+        commands.spawn_scene(bsn! {
+            #RisingChange
+            ChildOf(bar)
+            RisingChange
+            Text({ format!("{change:+}") })
+            @font::text(1)
+            TextColor(health_bar_color(now))
+            Node {
+                position_type: PositionType::Absolute,
+                left: percent(45),
+                top: px(0),
+            }
+            Pickable::IGNORE
+        });
+    }
+    shown.0 = health;
+}
+
+fn rise_health_changes(
+    mut commands: Commands,
+    time: Res<Time>,
+    mut changes: Query<(Entity, &mut RisingChange, &mut Node, &mut TextColor)>,
+) {
+    for (entity, mut change, mut node, mut color) in &mut changes {
+        change.age += time.delta_secs();
+        let k = change.age / RISE_SECONDS;
+        if k >= 1.0 {
+            commands.entity(entity).despawn();
+            continue;
+        }
+        node.top = px(-k * RISE_TEXELS * TEXEL);
+        color.0.set_alpha(1.0 - k * k);
+    }
+}
+
+fn bar_width(value: u8) -> f32 {
+    f32::from(value - MIN_HEALTH) / f32::from(MAX_HEALTH - MIN_HEALTH) * 100.0
+}
+
+// green or red based on distance from balanced
 fn health_bar_color(value: u8) -> Color {
     let value = value.clamp(MIN_HEALTH, MAX_HEALTH);
     let t = if value >= BALANCED {

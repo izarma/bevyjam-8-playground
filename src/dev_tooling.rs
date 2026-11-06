@@ -1,10 +1,11 @@
 //! Development tools for the game. This plugin is only enabled in dev builds.
 
 use bevy::{input::common_conditions::input_just_pressed, prelude::*};
+use plants::Plant;
 
 use crate::{
     GameResult, GameState,
-    gameplay::{Health, InDialogue},
+    gameplay::{BodyOf, Health, InDialogue, inventory::Inventory},
 };
 
 pub(super) fn plugin(app: &mut App) {
@@ -35,6 +36,18 @@ pub(super) fn plugin(app: &mut App) {
         increase_npc_health
             .run_if(in_state(GameState::Gameplay).and_then(input_just_pressed(KeyCode::F4))),
     );
+
+    app.add_systems(
+        Update,
+        grant_herbs.run_if(in_state(GameState::Gameplay).and_then(input_just_pressed(KeyCode::F5))),
+    );
+}
+
+fn grant_herbs(mut inventory: Single<&mut Inventory>) {
+    for plant in Plant::ALL {
+        *inventory.plants.entry(plant).or_default() += 3;
+    }
+    println!("Granted 3 of every herb");
 }
 
 const TOGGLE_KEY: KeyCode = KeyCode::Backquote;
@@ -54,16 +67,24 @@ fn lose(mut commands: Commands, mut next_state: ResMut<NextState<GameState>>) {
     next_state.set(GameState::GameOver);
 }
 
-fn decrease_npc_health(npcs: Query<&mut Health, With<InDialogue>>) {
-    adjust_npc_health(npcs, -1);
+fn decrease_npc_health(npcs: Query<&BodyOf, With<InDialogue>>, visitors: Query<&mut Health>) {
+    adjust_npc_health(npcs, visitors, -1);
 }
 
-fn increase_npc_health(npcs: Query<&mut Health, With<InDialogue>>) {
-    adjust_npc_health(npcs, 1);
+fn increase_npc_health(npcs: Query<&BodyOf, With<InDialogue>>, visitors: Query<&mut Health>) {
+    adjust_npc_health(npcs, visitors, 1);
 }
 
-fn adjust_npc_health(mut npcs: Query<&mut Health, With<InDialogue>>, delta: i8) {
-    let Some(mut health) = npcs.iter_mut().next() else {
+fn adjust_npc_health(
+    npcs: Query<&BodyOf, With<InDialogue>>,
+    mut visitors: Query<&mut Health>,
+    delta: i8,
+) {
+    let Some(mut health) = npcs
+        .iter()
+        .next()
+        .and_then(|body| visitors.get_mut(body.0).ok())
+    else {
         println!("Health editor: no NPC in dialogue");
         return;
     };

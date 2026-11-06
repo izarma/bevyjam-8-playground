@@ -66,9 +66,7 @@ impl Default for PixelSprite {
 impl PixelSprite {
     pub fn rect(&self, image_size: UVec2) -> URect {
         let size = self.size.unwrap_or(image_size).max(UVec2::ONE);
-        let columns = (image_size.x / size.x).max(1);
-        let min = UVec2::new(self.cell % columns, self.cell / columns) * size;
-        URect::from_corners(min, min + size)
+        crate::grid_rect(self.cell, (image_size.x / size.x).max(1), size)
     }
 }
 

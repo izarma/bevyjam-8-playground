@@ -1031,9 +1031,15 @@ bevy_ecs::hierarchy::Children [
     jackdaw_scene_types::node_id::SceneNodeId(4182730591733048611)
     plants::Gatherable {
         plants: [
-            plants::Plant::Plant01,
-            plants::Plant::Plant06,
-            plants::Plant::Plant13,
+            plants::Plant::Basil,
+            plants::Plant::Chili,
+            plants::Plant::Lemongrass,
+            plants::Plant::Ginseng,
+            plants::Plant::Chrysanthemum,
+            plants::Plant::Wolfberry,
+            plants::Plant::Lotus,
+            plants::Plant::Licorice,
+            plants::Plant::BlueHibiscus,
         ],
     }
     --
@@ -1047,9 +1053,15 @@ bevy_ecs::hierarchy::Children [
     }
     plants::Gatherable {
         plants: [
-            plants::Plant::Plant01,
-            plants::Plant::Plant06,
-            plants::Plant::Plant13,
+            plants::Plant::Basil,
+            plants::Plant::Chili,
+            plants::Plant::Lemongrass,
+            plants::Plant::Ginseng,
+            plants::Plant::Chrysanthemum,
+            plants::Plant::Wolfberry,
+            plants::Plant::Lotus,
+            plants::Plant::Licorice,
+            plants::Plant::BlueHibiscus,
         ],
     }
     jackdaw_scene_types::node_id::SceneNodeId(3766148771669846517)
@@ -1064,9 +1076,15 @@ bevy_ecs::hierarchy::Children [
     }
     plants::Gatherable {
         plants: [
-            plants::Plant::Plant01,
-            plants::Plant::Plant06,
-            plants::Plant::Plant13,
+            plants::Plant::Basil,
+            plants::Plant::Chili,
+            plants::Plant::Lemongrass,
+            plants::Plant::Ginseng,
+            plants::Plant::Chrysanthemum,
+            plants::Plant::Wolfberry,
+            plants::Plant::Lotus,
+            plants::Plant::Licorice,
+            plants::Plant::BlueHibiscus,
         ],
     }
     jackdaw_scene_types::node_id::SceneNodeId(3766148771669846518)
