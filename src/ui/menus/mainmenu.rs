@@ -2,7 +2,7 @@ use bevy::prelude::*;
 
 use crate::{
     GameState, GameplayScene,
-    ui::{menus::Menu, widget},
+    ui::{menus::Menu, scale::texels, widget},
 };
 
 use super::{close_menu, open_main_menu, open_settings_menu};
@@ -16,6 +16,11 @@ pub(super) fn plugin(app: &mut App) {
 fn spawn_main_menu() -> impl Scene {
     bsn! {
         @widget::ui_root("Main Menu")
+        Node {
+            align_items: AlignItems::FlexStart,
+            justify_content: JustifyContent::FlexStart,
+            padding: UiRect::all(texels(12)),
+        }
         GlobalZIndex(2)
         DespawnOnExit<Menu>(Menu::Main)
         Children [

@@ -5,11 +5,10 @@ use bevy::{
     ui::IsDefaultUiCamera,
 };
 
-/// Camera outside gameplay scenes.
 #[derive(Component, Clone, Default)]
-pub(crate) struct TitleCamera;
+pub(crate) struct NoSceneCamera;
 
-pub(crate) type SceneCamera = (With<Camera3d>, Without<TitleCamera>);
+pub(crate) type SceneCamera = (With<Camera3d>, Without<NoSceneCamera>);
 
 // `Clone` + `Default` are required for these tokens in BSN spawn scenes.
 #[derive(Component, Clone, Default)]
@@ -41,8 +40,14 @@ impl Default for CameraSensitivity {
 
 pub(super) fn plugin(app: &mut App) {
     app.init_resource::<CameraSensitivity>()
-        .add_systems(Startup, spawn_title_camera)
-        .add_systems(OnExit(GameState::Gameplay), spawn_title_camera)
+        .add_systems(
+            OnEnter(GameState::Loading),
+            spawn_no_scene_camera(GameState::Loading),
+        )
+        .add_systems(
+            OnEnter(GameState::GameOver),
+            spawn_no_scene_camera(GameState::GameOver),
+        )
         .add_systems(
             Update,
             (
@@ -54,17 +59,23 @@ pub(super) fn plugin(app: &mut App) {
         );
 }
 
-fn spawn_title_camera(mut commands: Commands) {
-    commands.spawn_scene(bsn! {
-        #TitleCamera
+fn spawn_no_scene_camera(state: GameState) -> impl Fn(Commands) {
+    move |mut commands: Commands| {
+        commands.spawn_scene(no_scene_camera(state.clone()));
+    }
+}
+
+fn no_scene_camera(state: GameState) -> impl Scene {
+    bsn! {
+        #NoSceneCamera
         Camera3d
         Camera {
             // Use the global ClearColor resource so splash/title/gameplay can control the background.
             clear_color: ClearColorConfig::Default,
         }
         IsDefaultUiCamera
-        TitleCamera
-        ~DespawnOnEnter::<GameState>(GameState::Gameplay)
+        NoSceneCamera
+        DespawnOnExit::<GameState>(state)
         Hdr
         Msaa::Off
         Bloom {
@@ -76,13 +87,13 @@ fn spawn_title_camera(mut commands: Commands) {
         ScreenSpaceAmbientOcclusion::default()
         TemporalAntiAliasing::default()
         Tonemapping::AcesFitted
-    });
+    }
 }
 
 /// Tag scene cameras when they spawn. May want a better way to do this.
 fn add_default_ui_camera(
     mut commands: Commands,
-    cameras: Query<Entity, (Added<Camera3d>, Without<TitleCamera>)>,
+    cameras: Query<Entity, (Added<Camera3d>, Without<NoSceneCamera>)>,
 ) {
     for entity in &cameras {
         commands.entity(entity).insert(IsDefaultUiCamera);

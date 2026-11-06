@@ -9,6 +9,7 @@ use pixel_art::PixelSprite;
 use rand::seq::IndexedRandom;
 
 #[derive(Reflect, Clone, Copy, Debug, Default, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[reflect(Default)]
 pub enum Plant {
     #[default]
     Basil,
@@ -26,7 +27,7 @@ pub enum Plant {
 pub const SHEET: &str = "sprites/Herbs-Sheet.png";
 pub const CELL: u32 = 16;
 pub const COLUMNS: u32 = Plant::ALL.len() as u32;
-// the sheet row of picked herbs (row 0 growing, 1 harvested)
+const HARVESTED: u32 = 1;
 const PICKED: u32 = 2;
 
 impl Plant {
@@ -47,6 +48,10 @@ impl Plant {
     }
 
     /// The picked herb's cell in [`SHEET`].
+    pub fn harvested_cell(self) -> u32 {
+        HARVESTED * COLUMNS + self.column()
+    }
+
     pub fn picked_cell(self) -> u32 {
         PICKED * COLUMNS + self.column()
     }
@@ -61,10 +66,18 @@ impl Plant {
     }
 }
 
-#[derive(Component, Reflect, Default)]
+#[derive(Component, Reflect)]
 #[reflect(Component, Default)]
 pub struct Gatherable {
     pub plants: Vec<Plant>,
+}
+
+impl Default for Gatherable {
+    fn default() -> Self {
+        Self {
+            plants: Plant::ALL.to_vec(),
+        }
+    }
 }
 
 #[derive(Component, Clone, Copy, Debug)]

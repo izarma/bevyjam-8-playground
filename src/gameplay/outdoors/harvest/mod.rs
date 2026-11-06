@@ -15,7 +15,7 @@ mod wipe;
 mod yields;
 
 const REACH: f32 = 1.5;
-const FADE_SECONDS: f32 = 0.3;
+const FADE_SECONDS: f32 = 0.25;
 const OVERLAY_ALPHA: f32 = 0.6;
 const HOURS_PER_HARVEST: f32 = 2.0;
 
@@ -38,6 +38,9 @@ pub(super) fn plugin(app: &mut App) {
 // the nearest plant you can harvest
 #[derive(Component)]
 struct InReach;
+
+#[derive(Component)]
+struct Harvested;
 
 #[derive(EntityEvent)]
 struct Won {
@@ -64,35 +67,44 @@ struct Overlay {
 fn find_in_reach(
     mut commands: Commands,
     player: Option<Single<&GlobalTransform, With<Player>>>,
-    plants: Query<(Entity, &GlobalTransform, Has<InReach>), With<Growing>>,
+    plants: Query<(Entity, &GlobalTransform), (With<Growing>, Without<Harvested>)>,
+    in_reach: Query<Entity, With<InReach>>,
 ) {
     let ground = |at: &GlobalTransform| Vec2::new(at.translation().x, at.translation().z);
     let nearest = player.and_then(|player| {
         let player = ground(&player);
         plants
             .iter()
-            .map(|(plant, at, _)| (plant, ground(at).distance(player)))
+            .map(|(plant, at)| (plant, ground(at).distance(player)))
             .filter(|(_, distance)| *distance <= REACH)
             .min_by(|a, b| a.1.total_cmp(&b.1))
             .map(|(plant, _)| plant)
     });
-    for (plant, _, in_reach) in &plants {
-        if in_reach && Some(plant) != nearest {
+    // every holder, eligible or not, so a plant that stops qualifying lets go
+    for plant in &in_reach {
+        if Some(plant) != nearest {
             commands.entity(plant).remove::<InReach>();
-        } else if !in_reach && Some(plant) == nearest {
-            commands.entity(plant).insert(InReach);
         }
+    }
+    if let Some(plant) = nearest
+        && !in_reach.contains(plant)
+    {
+        commands.entity(plant).insert(InReach);
     }
 }
 
 fn start_harvest(
     _: On<Start<Harvest>>,
     mut commands: Commands,
-    plants: Query<(Entity, &PixelSprite), With<InReach>>,
+    plants: Query<(Entity, &Growing, &PixelSprite), With<InReach>>,
     images: Res<Assets<Image>>,
 ) {
-    let Some((plant, sprite)) = plants.iter().next() else {
+    let Some((plant, &Growing(kind), sprite)) = plants.iter().next() else {
         return;
+    };
+    let harvested = PixelSprite {
+        cell: kind.harvested_cell(),
+        ..sprite.clone()
     };
 
     let overlay = commands
@@ -117,7 +129,7 @@ fn start_harvest(
         ))
         .id();
 
-    if !wipe::spawn(&mut commands, overlay, sprite, &images) {
+    if !wipe::spawn(&mut commands, overlay, sprite, &harvested, &images) {
         commands.entity(overlay).despawn();
         return;
     }
@@ -128,7 +140,7 @@ fn collect(
     won: On<Won>,
     mut commands: Commands,
     overlays: Query<&Overlay>,
-    plants: Query<(&Growing, &GlobalTransform, &PixelSprite)>,
+    mut plants: Query<(&Growing, &GlobalTransform, &mut PixelSprite)>,
     mut inventory: Single<&mut Inventory>,
     mut billboards: Billboards,
 ) {
@@ -136,15 +148,16 @@ fn collect(
     let Ok(overlay) = overlays.get(won.entity) else {
         return;
     };
-    let Ok((Growing(plant), at, sprite)) = plants.get(overlay.plant) else {
+    let Ok((&Growing(plant), at, mut sprite)) = plants.get_mut(overlay.plant) else {
         return;
     };
 
-    if let Some(above) = billboards.above(sprite, at) {
-        popup::spawn(&mut billboards, above, *plant);
+    if let Some(above) = billboards.above(&sprite, at) {
+        popup::spawn(&mut billboards, above, plant);
     }
-    commands.entity(overlay.plant).despawn();
-    let count = inventory.plants.entry(*plant).or_default();
+    sprite.cell = plant.harvested_cell();
+    commands.entity(overlay.plant).insert(Harvested);
+    let count = inventory.plants.entry(plant).or_default();
     *count += 1;
     info!("harvested {plant:?}, carrying {count}");
 }

@@ -16,6 +16,8 @@ const GRAVITY: f32 = 900.0;
 const MAX_KICK: f32 = 60.0;
 const POP: f32 = 80.0;
 const HAND_RADIUS: f32 = 1.5;
+// chroma kept by everything you can't wipe
+const FADED_CHROMA: f32 = 0.5;
 
 pub(super) fn plugin(app: &mut App) {
     app.add_systems(
@@ -29,6 +31,8 @@ pub(super) fn plugin(app: &mut App) {
 
 #[derive(Component)]
 struct Board {
+    // the minigame this board scores for
+    overlay: Entity,
     columns: u32,
     // the collection of still-in-place texels
     stuck: Vec<Option<Entity>>,
@@ -42,16 +46,20 @@ struct Falling {
     velocity: Vec2,
 }
 
+/// A board of the `growing` sprite where only the texels that differ from
+/// `harvested` can be wiped, revealing the harvested ones.
 pub(super) fn spawn(
     commands: &mut Commands,
     overlay: Entity,
-    sprite: &PixelSprite,
+    growing: &PixelSprite,
+    harvested: &PixelSprite,
     images: &Assets<Image>,
 ) -> bool {
-    let Some(image) = images.get(&sprite.image) else {
+    let Some(image) = images.get(&growing.image) else {
         return false;
     };
-    let rect = sprite.rect(image.size());
+    let rect = growing.rect(image.size());
+    let after = harvested.rect(image.size());
     let size = rect.size();
     let board = commands
         .spawn((
@@ -98,38 +106,54 @@ pub(super) fn spawn(
             .insert((Fades(Color::WHITE), ChildOf(back)));
     }
 
+    let texel = |rect: URect, x: u32, y: u32| {
+        let x = if growing.flip_x {
+            rect.max.x - 1 - x
+        } else {
+            rect.min.x + x
+        };
+        image.get_color_at(x, rect.min.y + y)
+    };
+    let shown = |color: Color| color.alpha() > 0.0;
     let mut stuck = vec![None; (size.x * size.y) as usize];
     for y in 0..size.y {
         for x in 0..size.x {
-            let source_x = if sprite.flip_x {
-                rect.max.x - 1 - x
-            } else {
-                rect.min.x + x
-            };
-            let Ok(color) = image.get_color_at(source_x, rect.min.y + y) else {
+            let (Ok(before), Ok(harvested)) = (texel(rect, x, y), texel(after, x, y)) else {
                 return false;
             };
-            if color.alpha() == 0.0 {
+            let at = Vec2::new(x as f32, y as f32) * TEXEL_SCALE as f32;
+            let unchanged = before == harvested || !shown(before) && !shown(harvested);
+            if unchanged {
+                if shown(before) {
+                    commands.spawn((square(at), Fades(faded(before)), ChildOf(board)));
+                }
                 continue;
             }
-            let at = Vec2::new(x as f32, y as f32) * TEXEL_SCALE as f32;
-
-            let grey = Oklcha::from(color).with_chroma(0.0).into();
-            commands.spawn((square(at), Fades(grey), ChildOf(board)));
-            stuck[(y * size.x + x) as usize] = Some(
-                commands
-                    .spawn((square(at), Fades(color), ChildOf(board)))
-                    .id(),
-            );
+            if shown(harvested) {
+                commands.spawn((square(at), Fades(faded(harvested)), ChildOf(board)));
+            }
+            if shown(before) {
+                stuck[(y * size.x + x) as usize] = Some(
+                    commands
+                        .spawn((square(at), Fades(before), ChildOf(board)))
+                        .id(),
+                );
+            }
         }
     }
     commands.entity(board).insert(Board {
+        overlay,
         columns: size.x,
         texels: stuck.iter().flatten().count(),
         stuck,
         last_cursor: None,
     });
     true
+}
+
+fn faded(color: Color) -> Color {
+    let color = Oklcha::from(color);
+    color.with_chroma(color.chroma * FADED_CHROMA).into()
 }
 
 fn square(at: Vec2) -> impl Bundle {
@@ -155,13 +179,13 @@ fn snapped(texels: f32) -> Val {
 fn wipe(
     mut commands: Commands,
     window: Single<&Window, With<PrimaryWindow>>,
-    mut boards: Query<(&mut Board, &ComputedNode, &UiGlobalTransform, &ChildOf)>,
+    mut boards: Query<(&mut Board, &ComputedNode, &UiGlobalTransform)>,
     mut progress: Query<&mut Progress>,
 ) {
     let cursor = window
         .cursor_position()
         .map(|logical| logical * window.scale_factor());
-    for (mut board, node, transform, overlay) in &mut boards {
+    for (mut board, node, transform) in &mut boards {
         let from = board.last_cursor.or(cursor);
         board.last_cursor = cursor;
         let (Some(from), Some(to)) = (from, cursor) else {
@@ -194,12 +218,12 @@ fn wipe(
             }
         }
         let left = board.stuck.iter().flatten().count();
-        if let Ok(mut progress) = progress.get_mut(overlay.parent()) {
+        if let Ok(mut progress) = progress.get_mut(board.overlay) {
             progress.done = 1.0 - left as f32 / board.texels.max(1) as f32;
         }
         if left == 0 {
             commands.trigger(Won {
-                entity: overlay.parent(),
+                entity: board.overlay,
             });
         }
     }

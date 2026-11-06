@@ -23,6 +23,8 @@ const CAPSULE_RADIUS: f32 = 0.5;
 const CAPSULE_HEIGHT: f32 = 2.0;
 const CAM_RADIUS: f32 = 10.0;
 const CAM_LOOK_OFFSET: Vec3 = Vec3::new(0.0, 1.0, 0.0);
+// how far the camera keeps from whatever it would clip into
+const CAM_CLEARANCE: f32 = 0.3;
 
 pub(super) fn plugin(app: &mut App) {
     app.add_observer(spawn_player)
@@ -174,11 +176,28 @@ fn apply_look(
 }
 
 fn follow_player(
-    player: Single<&Transform, (With<ExamplePlayer>, Without<Camera3d>)>,
+    player: Single<(Entity, &Transform), (With<ExamplePlayer>, Without<Camera3d>)>,
     mut camera: Single<&mut Transform, SceneCamera>,
+    spatial: SpatialQuery,
 ) {
-    let look_at = player.translation + CAM_LOOK_OFFSET;
-    camera.translation = look_at + camera.rotation * Vec3::new(0.0, 0.0, CAM_RADIUS);
+    let (player, at) = *player;
+    let look_at = at.translation + CAM_LOOK_OFFSET;
+    let back = camera.rotation * Dir3::Z;
+    let distance = spatial
+        .cast_shape(
+            &Collider::sphere(CAM_CLEARANCE),
+            look_at,
+            Quat::IDENTITY,
+            back,
+            &ShapeCastConfig {
+                max_distance: CAM_RADIUS,
+                ignore_origin_penetration: true,
+                ..default()
+            },
+            &SpatialQueryFilter::from_excluded_entities([player]),
+        )
+        .map_or(CAM_RADIUS, |hit| hit.distance);
+    camera.translation = look_at + back * distance;
 }
 
 fn update_animation(
