@@ -30,6 +30,7 @@ jobs:
         run: echo "tag=${GITHUB_REF#refs/tags/}" >> "$GITHUB_OUTPUT"
     outputs:
       version: ${{ inputs.version || steps.tag.outputs.tag }}
+      itch_page: ${{ env.itch_page }}
 
   build-macOS:
     runs-on: macos-latest
@@ -133,7 +134,7 @@ jobs:
     needs: get-version
     env:
       VERSION: ${{needs.get-version.outputs.version}}
-      BUILD_INSTALLER: ${{ false }}
+      BUILD_INSTALLER: "false"
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -142,7 +143,7 @@ jobs:
         with:
           toolchain: stable
       - name: Install dotnet
-        if: ${{ env.BUILD_INSTALLER }}
+        if: ${{ env.BUILD_INSTALLER == 'true' }}
         uses: actions/setup-dotnet@v3
         with:
           global-json-file: build/windows/installer/global.json
@@ -159,7 +160,7 @@ jobs:
           files: target/dist/assets/ target/dist/credits/ target/dist/${{ env.GAME_EXECUTABLE_NAME }}.exe
           dest: ${{ env.GAME_EXECUTABLE_NAME }}_windows.zip
       - name: Create Installer
-        if: ${{ env.BUILD_INSTALLER }}
+        if: ${{ env.BUILD_INSTALLER == 'true' }}
         shell: bash
         run: |
           tag=${{ env.VERSION }}
@@ -180,7 +181,7 @@ jobs:
           path: ${{ env.GAME_EXECUTABLE_NAME }}_windows.zip
           retention-days: 1
       - name: Upload installer
-        if: ${{ env.BUILD_INSTALLER }}
+        if: ${{ env.BUILD_INSTALLER == 'true' }}
         uses: svenstaro/upload-release-action@v2
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
@@ -296,31 +297,42 @@ jobs:
           tag: ${{ env.VERSION }}
           overwrite: true
 
-  deploy-to-itch:
-    runs-on: ubuntu-latest
-    needs: [get-version, build-macOS, build-linux, build-windows, build-web]
-    steps:
-      - name: Download packages
-        uses: actions/download-artifact@v4
-        with:
-          pattern: package-*
-          path: tmp
+  deploy-macos-to-itch:
+    needs: [get-version, build-macOS]
+    uses: ./.github/workflows/upload-to-itch.yaml
+    with:
+      platform: macos
+      version: ${{ needs.get-version.outputs.version }}
+      itch_page: ${{ needs.get-version.outputs.itch_page }}
+    secrets:
+      BUTLER_CREDENTIALS: ${{ secrets.BUTLER_CREDENTIALS }}
 
-      - name: Install butler
-        run: |
-          curl -L -o butler.zip 'https://broth.itch.zone/butler/linux-amd64/LATEST/archive/default'
-          unzip butler.zip
-          chmod +x butler
-          ./butler -V
+  deploy-linux-to-itch:
+    needs: [get-version, build-linux]
+    uses: ./.github/workflows/upload-to-itch.yaml
+    with:
+      platform: linux
+      version: ${{ needs.get-version.outputs.version }}
+      itch_page: ${{ needs.get-version.outputs.itch_page }}
+    secrets:
+      BUTLER_CREDENTIALS: ${{ secrets.BUTLER_CREDENTIALS }}
 
-      - name: Upload packages to itch.io
-        env:
-          BUTLER_API_KEY: ${{ secrets.BUTLER_CREDENTIALS }}
-        run: |
-          for package in $(ls tmp); do
-            ./butler push \
-              --fix-permissions \
-              --userversion='${{ needs.get-version.outputs.version }}' \
-              tmp/"${package}"/* \
-              '${{ env.itch_page }}':"${package#package-}"
-          done
+  deploy-windows-to-itch:
+    needs: [get-version, build-windows]
+    uses: ./.github/workflows/upload-to-itch.yaml
+    with:
+      platform: windows
+      version: ${{ needs.get-version.outputs.version }}
+      itch_page: ${{ needs.get-version.outputs.itch_page }}
+    secrets:
+      BUTLER_CREDENTIALS: ${{ secrets.BUTLER_CREDENTIALS }}
+
+  deploy-web-to-itch:
+    needs: [get-version, build-web]
+    uses: ./.github/workflows/upload-to-itch.yaml
+    with:
+      platform: web
+      version: ${{ needs.get-version.outputs.version }}
+      itch_page: ${{ needs.get-version.outputs.itch_page }}
+    secrets:
+      BUTLER_CREDENTIALS: ${{ secrets.BUTLER_CREDENTIALS }}

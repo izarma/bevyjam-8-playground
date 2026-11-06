@@ -9,12 +9,14 @@ mod inventory;
 mod mainmenu;
 mod pause;
 mod settings;
+mod title;
 
 pub(super) fn plugin(app: &mut App) {
     app.init_state::<Menu>();
     app.add_plugins((
         controls::plugin,
         mainmenu::plugin,
+        title::plugin,
         pause::plugin,
         credits::plugin,
         gameover::plugin,
