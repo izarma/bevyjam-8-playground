@@ -1,7 +1,7 @@
 use bevy::{prelude::*, ui::UiGlobalTransform, window::PrimaryWindow};
 use pixel_art::PixelSprite;
 
-use super::{Fades, Progress, Won};
+use super::{Fades, HarvestScratch, Progress, Won};
 use crate::{
     Harvesting, PausableSystems, Pause,
     ui::{
@@ -201,6 +201,7 @@ fn wipe(
         let top_left = transform.translation - node.size() / 2.0;
         let sweep = Segment2d::new((from - top_left) / cell, (to - top_left) / cell);
         let columns = board.columns;
+        let mut scratched = false;
         for (index, slot) in board.stuck.iter_mut().enumerate() {
             let spot = UVec2::new(index as u32 % columns, index as u32 / columns).as_vec2();
             let center = spot + 0.5;
@@ -208,6 +209,7 @@ fn wipe(
                 continue;
             }
             if let Some(texel) = slot.take() {
+                scratched = true;
                 commands.entity(texel).insert((
                     Falling {
                         position: spot * TEXEL_SCALE as f32,
@@ -216,6 +218,9 @@ fn wipe(
                     ZIndex(1),
                 ));
             }
+        }
+        if scratched {
+            commands.trigger(HarvestScratch);
         }
         let left = board.stuck.iter().flatten().count();
         if let Ok(mut progress) = progress.get_mut(board.overlay) {

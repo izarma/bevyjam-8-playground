@@ -2,14 +2,16 @@ use std::time::Duration;
 
 use bevy::prelude::*;
 use bevy_kira_audio::prelude::*;
-use rand::prelude::*;
+use bevy_yarnspinner::events::{DialogueCompleted, DialogueStarted};
 
 use crate::{
-    GameState, PausableSystems,
-    gameplay::{PlayerAnimation, PlayerAnimationSystems},
-    loading::{MusicAssets, PlayerAssets},
+    GameState,
+    loading::{MusicAssets, NPCAssets},
     scene_ready::Loading,
 };
+
+mod footsteps;
+mod harvesting;
 
 /// Dedicated background music audio channel.
 #[derive(Resource)]
@@ -20,19 +22,22 @@ struct Music;
 pub(super) fn plugin(app: &mut App) {
     app.add_plugins(AudioPlugin)
         .add_audio_channel::<Music>()
+        .add_plugins((footsteps::plugin, harvesting::plugin))
+        .add_observer(play_dialogue_open)
+        .add_observer(play_dialogue_close)
         // The soundtrack follows the application state.
         .add_systems(Update, start_music.run_if(resource_exists::<MusicAssets>))
         .add_systems(OnExit(GameState::Title), stop_music)
         .add_systems(OnExit(GameState::GameOver), stop_music)
-        .add_systems(OnExit(GameState::Gameplay), stop_music)
-        // Footsteps follow the player animation.
-        .add_systems(
-            Update,
-            trigger_step_sound
-                .after(PlayerAnimationSystems::UpdateState)
-                .in_set(PausableSystems)
-                .run_if(in_state(GameState::Gameplay)),
-        );
+        .add_systems(OnExit(GameState::Gameplay), stop_music);
+}
+
+fn play_dialogue_open(_: On<DialogueStarted>, npc_assets: Res<NPCAssets>, audio: Res<Audio>) {
+    audio.play(npc_assets.dialogue_open.clone());
+}
+
+fn play_dialogue_close(_: On<DialogueCompleted>, npc_assets: Res<NPCAssets>, audio: Res<Audio>) {
+    audio.play(npc_assets.dialogue_close.clone());
 }
 
 // dont start music until after loading
@@ -60,25 +65,4 @@ fn stop_music(music: Res<AudioChannel<Music>>) {
     music
         .stop()
         .fade_out(AudioTween::linear(Duration::from_millis(500)));
-}
-
-/// If the player is moving, play a random step sound effect synchronized with
-/// the walk/run animation.
-fn trigger_step_sound(
-    player_assets: Res<PlayerAssets>,
-    audio: Res<Audio>,
-    step_query: Query<&PlayerAnimation>,
-) {
-    for animation in &step_query {
-        if animation.step_frame() {
-            let rng = &mut rand::rng();
-            let steps = [
-                &player_assets.step1,
-                &player_assets.step2,
-                &player_assets.step3,
-                &player_assets.step4,
-            ];
-            audio.play(steps.choose(rng).copied().unwrap().clone());
-        }
-    }
 }

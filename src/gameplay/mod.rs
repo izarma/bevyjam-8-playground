@@ -11,6 +11,7 @@ mod visitors;
 pub(crate) use animation::{PlayerAnimation, PlayerAnimationSystems};
 pub(crate) use base::{BodyOf, InDialogue};
 pub(crate) use dialogue::Concoction;
+pub(crate) use outdoors::HarvestScratch;
 pub(crate) use visitors::{BALANCED, Health, MAX_HEALTH, MIN_HEALTH};
 
 use bevy::prelude::*;
