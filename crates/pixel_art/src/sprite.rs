@@ -5,11 +5,16 @@ use bevy::{
     asset::{RenderAssetUsages, embedded_asset},
     camera::primitives::Aabb,
     camera::visibility::NoAutoAabb,
-    mesh::{Indices, PrimitiveTopology},
-    pbr::{ExtendedMaterial, MaterialExtension, check_entities_needing_specialization},
+    mesh::{Indices, MeshVertexBufferLayoutRef, PrimitiveTopology},
+    pbr::{
+        ExtendedMaterial, MaterialExtension, MaterialExtensionKey, MaterialExtensionPipeline,
+        check_entities_needing_specialization,
+    },
     platform::collections::HashMap,
     prelude::*,
-    render::render_resource::AsBindGroup,
+    render::render_resource::{
+        AsBindGroup, RenderPipelineDescriptor, SpecializedMeshPipelineError,
+    },
     shader::ShaderRef,
 };
 
@@ -39,6 +44,8 @@ pub struct PixelSprite {
     pub anchor: Vec2,
 
     pub unlit: bool,
+
+    pub billboard: bool,
 }
 
 impl Default for PixelSprite {
@@ -51,6 +58,7 @@ impl Default for PixelSprite {
             flip_x: false,
             anchor: Vec2::new(0.5, 0.0),
             unlit: false,
+            billboard: true,
         }
     }
 }
@@ -67,9 +75,24 @@ impl PixelSprite {
 pub type PixelSpriteMaterial = ExtendedMaterial<StandardMaterial, PixelSpriteExtension>;
 
 #[derive(Asset, AsBindGroup, Reflect, Clone)]
+#[bind_group_data(PixelSpriteKey)]
 pub struct PixelSpriteExtension {
     #[texture(100)]
     image: Handle<Image>,
+    billboard: bool,
+}
+
+#[derive(Clone, Copy, PartialEq, Eq, Hash)]
+pub struct PixelSpriteKey {
+    billboard: bool,
+}
+
+impl From<&PixelSpriteExtension> for PixelSpriteKey {
+    fn from(extension: &PixelSpriteExtension) -> Self {
+        Self {
+            billboard: extension.billboard,
+        }
+    }
 }
 
 impl MaterialExtension for PixelSpriteExtension {
@@ -84,11 +107,27 @@ impl MaterialExtension for PixelSpriteExtension {
     fn prepass_vertex_shader() -> ShaderRef {
         "embedded://pixel_art/sprite_prepass.wesl".into()
     }
+
+    fn specialize(
+        _pipeline: &MaterialExtensionPipeline,
+        descriptor: &mut RenderPipelineDescriptor,
+        _layout: &MeshVertexBufferLayoutRef,
+        key: MaterialExtensionKey<Self>,
+    ) -> Result<(), SpecializedMeshPipelineError> {
+        if key.bind_group_data.billboard {
+            descriptor.vertex.shader_defs.push("BILLBOARD".into());
+            if let Some(fragment) = &mut descriptor.fragment {
+                fragment.shader_defs.push("BILLBOARD".into());
+            }
+        }
+        Ok(())
+    }
 }
 
 #[derive(Resource, Default)]
 struct PixelSpriteCache {
-    materials: HashMap<(AssetId<Image>, bool), Handle<PixelSpriteMaterial>>,
+    // keyed by image, unlit and billboard
+    materials: HashMap<(AssetId<Image>, bool, bool), Handle<PixelSpriteMaterial>>,
     quads: HashMap<(AssetId<Image>, QuadShape), Handle<Mesh>>,
 }
 
@@ -156,7 +195,7 @@ fn sync_pixel_sprites(
         let image = sprite.image.id();
         let material = cache
             .materials
-            .entry((image, sprite.unlit))
+            .entry((image, sprite.unlit, sprite.billboard))
             .or_insert_with(|| {
                 materials.add(ExtendedMaterial {
                     base: StandardMaterial {
@@ -167,6 +206,7 @@ fn sync_pixel_sprites(
                     },
                     extension: PixelSpriteExtension {
                         image: sprite.image.clone(),
+                        billboard: sprite.billboard,
                     },
                 })
             })

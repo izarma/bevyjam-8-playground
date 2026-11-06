@@ -28,7 +28,7 @@ import bevy_render::maths::{PI, quat_rotate};
 import bevy_pbr::render::mesh_view_bindings::diffuse_environment_maps;
 @if(ENVIRONMENT_MAP && !MULTIPLE_LIGHT_PROBES_IN_ARRAY)
 import bevy_pbr::render::mesh_view_bindings::diffuse_environment_map;
-import pixel_art::billboard::{billboard_facing, billboard_point, billboard_scale, facing_toward};
+import pixel_art::billboard::{billboard_facing, billboard_point, facing_toward};
 import pixel_art::texel::{texel_center, texel_sharp};
 
 @group(constants::MATERIAL_BIND_GROUP) @binding(100) var sprite_texture: texture_2d<f32>;
@@ -73,8 +73,9 @@ struct BillboardOutput {
     @location(8) @interpolate(flat) frame: vec4<f32>,
     @location(9) local: vec2<f32>,
     @location(10) @interpolate(flat) origin: vec3<f32>,
-    @location(11) @interpolate(flat) scale: vec2<f32>,
+    @location(11) @interpolate(flat) x: vec3<f32>,
     @location(12) @interpolate(flat) own: vec3<f32>,
+    @location(13) @interpolate(flat) y: vec3<f32>,
 }
 
 struct Quad {
@@ -82,9 +83,9 @@ struct Quad {
     @location(8) @interpolate(flat) frame: vec4<f32>,
     @location(9) local: vec2<f32>,
     @location(10) @interpolate(flat) origin: vec3<f32>,
-    @location(11) @interpolate(flat) scale: vec2<f32>,
-    // the entity's forward direction
+    @location(11) @interpolate(flat) x: vec3<f32>,
     @location(12) @interpolate(flat) own: vec3<f32>,
+    @location(13) @interpolate(flat) y: vec3<f32>,
 }
 
 // 90% normal bevy vertex shader
@@ -95,11 +96,12 @@ fn vertex(packed: Vertex) -> BillboardOutput {
     let world_from_local = mesh_functions::get_world_from_local(packed.instance_index);
 
     out.origin = world_from_local[3].xyz;
-    out.scale = billboard_scale(world_from_local);
+    out.x = world_from_local[0].xyz;
+    out.y = world_from_local[1].xyz;
     out.own = world_from_local[2].xyz;
     out.local = vertex.position.xy;
     let facing = billboard_facing(out.origin, out.own);
-    out.world_position = vec4<f32>(billboard_point(out.origin, out.scale, out.local, facing), 1.0);
+    out.world_position = vec4<f32>(billboard_point(out.origin, out.x, out.y, out.local, facing), 1.0);
     out.world_normal = facing;
     out.position = position_world_to_clip(out.world_position.xyz);
 
@@ -176,7 +178,7 @@ fn sprite_lighting(in: PbrInput, quad: Quad, local: vec2<f32>) -> vec4<f32> {
         var shadow = 1.0;
         if receives && ((*light).flags & DIRECTIONAL_LIGHT_FLAGS_SHADOWS_ENABLED_BIT) != 0u {
             let facing = facing_toward((*light).direction_to_light, quad.own);
-            let at = billboard_point(quad.origin, quad.scale, local, facing);
+            let at = billboard_point(quad.origin, quad.x, quad.y, local, facing);
             shadow = shadows::fetch_directional_shadow(i, vec4<f32>(at, 1.0), facing, view_z, in.frag_coord.xy);
         }
         arriving += (*light).color.rgb * shadow;
@@ -188,7 +190,7 @@ fn sprite_lighting(in: PbrInput, quad: Quad, local: vec2<f32>) -> vec4<f32> {
         let id = clustering::get_clusterable_object_id(i);
         let light = &clustered_lights.data[id];
         let facing = facing_toward((*light).position_radius.xyz - quad.origin, quad.own);
-        let at = billboard_point(quad.origin, quad.scale, local, facing);
+        let at = billboard_point(quad.origin, quad.x, quad.y, local, facing);
         var shadow = 1.0;
         if receives && ((*light).flags & POINT_LIGHT_FLAGS_SHADOWS_ENABLED_BIT) != 0u {
             shadow = shadows::fetch_point_shadow(id, vec4<f32>(at, 1.0), facing, in.frag_coord.xy);
@@ -199,7 +201,7 @@ fn sprite_lighting(in: PbrInput, quad: Quad, local: vec2<f32>) -> vec4<f32> {
         let id = clustering::get_clusterable_object_id(i);
         let light = &clustered_lights.data[id];
         let facing = facing_toward((*light).position_radius.xyz - quad.origin, quad.own);
-        let at = billboard_point(quad.origin, quad.scale, local, facing);
+        let at = billboard_point(quad.origin, quad.x, quad.y, local, facing);
         var shadow = 1.0;
         if receives && ((*light).flags & POINT_LIGHT_FLAGS_SHADOWS_ENABLED_BIT) != 0u {
             shadow = shadows::fetch_spot_shadow(
@@ -246,7 +248,7 @@ fn fragment(in: VertexOutput, quad: Quad, @builtin(front_facing) is_front: bool)
     // every fragment of a texel should be lit and postprocessed the same
     let size = vec2<f32>(textureDimensions(sprite_texture));
     let local = texel_center(in.uv, size, vec3<f32>(quad.local, 0.0), ddx, ddy, local_ddx, local_ddy).xy;
-    let seen = billboard_point(quad.origin, quad.scale, local, billboard_facing(quad.origin, quad.own));
+    let seen = billboard_point(quad.origin, quad.x, quad.y, local, billboard_facing(quad.origin, quad.own));
     pbr_input.world_position = vec4<f32>(seen, 1.0);
 
     var out: FragmentOutput;
