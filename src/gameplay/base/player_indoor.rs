@@ -11,7 +11,7 @@ use crate::{
     gameplay::{
         CharacterName, Player, PlayerAnimation, SpeakerSprite,
         animation::PlayerAnimationSystems,
-        base::{BODY_HEIGHT, indoor_body},
+        base::{BODY_HEIGHT, ground_below, indoor_body},
     },
     loading::{PLAYER_FRAME, PlayerAssets},
 };
@@ -146,6 +146,7 @@ fn spawn_player_base(
         ..default()
     };
     let (collider, controller) = indoor_body(WALK_SPEED);
+    let sprite_at = ground_below(&controller);
 
     commands
         .spawn_scene(bsn! {
@@ -160,7 +161,7 @@ fn spawn_player_base(
         .insert(CharacterName("Aruna"))
         .insert(children![(
             IndoorPlayerSprite,
-            Transform::from_xyz(0.0, -BODY_HEIGHT / 2.0, 0.0),
+            Transform::from_xyz(0.0, sprite_at, 0.0),
             animation,
             sprite,
         )])

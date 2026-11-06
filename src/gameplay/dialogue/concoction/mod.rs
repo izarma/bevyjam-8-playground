@@ -43,6 +43,7 @@ pub(crate) struct Concoction {
     visitor: Entity,
     mix: [Option<Plant>; SLOTS],
     stage: Stage,
+    hurried: bool,
     // for keeping the yarn dialogue open while we do the brew event
     done: Arc<AtomicBool>,
 }
@@ -62,7 +63,7 @@ enum Stage {
 /// What one [`Concoction::advance`] did.
 #[derive(Default)]
 struct Step {
-    stamped: Option<Plant>,
+    stamped: Vec<Plant>,
     drunk: bool,
 }
 
@@ -72,6 +73,7 @@ impl Concoction {
             visitor,
             mix: [None; SLOTS],
             stage: Stage::Mixing,
+            hurried: false,
             done,
         }
     }
@@ -162,30 +164,45 @@ impl Concoction {
 
     // moves through the brewing timeline in `Stage`s and `Step`s.
     fn advance(&mut self, seconds: f32) -> Step {
-        let Stage::Brewing {
+        let Concoction {
+            mix, stage, done, ..
+        } = self;
+        let mut step = Step::default();
+        let mut left = seconds;
+        // as many slots as `seconds` covers
+        while let Stage::Brewing {
             marks,
             slot,
             elapsed,
-        } = &mut self.stage
-        else {
-            return Step::default();
-        };
-        let mut step = Step::default();
-        let before = *elapsed;
-        *elapsed += seconds;
-        if before < STAMP_AT && *elapsed >= STAMP_AT {
-            step.stamped = self.mix[*slot];
-        }
-        if *elapsed >= SLOT_SECONDS {
+        } = stage
+        {
+            let before = *elapsed;
+            let spent = left.min(SLOT_SECONDS - before);
+            *elapsed += spent;
+            left -= spent;
+            if before < STAMP_AT
+                && *elapsed >= STAMP_AT
+                && let Some(plant) = mix[*slot]
+            {
+                step.stamped.push(plant);
+            }
+            if *elapsed < SLOT_SECONDS {
+                break;
+            }
             *slot += 1;
             *elapsed = 0.0;
             if *slot == SLOTS {
-                self.stage = Stage::Drunk { marks: *marks };
-                self.done.store(true, Ordering::Relaxed);
+                *stage = Stage::Drunk { marks: *marks };
+                done.store(true, Ordering::Relaxed);
                 step.drunk = true;
             }
         }
         step
+    }
+
+    // finish brewing instantly
+    pub(crate) fn hurry(&mut self) {
+        self.hurried = true;
     }
 }
 
@@ -222,11 +239,16 @@ fn brew(
     mut visitors: Query<&mut Health>,
     mut clock: Single<&mut Clock>,
 ) {
-    let step = concoction.advance(time.delta_secs());
-    if let Some(plant) = step.stamped
-        && let Ok(mut health) = visitors.get_mut(concoction.visitor)
-    {
-        health.dose(plant);
+    let seconds = if concoction.hurried {
+        f32::INFINITY
+    } else {
+        time.delta_secs()
+    };
+    let step = concoction.advance(seconds);
+    if let Ok(mut health) = visitors.get_mut(concoction.visitor) {
+        for plant in step.stamped {
+            health.dose(plant);
+        }
     }
     if step.drunk {
         clock.bank += HOURS_PER_DOSE;

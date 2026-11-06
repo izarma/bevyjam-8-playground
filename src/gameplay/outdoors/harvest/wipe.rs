@@ -16,7 +16,6 @@ const GRAVITY: f32 = 900.0;
 const MAX_KICK: f32 = 60.0;
 const POP: f32 = 80.0;
 const HAND_RADIUS: f32 = 1.5;
-// chroma kept by everything you can't wipe
 const FADED_CHROMA: f32 = 0.5;
 
 pub(super) fn plugin(app: &mut App) {
@@ -31,7 +30,6 @@ pub(super) fn plugin(app: &mut App) {
 
 #[derive(Component)]
 struct Board {
-    // the minigame this board scores for
     overlay: Entity,
     columns: u32,
     // the collection of still-in-place texels
@@ -46,8 +44,6 @@ struct Falling {
     velocity: Vec2,
 }
 
-/// A board of the `growing` sprite where only the texels that differ from
-/// `harvested` can be wiped, revealing the harvested ones.
 pub(super) fn spawn(
     commands: &mut Commands,
     overlay: Entity,

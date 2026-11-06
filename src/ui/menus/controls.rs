@@ -52,18 +52,21 @@ fn back(
     screen: Res<State<GameState>>,
     harvesting: Option<Res<State<Harvesting>>>,
     mut runners: Query<&mut DialogueRunner>,
-    concoctions: Query<&Concoction>,
+    mut concoctions: Query<&mut Concoction>,
 ) {
     let in_game = *screen.get() == GameState::Gameplay;
     let harvesting = harvesting.is_some_and(|harvesting| harvesting.0);
     let talking = runners.iter().any(|runner| runner.is_running());
-    // a brew, once started, plays out
     let brewing = concoctions
         .iter()
         .any(|concoction| concoction.brewing().is_some());
     match menu.get() {
         Menu::None if harvesting => commands.set_state(Harvesting(false)),
-        Menu::None if brewing => {}
+        Menu::None if brewing => {
+            for mut concoction in &mut concoctions {
+                concoction.hurry();
+            }
+        }
         Menu::None if talking => {
             for mut runner in &mut runners {
                 runner.stop();

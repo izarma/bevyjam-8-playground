@@ -119,8 +119,13 @@ fn spawn_player(
             ExamplePlayer,
             children![(
                 ExamplePlayerSprite,
-                // feet at the bottom of the capsule
-                Transform::from_xyz(0.0, -CAPSULE_HEIGHT / 2.0, 0.0),
+                // feet on the ground
+                Transform::from_xyz(
+                    0.0,
+                    -CAPSULE_HEIGHT / 2.0
+                        - CharacterController::default().move_and_slide.skin_width,
+                    0.0,
+                ),
                 animation,
                 sprite,
             )],

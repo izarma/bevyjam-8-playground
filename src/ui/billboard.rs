@@ -13,7 +13,7 @@ use bevy::{
 };
 use pixel_art::PixelSprite;
 
-use crate::{GameplayScene, ui::scale::TEXEL};
+use crate::{GameState, GameplayScene, ui::scale::TEXEL};
 
 // meters between a sprite's top and a billboard above it
 const GAP: f32 = 0.35;
@@ -21,7 +21,8 @@ const GAP: f32 = 0.35;
 const TEXELS_PER_METER: f32 = 32.0;
 
 pub(crate) fn plugin(app: &mut App) {
-    app.add_systems(Update, fit_canvas_scale.run_if(resource_changed::<UiScale>));
+    app.add_systems(Update, fit_canvas_scale.run_if(resource_changed::<UiScale>))
+        .add_systems(OnEnter(GameState::Loading), warm_up);
 }
 
 #[derive(Component)]
@@ -60,10 +61,7 @@ impl Billboards<'_, '_> {
         ui: impl Scene,
         scene: GameplayScene,
     ) -> EntityCommands<'_> {
-        let mut image =
-            Image::new_target_texture(canvas.x, canvas.y, TextureFormat::Bgra8UnormSrgb, None);
-        image.sampler = ImageSampler::nearest();
-        let image = self.images.add(image);
+        let (image, camera) = self.canvas(canvas);
         let billboard = self
             .commands
             .spawn((
@@ -82,20 +80,7 @@ impl Billboards<'_, '_> {
             .commands
             .spawn((
                 Name::new("Billboard Camera"),
-                CanvasCamera,
-                Camera2d,
-                Camera {
-                    order: -1,
-                    clear_color: ClearColorConfig::Custom(Color::NONE),
-                    ..default()
-                },
-                Tonemapping::None,
-                DebandDither::Disabled,
-                RenderLayers::none(),
-                RenderTarget::Image(ImageRenderTarget {
-                    handle: image,
-                    scale_factor: canvas_scale(&self.ui_scale),
-                }),
+                camera,
                 PartOfBillboard(billboard),
             ))
             .id();
@@ -104,6 +89,54 @@ impl Billboards<'_, '_> {
             .insert((UiTargetCamera(camera), PartOfBillboard(billboard)));
         self.commands.entity(billboard)
     }
+}
+
+impl Billboards<'_, '_> {
+    fn canvas(&mut self, size: UVec2) -> (Handle<Image>, impl Bundle) {
+        let mut image =
+            Image::new_target_texture(size.x, size.y, TextureFormat::Bgra8UnormSrgb, None);
+        image.sampler = ImageSampler::nearest();
+        let image = self.images.add(image);
+        let camera = (
+            CanvasCamera,
+            Camera2d,
+            Camera {
+                order: -1,
+                clear_color: ClearColorConfig::Custom(Color::NONE),
+                ..default()
+            },
+            Tonemapping::None,
+            DebandDither::Disabled,
+            RenderLayers::none(),
+            RenderTarget::Image(ImageRenderTarget {
+                handle: image.clone(),
+                scale_factor: canvas_scale(&self.ui_scale),
+            }),
+        );
+        (image, camera)
+    }
+}
+
+fn warm_up(mut billboards: Billboards) {
+    let (_, camera) = billboards.canvas(UVec2::splat(8));
+    let camera = billboards
+        .commands
+        .spawn((
+            Name::new("Billboard Warm-up"),
+            camera,
+            DespawnOnExit(GameState::Title),
+        ))
+        .id();
+    billboards.commands.spawn((
+        Node {
+            width: percent(100),
+            height: percent(100),
+            ..default()
+        },
+        BackgroundColor(Color::WHITE),
+        UiTargetCamera(camera),
+        DespawnOnExit(GameState::Title),
+    ));
 }
 
 fn canvas_scale(ui_scale: &UiScale) -> f32 {
