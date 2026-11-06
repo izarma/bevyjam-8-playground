@@ -5,7 +5,7 @@ import bevy_pbr::render::{
     view_transformations::position_world_to_clip,
 };
 import bevy_pbr::prepass::io::{Vertex, decompress_vertex};
-import pixel_art::billboard::{billboard_facing, billboard_point, billboard_scale};
+import pixel_art::billboard::{billboard_facing, billboard_point};
 
 fn facing(world_from_local: mat4x4<f32>) -> vec3<f32> {
     return billboard_facing(world_from_local[3].xyz, world_from_local[2].xyz);
@@ -13,7 +13,12 @@ fn facing(world_from_local: mat4x4<f32>) -> vec3<f32> {
 
 fn placed(world_from_local: mat4x4<f32>, local: vec3<f32>) -> vec3<f32> {
     return billboard_point(
-        world_from_local[3].xyz, billboard_scale(world_from_local), local.xy, facing(world_from_local));
+        world_from_local[3].xyz,
+        world_from_local[0].xyz,
+        world_from_local[1].xyz,
+        local.xy,
+        facing(world_from_local),
+    );
 }
 
 struct BillboardOutput {
