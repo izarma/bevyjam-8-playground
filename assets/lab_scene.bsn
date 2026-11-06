@@ -2413,9 +2413,9 @@ bevy_ecs::hierarchy::Children [
             z: 5.0,
         },
         scale: glam::Vec3 {
+            x: 44.0,
             y: 20.0,
             z: 0.009999999776482582,
-            x: 44.0,
         },
     }
     jackdaw_scene_types::types::Brush {
@@ -2869,4 +2869,227 @@ bevy_ecs::hierarchy::Children [
     avian3d::dynamics::rigid_body::RigidBody::Static
     jackdaw_avian_integration::AvianCollider(avian3d::collision::collider::constructor::ColliderConstructor::TrimeshFromMesh)
     bevy_camera::visibility::Visibility::Hidden
+    --
+    #Chandelier
+    bevy_transform::components::transform::Transform {
+        translation: glam::Vec3 {
+            x: -1.5,
+            y: 3.210463523864746,
+            z: 0.0,
+        },
+    }
+    jackdaw_scene_types::node_id::SceneNodeId(3416446451134850355)
+    pixel_art::sprite::PixelSprite {
+        image: "sprites/interior_props.png",
+        size: core::option::Option::Some(glam::UVec2 { x: 48, y: 32 }),
+        billboard: false,
+    }
+    --
+    #multicandles
+    bevy_transform::components::transform::Transform {
+        translation: glam::Vec3 {
+            x: -21.648181915283203,
+            y: 0.04020845890045166,
+            z: -4.696489334106445,
+        },
+    }
+    jackdaw_scene_types::node_id::SceneNodeId(3462172136416278439)
+    pixel_art::sprite::PixelSprite {
+        image: "sprites/interior_props.png",
+        size: core::option::Option::Some(glam::UVec2 { x: 48, y: 32 }),
+        cell: 1,
+        billboard: false,
+    }
+    --
+    #Table
+    bevy_transform::components::transform::Transform {
+        translation: glam::Vec3 {
+            x: -14.442198753356934,
+            y: 0.0,
+            z: -0.000000007623927267275121,
+        },
+    }
+    jackdaw_scene_types::node_id::SceneNodeId(1781186654033623249)
+    pixel_art::sprite::PixelSprite {
+        image: "sprites/interior_props.png",
+        size: core::option::Option::Some(glam::UVec2 { x: 48, y: 32 }),
+        cell: 2,
+        billboard: false,
+    }
+    --
+    #ChairLeft
+    bevy_transform::components::transform::Transform {
+        translation: glam::Vec3 {
+            x: -14.994839668273926,
+            y: -0.010998770594596863,
+            z: -2.099388837814331,
+        },
+    }
+    jackdaw_scene_types::node_id::SceneNodeId(403785031168745946)
+    pixel_art::sprite::PixelSprite {
+        image: "sprites/interior_props.png",
+        size: core::option::Option::Some(glam::UVec2 { x: 48, y: 32 }),
+        cell: 3,
+        billboard: false,
+    }
+    --
+    #ChairRight
+    bevy_transform::components::transform::Transform {
+        translation: glam::Vec3 {
+            x: -14.037659645080566,
+            y: 0.0,
+            z: 1.34575355052948,
+        },
+    }
+    jackdaw_scene_types::node_id::SceneNodeId(1262154038117315489)
+    pixel_art::sprite::PixelSprite {
+        image: "sprites/interior_props.png",
+        size: core::option::Option::Some(glam::UVec2 { x: 48, y: 32 }),
+        cell: 3,
+        flip_x: true,
+        billboard: false,
+    }
+    --
+    #Picture1
+    bevy_transform::components::transform::Transform {
+        translation: glam::Vec3 {
+            x: -6.0,
+            y: 1.7999999523162842,
+            z: -4.912491321563721,
+        },
+    }
+    jackdaw_scene_types::node_id::SceneNodeId(7482590078810213076)
+    pixel_art::sprite::PixelSprite {
+        image: "sprites/interior_props.png",
+        size: core::option::Option::Some(glam::UVec2 { x: 48, y: 32 }),
+        cell: 4,
+        billboard: false,
+    }
+    --
+    #Picture2
+    bevy_transform::components::transform::Transform {
+        translation: glam::Vec3 {
+            x: -4.4,
+            y: 1.8,
+            z: -4.8,
+        },
+    }
+    jackdaw_scene_types::node_id::SceneNodeId(4670350298114876252)
+    pixel_art::sprite::PixelSprite {
+        image: "sprites/interior_props.png",
+        size: core::option::Option::Some(glam::UVec2 { x: 48, y: 32 }),
+        cell: 5,
+        billboard: false,
+    }
+    --
+    #Picture3
+    bevy_transform::components::transform::Transform {
+        translation: glam::Vec3 {
+            x: 3.0,
+            y: 1.8,
+            z: -4.8,
+        },
+    }
+    jackdaw_scene_types::node_id::SceneNodeId(3695899571916576072)
+    pixel_art::sprite::PixelSprite {
+        image: "sprites/interior_props.png",
+        size: core::option::Option::Some(glam::UVec2 { x: 48, y: 32 }),
+        cell: 6,
+        billboard: false,
+    }
+    --
+    #Picture4
+    bevy_transform::components::transform::Transform {
+        translation: glam::Vec3 {
+            x: 4.6,
+            y: 1.8,
+            z: -4.8,
+        },
+    }
+    jackdaw_scene_types::node_id::SceneNodeId(279410337148665196)
+    pixel_art::sprite::PixelSprite {
+        image: "sprites/interior_props.png",
+        size: core::option::Option::Some(glam::UVec2 { x: 48, y: 32 }),
+        cell: 7,
+        billboard: false,
+    }
+    --
+    #CandelabraSmallA
+    bevy_transform::components::transform::Transform {
+        translation: glam::Vec3 {
+            x: -0.4895479679107666,
+            y: 0.875,
+            z: -4.360351085662842,
+        },
+    }
+    jackdaw_scene_types::node_id::SceneNodeId(4495490679548004938)
+    pixel_art::sprite::PixelSprite {
+        image: "sprites/lamps_and_candles.png",
+        size: core::option::Option::Some(glam::UVec2 { x: 32, y: 64 }),
+        billboard: false,
+    }
+    --
+    #CandelabraSmallB
+    bevy_transform::components::transform::Transform {
+        translation: glam::Vec3 {
+            x: -0.760370671749115,
+            y: 0.875,
+            z: -1.772844672203064,
+        },
+    }
+    jackdaw_scene_types::node_id::SceneNodeId(3601523817026976948)
+    pixel_art::sprite::PixelSprite {
+        image: "sprites/lamps_and_candles.png",
+        size: core::option::Option::Some(glam::UVec2 { x: 32, y: 64 }),
+        cell: 2,
+        billboard: false,
+    }
+    --
+    #CandelabraTall
+    bevy_transform::components::transform::Transform {
+        translation: glam::Vec3 {
+            x: -6.641793251037598,
+            y: 0.15607687830924988,
+            z: -0.10784649848937988,
+        },
+    }
+    jackdaw_scene_types::node_id::SceneNodeId(5286144414584352642)
+    pixel_art::sprite::PixelSprite {
+        image: "sprites/lamps_and_candles.png",
+        size: core::option::Option::Some(glam::UVec2 { x: 32, y: 64 }),
+        cell: 4,
+        billboard: false,
+    }
+    --
+    #CandleStick
+    bevy_transform::components::transform::Transform {
+        translation: glam::Vec3 {
+            x: -11.620331764221191,
+            y: -0.18126507103443146,
+            z: -0.2962304651737213,
+        },
+    }
+    jackdaw_scene_types::node_id::SceneNodeId(8276493634819721792)
+    pixel_art::sprite::PixelSprite {
+        image: "sprites/lamps_and_candles.png",
+        size: core::option::Option::Some(glam::UVec2 { x: 32, y: 64 }),
+        cell: 5,
+        billboard: false,
+    }
+    --
+    #CandelabraLarge
+    bevy_transform::components::transform::Transform {
+        translation: glam::Vec3 {
+            x: 14.773408889770508,
+            y: 0.0,
+            z: -3.5,
+        },
+    }
+    jackdaw_scene_types::node_id::SceneNodeId(3714102212920412865)
+    pixel_art::sprite::PixelSprite {
+        image: "sprites/lamps_and_candles.png",
+        size: core::option::Option::Some(glam::UVec2 { x: 32, y: 64 }),
+        cell: 6,
+        billboard: false,
+    }
 ]
