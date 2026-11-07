@@ -12,7 +12,7 @@ pub(super) fn plugin(app: &mut App) {
         LoadingState::new(GameState::Loading)
             .continue_to_state(GameState::Title)
             .load_collection::<UIAssets>()
-            .load_collection::<MusicAssets>()
+            .load_collection::<AmbienceAssets>()
             .load_collection::<PlayerAssets>()
             .load_collection::<FootstepAssets>()
             .load_collection::<HarvestingAssets>()
@@ -25,6 +25,14 @@ pub(super) fn plugin(app: &mut App) {
 // When done loading, they will be inserted as resources (see <https://github.com/NiklasEi/bevy_asset_loader>).
 
 #[derive(AssetCollection, Resource)]
+pub struct AmbienceAssets {
+    #[asset(path = "audio/ambience/menus.ogg")]
+    pub menus: Handle<AudioSource>,
+    #[asset(path = "audio/ambience/outside.ogg")]
+    pub outdoors: Handle<AudioSource>,
+}
+
+#[derive(AssetCollection, Resource)]
 pub struct UIAssets {
     #[asset(path = "audio/sfx/button_hover.ogg")]
     pub button_hover: Handle<AudioSource>,
@@ -32,16 +40,6 @@ pub struct UIAssets {
     pub button_click: Handle<AudioSource>,
     #[asset(path = "textures/bevy.png")]
     pub bevy: Handle<Image>,
-}
-
-#[derive(AssetCollection, Resource)]
-pub struct MusicAssets {
-    #[asset(path = "audio/music/Monkeys Spinning Monkeys.ogg")]
-    pub title_theme: Handle<AudioSource>,
-    #[asset(path = "audio/music/Allegories.ogg")]
-    pub game_over_bg: Handle<AudioSource>,
-    #[asset(path = "audio/music/Fluffing A Duck.ogg")]
-    pub game_bg1: Handle<AudioSource>,
 }
 
 // size of one cell of the player sheet, in texels
@@ -120,6 +118,8 @@ pub struct FootstepAssets {
 
 #[derive(AssetCollection, Resource)]
 pub struct HarvestingAssets {
+    #[asset(path = "audio/sfx/pickup.ogg")]
+    pub pickup: Handle<AudioSource>,
     #[asset(
         paths(
             "audio/sfx/harvesting/harvesting_1.ogg",

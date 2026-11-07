@@ -269,7 +269,9 @@ fn brew(
     let step = concoction.advance(seconds);
     if step.anticipating && !assets.herb_anticipation.is_empty() {
         let clips = &assets.herb_anticipation;
-        anticipation.play(clips[*next_anticipation % clips.len()].clone());
+        anticipation
+            .play(clips[*next_anticipation % clips.len()].clone())
+            .with_volume(3.0);
         *next_anticipation = (*next_anticipation + 1) % clips.len();
     }
     for mark in step.revealed {
@@ -282,7 +284,9 @@ fn brew(
             Mark::Absent => (&assets.herb_bad, 2),
         };
         if !clips.is_empty() {
-            audio.play(clips[next_result[index] % clips.len()].clone());
+            audio
+                .play(clips[next_result[index] % clips.len()].clone())
+                .with_volume(3.0);
             next_result[index] = (next_result[index] + 1) % clips.len();
         }
     }

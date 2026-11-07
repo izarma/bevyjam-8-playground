@@ -58,7 +58,13 @@ fn update_playback(
     let scratching = playback
         .last_scratch
         .is_some_and(|last| time.elapsed().saturating_sub(last) <= SCRATCH_GRACE);
-    if !scratching || time.elapsed() < playback.next_allowed {
+    if !scratching {
+        if playback.instance.take().is_some() {
+            audio.stop().fade_out(AudioTween::linear(SCRATCH_FADE));
+        }
+        return;
+    }
+    if time.elapsed() < playback.next_allowed {
         return;
     }
     let Some(assets) = assets else {
@@ -68,7 +74,15 @@ fn update_playback(
         return;
     }
     let index = playback.next_clip % assets.scratches.len();
-    playback.instance = Some(audio.play(assets.scratches[index].clone()).handle());
+    if playback.instance.take().is_some() {
+        audio.stop().fade_out(AudioTween::linear(SCRATCH_FADE));
+    }
+    playback.instance = Some(
+        audio
+            .play(assets.scratches[index].clone())
+            .with_volume(6.0)
+            .handle(),
+    );
     playback.next_allowed = time.elapsed() + SCRATCH_INTERVAL;
     playback.next_clip = (index + 1) % assets.scratches.len();
 }

@@ -1,5 +1,6 @@
 use bevy::prelude::*;
 use bevy_enhanced_input::prelude::*;
+use bevy_kira_audio::prelude::*;
 use pixel_art::PixelSprite;
 use plants::Growing;
 
@@ -7,6 +8,7 @@ use super::player::Harvest;
 use crate::{
     GameplayScene, Harvesting,
     gameplay::{Player, clock::Clock, inventory::Inventory},
+    loading::HarvestingAssets,
     ui::billboard::Billboards,
 };
 
@@ -146,6 +148,8 @@ fn collect(
     mut plants: Query<(&Growing, &GlobalTransform, &mut PixelSprite)>,
     mut inventory: Single<&mut Inventory>,
     mut billboards: Billboards,
+    assets: Res<HarvestingAssets>,
+    audio: Res<Audio>,
 ) {
     commands.set_state(Harvesting(false));
     let Ok(overlay) = overlays.get(won.entity) else {
@@ -162,6 +166,7 @@ fn collect(
     commands.entity(overlay.plant).insert(Harvested);
     let count = inventory.plants.entry(plant).or_default();
     *count += 1;
+    audio.play(assets.pickup.clone()).with_volume(6.0);
     info!("harvested {plant:?}, carrying {count}");
 }
 
