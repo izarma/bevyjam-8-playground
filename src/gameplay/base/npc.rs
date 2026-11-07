@@ -103,8 +103,9 @@ fn sync_lineup(
         match (place, body.map(|body| body.0)) {
             (Some(place), None) => {
                 let start = if shown { door } else { place };
+                let (image, frame) = assets.sprite(visitor.name());
                 let (animation, sprite, sprite3d) =
-                    indoor_visual_bundle(&assets, &mut texture_atlas_layouts);
+                    indoor_visual_bundle(image, frame, &mut texture_atlas_layouts);
                 let (collider, mut controller) = indoor_body(NPC_SPEED);
                 let sprite_at = ground_below(&controller) + BODY_HEIGHT / 2.0;
                 // NPCs pass through each other

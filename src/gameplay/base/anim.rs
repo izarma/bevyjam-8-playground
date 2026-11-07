@@ -14,7 +14,6 @@ use crate::{
         SpeakerSprite,
         animation::{FRAME_INTERVAL, MOVING_SPEED_SQ, PlayerAnimationSystems},
     },
-    loading::NPCAssets,
 };
 
 pub(super) fn plugin(app: &mut App) {
@@ -46,7 +45,6 @@ pub(super) enum IndoorCharAnimationState {
     #[default]
     Idle,
     Walk,
-    Sit,
 }
 
 #[derive(Reflect, PartialEq, Eq, Clone, Copy, Debug, Default)]
@@ -72,16 +70,13 @@ impl Default for IndoorCharAnimation {
 impl IndoorCharAnimation {
     fn frames(&self) -> &'static [usize] {
         match (self.facing, self.state) {
-            // Fuck you cat.
-            (IndoorCharFacing::Front, IndoorCharAnimationState::Idle) => &[0, 1, 2, 3],
-            (IndoorCharFacing::Front, IndoorCharAnimationState::Walk) => &[4, 5],
-            (IndoorCharFacing::Front, IndoorCharAnimationState::Sit) => &[6],
-            (IndoorCharFacing::Back, IndoorCharAnimationState::Sit) => &[7],
+            // Love you cat.
+            (IndoorCharFacing::Front, IndoorCharAnimationState::Idle) => &[0, 1],
+            (IndoorCharFacing::Front, IndoorCharAnimationState::Walk) => &[6, 7],
             (IndoorCharFacing::Back, IndoorCharAnimationState::Walk) => &[8, 9],
-            (IndoorCharFacing::Back, IndoorCharAnimationState::Idle) => &[10, 11, 12, 13],
-            (IndoorCharFacing::Side, IndoorCharAnimationState::Idle) => &[14, 15, 16, 17],
-            (IndoorCharFacing::Side, IndoorCharAnimationState::Walk) => &[18, 19],
-            (IndoorCharFacing::Side, IndoorCharAnimationState::Sit) => &[20],
+            (IndoorCharFacing::Back, IndoorCharAnimationState::Idle) => &[2, 3],
+            (IndoorCharFacing::Side, IndoorCharAnimationState::Idle) => &[4, 5],
+            (IndoorCharFacing::Side, IndoorCharAnimationState::Walk) => &[10, 11],
         }
     }
 
@@ -102,9 +97,6 @@ impl IndoorCharAnimation {
     }
 
     fn update_state(&mut self, velocity: Vec3) {
-        if self.state == IndoorCharAnimationState::Sit {
-            return;
-        }
         let horizontal = Vec2::new(velocity.x, velocity.z);
         let next = if horizontal.length_squared() < MOVING_SPEED_SQ {
             IndoorCharAnimationState::Idle
@@ -178,20 +170,16 @@ fn select_animation_state(
 
 /// The visual components shared by every indoor character
 pub(super) fn indoor_visual_bundle(
-    assets: &NPCAssets,
+    image: &Handle<Image>,
+    frame: UVec2,
     texture_atlas_layouts: &mut Assets<TextureAtlasLayout>,
 ) -> (IndoorCharAnimation, Sprite, Sprite3d) {
     let animation = IndoorCharAnimation::default();
     let sprite = Sprite {
-        image: assets.fox.clone(),
+        image: image.clone(),
         texture_atlas: Some(TextureAtlas {
-            layout: texture_atlas_layouts.add(TextureAtlasLayout::from_grid(
-                UVec2::splat(32),
-                7,
-                3,
-                None,
-                None,
-            )),
+            layout: texture_atlas_layouts
+                .add(TextureAtlasLayout::from_grid(frame, 6, 2, None, None)),
             index: animation.frame_index(),
         }),
         ..default()
