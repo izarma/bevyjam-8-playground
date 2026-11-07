@@ -1,14 +1,18 @@
 mod animation;
 mod base;
+mod candles;
 pub(crate) mod clock;
 mod dialogue;
 pub(crate) mod herbs;
 pub(crate) mod inventory;
 mod outdoors;
 mod remedy;
+mod time_of_day;
 mod visitors;
 
-pub(crate) use animation::{PlayerAnimation, PlayerAnimationSystems};
+pub(crate) use animation::{
+    Facing, PlayerAnimation, PlayerAnimationSystems, apply_player_animation, tick_player_animation,
+};
 pub(crate) use base::{BodyOf, InDialogue};
 pub(crate) use dialogue::Concoction;
 pub(crate) use outdoors::HarvestScratch;
@@ -26,6 +30,8 @@ pub(super) fn plugin(app: &mut App) {
         clock::plugin,
         inventory::plugin,
         remedy::plugin,
+        candles::plugin,
+        time_of_day::plugin,
         visitors::plugin,
         dialogue::plugin,
         outdoors::plugin,
@@ -34,6 +40,8 @@ pub(super) fn plugin(app: &mut App) {
 
 /// Marker for both indoor & outdoor player
 #[derive(Component, Clone, Default)]
+// its sprite is a child, so it has to take part in visibility
+#[require(Visibility)]
 pub struct Player;
 
 /// The name a character is addressed by in Yarn dialogue (their speaker label).

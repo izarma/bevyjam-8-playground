@@ -50,6 +50,7 @@ pub(crate) struct Concoction {
     visitor: Entity,
     mix: [Option<Plant>; SLOTS],
     stage: Stage,
+    hurried: bool,
     // for keeping the yarn dialogue open while we do the brew event
     done: Arc<AtomicBool>,
 }
@@ -70,8 +71,8 @@ enum Stage {
 #[derive(Default)]
 struct Step {
     anticipating: bool,
-    stamped: Option<Plant>,
-    revealed: Option<Mark>,
+    stamped: Vec<Plant>,
+    revealed: Vec<Mark>,
     drunk: bool,
 }
 
@@ -81,6 +82,7 @@ impl Concoction {
             visitor,
             mix: [None; SLOTS],
             stage: Stage::Mixing,
+            hurried: false,
             done,
         }
     }
@@ -171,32 +173,46 @@ impl Concoction {
 
     // moves through the brewing timeline in `Stage`s and `Step`s.
     fn advance(&mut self, seconds: f32) -> Step {
-        let Stage::Brewing {
+        let Concoction {
+            mix, stage, done, ..
+        } = self;
+        let mut step = Step::default();
+        let mut left = seconds;
+        // as many slots as `seconds` covers
+        while let Stage::Brewing {
             marks,
             slot,
             elapsed,
-        } = &mut self.stage
-        else {
-            return Step::default();
-        };
-        let mut step = Step::default();
-        let before = *elapsed;
-        *elapsed += seconds;
-        step.anticipating = before < LIFT && *elapsed >= LIFT && *elapsed < STAMP_AT;
-        if before < STAMP_AT && *elapsed >= STAMP_AT {
-            step.stamped = self.mix[*slot];
-            step.revealed = Some(marks[*slot]);
-        }
-        if *elapsed >= SLOT_SECONDS {
+        } = stage
+        {
+            let before = *elapsed;
+            let spent = left.min(SLOT_SECONDS - before);
+            *elapsed += spent;
+            left -= spent;
+            step.anticipating |= before < LIFT && *elapsed >= LIFT && *elapsed < STAMP_AT;
+            if before < STAMP_AT && *elapsed >= STAMP_AT {
+                if let Some(plant) = mix[*slot] {
+                    step.stamped.push(plant);
+                }
+                step.revealed.push(marks[*slot]);
+            }
+            if *elapsed < SLOT_SECONDS {
+                break;
+            }
             *slot += 1;
             *elapsed = 0.0;
             if *slot == SLOTS {
-                self.stage = Stage::Drunk { marks: *marks };
-                self.done.store(true, Ordering::Relaxed);
+                *stage = Stage::Drunk { marks: *marks };
+                done.store(true, Ordering::Relaxed);
                 step.drunk = true;
             }
         }
         step
+    }
+
+    // finish brewing instantly
+    pub(crate) fn hurry(&mut self) {
+        self.hurried = true;
     }
 }
 
@@ -245,13 +261,18 @@ fn brew(
     anticipation: Res<AudioChannel<Anticipation>>,
     mut next_anticipation: Local<usize>,
 ) {
-    let step = concoction.advance(time.delta_secs());
+    let seconds = if concoction.hurried {
+        f32::INFINITY
+    } else {
+        time.delta_secs()
+    };
+    let step = concoction.advance(seconds);
     if step.anticipating && !assets.herb_anticipation.is_empty() {
         let clips = &assets.herb_anticipation;
         anticipation.play(clips[*next_anticipation % clips.len()].clone());
         *next_anticipation = (*next_anticipation + 1) % clips.len();
     }
-    if let Some(mark) = step.revealed {
+    for mark in step.revealed {
         anticipation
             .stop()
             .fade_out(AudioTween::linear(Duration::from_millis(10)));
@@ -265,10 +286,10 @@ fn brew(
             next_result[index] = (next_result[index] + 1) % clips.len();
         }
     }
-    if let Some(plant) = step.stamped
-        && let Ok(mut health) = visitors.get_mut(concoction.visitor)
-    {
-        health.dose(plant);
+    if let Ok(mut health) = visitors.get_mut(concoction.visitor) {
+        for plant in step.stamped {
+            health.dose(plant);
+        }
     }
     if step.drunk {
         clock.bank += HOURS_PER_DOSE;

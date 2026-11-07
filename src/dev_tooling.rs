@@ -5,7 +5,7 @@ use plants::Plant;
 
 use crate::{
     GameResult, GameState,
-    gameplay::{BodyOf, Health, InDialogue, inventory::Inventory},
+    gameplay::{BodyOf, Health, InDialogue, clock::Clock, inventory::Inventory},
 };
 
 pub(super) fn plugin(app: &mut App) {
@@ -40,6 +40,10 @@ pub(super) fn plugin(app: &mut App) {
     app.add_systems(
         Update,
         grant_herbs.run_if(in_state(GameState::Gameplay).and_then(input_just_pressed(KeyCode::F5))),
+    );
+    app.add_systems(
+        Update,
+        pass_hour.run_if(in_state(GameState::Gameplay).and_then(input_just_pressed(KeyCode::F6))),
     );
 }
 
@@ -90,4 +94,9 @@ fn adjust_npc_health(
     };
     health.offset(delta);
     println!("Health editor: all stats {delta:+}");
+}
+
+fn pass_hour(mut clock: Single<&mut Clock>) {
+    clock.bank += 1.0;
+    println!("Passed an hour");
 }

@@ -6,7 +6,6 @@ use crate::GameplayScene;
 mod camera_effects;
 mod harvest;
 mod player;
-mod time_of_day;
 
 pub(crate) use harvest::HarvestScratch;
 
@@ -15,7 +14,6 @@ pub(super) fn plugin(app: &mut App) {
         player::plugin,
         camera_effects::plugin,
         harvest::plugin,
-        time_of_day::plugin,
         plants::PlantsPlugin {
             pick: plants::Pick::Random,
         },
