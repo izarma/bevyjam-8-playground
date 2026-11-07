@@ -46,17 +46,17 @@ pub(super) fn plugin(app: &mut App) {
 /// Animation state for the player character.
 #[derive(Component, Debug, Clone)]
 pub struct PlayerAnimation {
-    timer: Timer,
-    frame: usize,
-    state: PlayerAnimationState,
+    pub timer: Timer,
+    pub frame: usize,
+    pub state: PlayerAnimationState,
     /// World-space heading (XZ plane) the character last moved along.
-    heading: Vec2,
-    facing: Facing,
-    flip: bool,
+    pub heading: Vec2,
+    pub facing: Facing,
+    pub flip: bool,
 }
 
 #[derive(Reflect, PartialEq, Eq, Clone, Copy, Debug, Default)]
-enum PlayerAnimationState {
+pub enum PlayerAnimationState {
     #[default]
     Idle,
     Walk,
@@ -85,7 +85,7 @@ impl PlayerAnimationState {
 
 /// Facing is expressed relative to the camera, not the world.
 #[derive(Debug, PartialEq, Eq, Clone, Copy, Default)]
-enum Facing {
+pub enum Facing {
     #[default]
     Front,
     Back,

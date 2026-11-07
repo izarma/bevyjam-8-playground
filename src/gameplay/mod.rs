@@ -10,7 +10,9 @@ mod remedy;
 mod time_of_day;
 mod visitors;
 
-pub(crate) use animation::{PlayerAnimation, PlayerAnimationSystems};
+pub(crate) use animation::{
+    Facing, PlayerAnimation, PlayerAnimationSystems, apply_player_animation, tick_player_animation,
+};
 pub(crate) use base::{BodyOf, InDialogue};
 pub(crate) use dialogue::Concoction;
 pub(crate) use visitors::{BALANCED, Health, MAX_HEALTH, MIN_HEALTH};

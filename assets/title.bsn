@@ -1,39 +1,32 @@
 // jackdaw 0.20.0 | bevy 0.20
-bevy_ecs::hierarchy::Children [    #Camera
-    bevy_camera::camera::CameraMainTextureUsages
-    jackdaw_scene_types::node_id::SceneNodeId(4298439444789603623)
+bevy_ecs::hierarchy::Children [
+    #"Directional Light"
+    jackdaw_scene_types::node_id::SceneNodeId(6413514645213545415)
+    bevy_light::cascade::CascadeShadowConfig
     bevy_transform::components::transform::Transform {
         translation: glam::Vec3 {
-            x: -0.8811947107315063,
-            y: 4.821435451507568,
-            z: 10.19483757019043,
+            x: 0.0,
+            y: 10.0,
+            z: 0.0,
         },
         rotation: glam::Quat {
-            x: -0.2575836777687073,
-            y: 0.1321840137243271,
-            z: 0.03595918416976929,
-            w: 0.9376155734062195,
+            x: -0.38165590167045593,
+            y: 0.1829865723848343,
+            z: -0.07736548036336899,
+            w: 0.9027010798454285,
         },
     }
-    bevy_camera::camera::RenderTarget::None {
-        size: glam::UVec2 {
-            x: 1,
-            y: 1,
-        },
-    }
-    bevy_camera::camera::Exposure
-    bevy_camera::projection::Projection::Perspective(bevy_camera::projection::PerspectiveProjection { fov: 0.7853981852531433, aspect_ratio: 1.0, near: 0.10000000149011612, far: 1000.0, near_clip_plane: glam::Vec4 { x: 0.0, y: 0.0, z: -1.0, w: -0.10000000149011612 } })
-    bevy_camera::components::Camera3d
-    bevy_camera::camera::Camera {
-        is_active: true,
+    bevy_light::directional_light::DirectionalLight {
+        color: bevy_color::color::Color::LinearRgba(bevy_color::linear_rgba::LinearRgba { red: 1.0, green: 1.0, blue: 1.0, alpha: 1.0 }),
+        shadow_maps_enabled: true,
     }
     --
     #Terrain
     bevy_transform::components::transform::Transform {
         translation: glam::Vec3 {
-            x: -32.57659149169922,
-            y: 0.0,
-            z: -31.614242553710938,
+            x: -31.91925811767578,
+            y: 0.00000011920928955078125,
+            z: -31.44158363342285,
         },
         scale: glam::Vec3 {
             x: 1.0,
@@ -44,6 +37,40 @@ bevy_ecs::hierarchy::Children [    #Camera
     jackdaw_scene_types::node_id::SceneNodeId(2214264198725415364)
     jackdaw_scene_types::types::Terrain {
         cell_size: 0.25,
+        channels: [
+            jackdaw_scene_types::types::TerrainChannel {
+                name: "channel-0",
+                element: jackdaw_scene_types::types::TerrainChannelElement::U8,
+                palette: [
+                    jackdaw_scene_types::types::TerrainPaletteEntry {
+                        value: 0,
+                        label: "unset",
+                        color: bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.5, green: 0.5, blue: 0.5, alpha: 1.0 }),
+                    },
+                    jackdaw_scene_types::types::TerrainPaletteEntry {
+                        value: 1,
+                        label: "value-1",
+                        color: bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.41999998688697815, green: 0.6200000047683716, blue: 0.3199999928474426, alpha: 1.0 }),
+                    },
+                ],
+            },
+            jackdaw_scene_types::types::TerrainChannel {
+                name: "channel-1",
+                element: jackdaw_scene_types::types::TerrainChannelElement::U8,
+                palette: [
+                    jackdaw_scene_types::types::TerrainPaletteEntry {
+                        value: 0,
+                        label: "unset",
+                        color: bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.5, green: 0.5, blue: 0.5, alpha: 1.0 }),
+                    },
+                    jackdaw_scene_types::types::TerrainPaletteEntry {
+                        value: 1,
+                        label: "value-1",
+                        color: bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.41999998688697815, green: 0.6200000047683716, blue: 0.3199999928474426, alpha: 1.0 }),
+                    },
+                ],
+            },
+        ],
         data_path: "title.terrain-0.jdterrain",
     }
     --
@@ -534,5 +561,51 @@ bevy_ecs::hierarchy::Children [    #Camera
     jackdaw::prefab::components::IsA {
         source: "outdoor_environment.bsn",
         deleted: [],
+    }
+    --
+    #"Title Player Spawn"
+    jackdaw_scene_types::node_id::SceneNodeId(7012345678901234567)
+    bevy_transform::components::transform::Transform {
+        translation: glam::Vec3 {
+            x: -9.162610054016113,
+            y: -1.0431914329528809,
+            z: 4.6012492179870605,
+        },
+        rotation: glam::Quat {
+            x: 0.0,
+            y: -0.6304014921188354,
+            z: 0.0,
+            w: 0.776269257068634,
+        },
+    }
+    bevy_game::ui::menus::title::TitlePlayerSpawn
+    --
+    #Camera
+    bevy_camera::camera::CameraMainTextureUsages
+    jackdaw_scene_types::node_id::SceneNodeId(7624495097706319438)
+    bevy_transform::components::transform::Transform {
+        translation: glam::Vec3 {
+            x: -13.292937278747559,
+            y: 1.9983768463134766,
+            z: 5.0,
+        },
+        rotation: glam::Quat {
+            x: -0.08494170755147934,
+            y: -0.6813939213752747,
+            z: -0.09222983568906784,
+            w: 0.721096932888031,
+        },
+    }
+    bevy_camera::camera::RenderTarget::None {
+        size: glam::UVec2 {
+            x: 1,
+            y: 1,
+        },
+    }
+    bevy_camera::camera::Exposure
+    bevy_camera::projection::Projection::Perspective(bevy_camera::projection::PerspectiveProjection { fov: 0.7853981852531433, aspect_ratio: 1.0, near: 0.10000000149011612, far: 1000.0, near_clip_plane: glam::Vec4 { x: 0.0, y: 0.0, z: -1.0, w: -0.10000000149011612 } })
+    bevy_camera::components::Camera3d
+    bevy_camera::camera::Camera {
+        is_active: true,
     }
 ]

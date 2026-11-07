@@ -10,15 +10,31 @@ use super::{close_menu, open_main_menu, open_settings_menu};
 pub(super) fn plugin(app: &mut App) {
     app.add_systems(OnEnter(GameState::Title), open_main_menu);
     app.add_systems(OnExit(GameState::Title), close_menu);
-    app.add_systems(OnEnter(Menu::Main), spawn_main_menu.spawn());
+    app.add_systems(OnEnter(Menu::Main), spawn_main_menu);
 }
 
-fn spawn_main_menu() -> impl Scene {
-    bsn! {
+fn spawn_main_menu(mut commands: Commands) {
+    commands.spawn_scene(bsn! {
+        #MainMenuScrim
+        Node {
+            width: percent(100),
+            height: percent(100),
+        }
+        GlobalZIndex(1)
+        BackgroundGradient(vec![
+            Gradient::Linear(LinearGradient::to_right(vec![
+                ColorStop::percent(Color::srgba(0.0, 0.0, 0.0, 1.0), 0.0),
+                ColorStop::percent(Color::srgba(0.0, 0.0, 0.0, 0.0), 100.0),
+            ]))
+        ])
+        DespawnOnExit<Menu>(Menu::Main)
+    });
+
+    commands.spawn_scene(bsn! {
         @widget::ui_root("Main Menu")
         Node {
             align_items: AlignItems::FlexStart,
-            justify_content: JustifyContent::FlexStart,
+            justify_content: JustifyContent::FlexEnd,
             padding: UiRect::all(texels(12)),
         }
         GlobalZIndex(2)
@@ -34,7 +50,7 @@ fn spawn_main_menu() -> impl Scene {
             --
             { #[cfg(not(target_family = "wasm"))] (true).then(|| { bsn! { @widget::button("Exit", exit_app) }})}
         ]
-    }
+    });
 }
 
 fn enter_gameplay_state(_: On<PointerClick>, mut next_screen: ResMut<NextState<GameState>>) {
