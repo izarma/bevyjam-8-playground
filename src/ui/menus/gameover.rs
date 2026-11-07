@@ -2,6 +2,7 @@ use bevy::prelude::*;
 
 use crate::{
     GameResult, GameState,
+    loading_screen::Travel,
     ui::{menus::Menu, widget},
 };
 
@@ -37,6 +38,6 @@ fn gameover_menu(title: &'static str, color: Color) -> impl Scene {
     }
 }
 
-fn play_again(_: On<PointerClick>, mut next_screen: ResMut<NextState<GameState>>) {
-    next_screen.set(GameState::Gameplay);
+fn play_again(_: On<PointerClick>, mut commands: Commands) {
+    commands.trigger(Travel::Base);
 }

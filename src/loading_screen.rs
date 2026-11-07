@@ -1,4 +1,5 @@
 use crate::{
+    GameState, GameplayScene,
     scene_ready::Loading,
     ui::{
         font,
@@ -20,8 +21,47 @@ pub(super) fn plugin(app: &mut App) {
     embedded_asset!(app, "loading_screen.wesl");
     app.add_plugins(UiMaterialPlugin::<LoadingScreenMaterial>::default())
         .add_systems(Startup, spawn_loading_screen)
+        .add_observer(plan_trip)
         .add_systems(Update, sweep);
 }
+
+#[derive(Event, Clone, Copy, PartialEq, Eq)]
+pub(crate) enum Travel {
+    Title,
+    Base,
+    Outdoors,
+    GameOver,
+    // through the house door, arriving at the lab's entrance
+    EnterHouse,
+    // out the lab's exit, arriving at the outdoor entrance
+    LeaveHouse,
+}
+
+impl Travel {
+    fn arrive(self, game: &mut NextState<GameState>, scene: &mut NextState<GameplayScene>) {
+        let (state, gameplay_scene) = match self {
+            Self::Title => (GameState::Title, None),
+            Self::GameOver => (GameState::GameOver, None),
+            Self::Base | Self::EnterHouse => (GameState::Gameplay, Some(GameplayScene::Base)),
+            Self::Outdoors | Self::LeaveHouse => {
+                (GameState::Gameplay, Some(GameplayScene::Outdoors))
+            }
+        };
+        game.set_if_different(state);
+        if let Some(gameplay_scene) = gameplay_scene {
+            scene.set_if_different(gameplay_scene);
+        }
+    }
+}
+
+// where the screen is taking us once it covers everything. the world holds
+// still meanwhile
+#[derive(Component)]
+pub(crate) struct Trip(Travel);
+
+// the last trip the screen finished
+#[derive(Component)]
+pub(crate) struct Arrived(pub(crate) Travel);
 
 #[derive(Asset, TypePath, AsBindGroup, Clone)]
 struct LoadingScreenMaterial {
@@ -71,20 +111,33 @@ fn spawn_loading_screen(
             ]
         })
         .insert(MaterialNode(materials.add(LoadingScreenMaterial {
-            swept: 1.0,
+            swept: 0.0,
             pixels_per_texel: 1.0,
         })));
 }
 
+fn plan_trip(
+    travel: On<Travel>,
+    screen: Single<Entity, With<MaterialNode<LoadingScreenMaterial>>>,
+    mut commands: Commands,
+) {
+    commands.entity(*screen).insert(Trip(*travel));
+}
+
 fn sweep(
+    mut commands: Commands,
     time: Res<Time<Real>>,
+    state: Res<State<GameState>>,
     loading: Query<(), Loading>,
-    screen: Single<&MaterialNode<LoadingScreenMaterial>>,
+    screen: Single<(Entity, &MaterialNode<LoadingScreenMaterial>, Option<&Trip>)>,
     mut label: Single<&mut Visibility, With<LoadingLabel>>,
     window: Single<&Window, With<PrimaryWindow>>,
     mut materials: ResMut<Assets<LoadingScreenMaterial>>,
+    mut game: ResMut<NextState<GameState>>,
+    mut scene: ResMut<NextState<GameplayScene>>,
 ) {
-    let loading = !loading.is_empty();
+    let (entity, screen, trip) = *screen;
+    let loading = !loading.is_empty() || *state == GameState::Loading;
     label.set_if_neq(if loading {
         Visibility::Inherited
     } else {
@@ -93,11 +146,21 @@ fn sweep(
     let Some(material) = materials.get(&screen.0) else {
         return;
     };
-    let swept = if loading {
-        0.0
+    let step = time.delta_secs() / SWEEP_SECONDS;
+    let swept = if trip.is_some() || loading {
+        (material.swept - step).max(0.0)
     } else {
-        (material.swept + time.delta_secs() / SWEEP_SECONDS).min(1.0)
+        (material.swept + step).min(1.0)
     };
+    if let Some(Trip(travel)) = trip
+        && swept == 0.0
+    {
+        travel.arrive(&mut game, &mut scene);
+        commands
+            .entity(entity)
+            .remove::<Trip>()
+            .insert(Arrived(*travel));
+    }
     let pixels_per_texel = pixels_per_texel(&window);
     if (material.swept != swept || material.pixels_per_texel != pixels_per_texel)
         && let Some(mut material) = materials.get_mut(&screen.0)

@@ -6,6 +6,7 @@ use plants::Plant;
 use crate::{
     GameResult, GameState,
     gameplay::{BodyOf, Health, InDialogue, clock::Clock, inventory::Inventory},
+    loading_screen::Travel,
 };
 
 pub(super) fn plugin(app: &mut App) {
@@ -61,14 +62,14 @@ fn toggle_debug_ui(mut options: ResMut<GlobalUiDebugOptions>) {
     options.toggle();
 }
 
-fn win(mut commands: Commands, mut next_state: ResMut<NextState<GameState>>) {
+fn win(mut commands: Commands) {
     commands.insert_resource(GameResult::Won);
-    next_state.set(GameState::GameOver);
+    commands.trigger(Travel::GameOver);
 }
 
-fn lose(mut commands: Commands, mut next_state: ResMut<NextState<GameState>>) {
+fn lose(mut commands: Commands) {
     commands.insert_resource(GameResult::Lost);
-    next_state.set(GameState::GameOver);
+    commands.trigger(Travel::GameOver);
 }
 
 fn decrease_npc_health(npcs: Query<&BodyOf, With<InDialogue>>, visitors: Query<&mut Health>) {

@@ -1,5 +1,6 @@
 // jackdaw 0.20.0 | bevy 0.20
-bevy_ecs::hierarchy::Children [    #Camera
+bevy_ecs::hierarchy::Children [
+    #Camera
     bevy_camera::camera::Exposure
     bevy_camera::components::Camera3d
     bevy_transform::components::transform::Transform {
@@ -998,6 +999,54 @@ bevy_ecs::hierarchy::Children [    #Camera
         cell: 23,
     }
     --
+    #House
+    bevy_transform::components::transform::Transform {
+        translation: glam::Vec3 {
+            x: -28.3525390625,
+            y: 0.35863763093948364,
+            z: 1.9700000286102295,
+        },
+        rotation: glam::Quat {
+            x: 0.0,
+            y: 0.6971161365509033,
+            z: 0.0,
+            w: 0.716958224773407,
+        },
+    }
+    jackdaw_scene_types::node_id::SceneNodeId(3623514023663239946)
+    pixel_art::sprite::PixelSprite {
+        image: "sprites/House.png",
+        billboard: false,
+    }
+    --
+    #"House Door"
+    bevy_transform::components::transform::Transform {
+        translation: glam::Vec3 {
+            x: -27.85,
+            y: 0.36,
+            z: 1.97,
+        },
+    }
+    jackdaw_scene_types::node_id::SceneNodeId(152080404578676678)
+    bevy_game::gameplay::outdoors::door::HouseDoor
+    --
+    #"House Entrance"
+    bevy_transform::components::transform::Transform {
+        translation: glam::Vec3 {
+            x: -26.0,
+            y: 0.5,
+            z: 1.97,
+        },
+        rotation: glam::Quat {
+            x: 0.0,
+            y: -0.70710677,
+            z: 0.0,
+            w: 0.70710677,
+        },
+    }
+    jackdaw_scene_types::node_id::SceneNodeId(6385867795600453470)
+    bevy_game::gameplay::entrance::Entrance
+    --
     #"Plant Spot"
     bevy_transform::components::transform::Transform {
         translation: glam::Vec3 {
@@ -1579,19 +1628,21 @@ bevy_ecs::hierarchy::Children [    #Camera
     }
     pixel_art::model::PixelModel
     --
-    #"Sun"
+    #Sun
     jackdaw_scene_types::node_id::SceneNodeId(682236561151705710)
-    bevy_transform::components::transform::Transform
     jackdaw::prefab::components::IsA {
         source: "sun.bsn",
         deleted: [],
     }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    bevy_ecs::hierarchy::Children [
+        jackdaw::prefab::components::PrefabEntityId(1)
+    ]
     --
-    #"Outdoor Environment"
     jackdaw_scene_types::node_id::SceneNodeId(8905764817166589558)
-    bevy_transform::components::transform::Transform
     jackdaw::prefab::components::IsA {
         source: "outdoor_environment.bsn",
         deleted: [],
     }
+    jackdaw::prefab::components::PrefabEntityId(0)
 ]
