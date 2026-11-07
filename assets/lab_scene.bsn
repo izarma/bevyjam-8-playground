@@ -62,6 +62,17 @@ bevy_ecs::hierarchy::Children [    #Camera
     }
     bevy_game::gameplay::base::player_indoor::IndoorPlayerSpawn
     --
+    #"Lab Entrance"
+    bevy_transform::components::transform::Transform {
+        translation: glam::Vec3 {
+            x: 18.0,
+            y: 0.0,
+            z: -2.410432815551758,
+        },
+    }
+    jackdaw_scene_types::node_id::SceneNodeId(8617927262131403864)
+    bevy_game::gameplay::entrance::Entrance
+    --
     #"NPC Door"
     jackdaw_scene_types::node_id::SceneNodeId(8624228120134786342)
     bevy_transform::components::transform::Transform {

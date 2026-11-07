@@ -12,8 +12,10 @@ use crate::{
         CharacterName, Player, PlayerAnimation, SpeakerSprite,
         animation::PlayerAnimationSystems,
         base::{BODY_HEIGHT, ground_below, indoor_body},
+        entrance::{Entrance, through_door},
     },
     loading::{PLAYER_FRAME, PlayerAssets},
+    loading_screen::{Arrived, Travel},
 };
 
 use super::npc::InDialogue;
@@ -38,6 +40,7 @@ pub(super) struct Touch;
 
 pub(super) fn plugin(app: &mut App) {
     app.add_observer(spawn_player_base)
+        .add_observer(enter_base)
         .add_input_context::<IndoorPlayer>()
         .sync_context_to_state::<IndoorPlayer, InControl>()
         .add_systems(
@@ -114,7 +117,7 @@ fn sync_camera(
 fn exit_to_outdoors(
     player: Query<&Transform, With<IndoorPlayer>>,
     runners: Query<&DialogueRunner>,
-    mut next_scene: ResMut<NextState<GameplayScene>>,
+    mut commands: Commands,
 ) {
     let Ok(player) = player.single() else {
         return;
@@ -123,19 +126,45 @@ fn exit_to_outdoors(
         return;
     }
     if player.translation.x >= EXIT_X {
-        next_scene.set(GameplayScene::Outdoors);
+        commands.trigger(Travel::LeaveHouse);
     }
 }
 
 fn spawn_player_base(
     spawn: On<Insert<IndoorPlayerSpawn>>,
+    arrived: Single<&Arrived>,
     mut commands: Commands,
     transforms: Query<&GlobalTransform>,
     player_assets: Res<PlayerAssets>,
 ) {
-    let Ok(feet) = transforms.get(spawn.entity) else {
+    if through_door(&arrived) {
         return;
-    };
+    }
+    if let Ok(feet) = transforms.get(spawn.entity) {
+        spawn_indoor_player(&mut commands, feet, &player_assets);
+    }
+}
+
+fn enter_base(
+    entrance: On<Insert<Entrance>>,
+    arrived: Single<&Arrived>,
+    mut commands: Commands,
+    transforms: Query<&GlobalTransform>,
+    player_assets: Res<PlayerAssets>,
+) {
+    if arrived.0 != Travel::EnterHouse {
+        return;
+    }
+    if let Ok(feet) = transforms.get(entrance.entity) {
+        spawn_indoor_player(&mut commands, feet, &player_assets);
+    }
+}
+
+fn spawn_indoor_player(
+    commands: &mut Commands,
+    feet: &GlobalTransform,
+    player_assets: &PlayerAssets,
+) {
     let spawn = feet.translation() + Vec3::Y * BODY_HEIGHT / 2.0;
 
     let animation = PlayerAnimation::default();

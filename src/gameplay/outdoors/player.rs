@@ -13,8 +13,13 @@ use pixel_art::PixelSprite;
 use crate::{
     GameplayScene, InControl, PausableSystems,
     camera::{CameraSensitivity, SceneCamera, face_camera},
-    gameplay::{CharacterName, Player, PlayerAnimation, animation::PlayerAnimationSystems},
+    gameplay::{
+        CharacterName, Player, PlayerAnimation,
+        animation::PlayerAnimationSystems,
+        entrance::{Entrance, through_door},
+    },
     loading::{PLAYER_FRAME, PlayerAssets},
+    loading_screen::{Arrived, Travel},
 };
 
 const WALK_SPEED: f32 = 7.0;
@@ -28,6 +33,7 @@ const CAM_CLEARANCE: f32 = 0.3;
 
 pub(super) fn plugin(app: &mut App) {
     app.add_observer(spawn_player)
+        .add_observer(come_outside)
         .add_input_context::<ExamplePlayer>()
         .sync_context_to_state::<ExamplePlayer, InControl>()
         .add_systems(OnEnter(GameplayScene::Outdoors), set_cursor_locked::<true>)
@@ -51,7 +57,7 @@ pub(super) fn plugin(app: &mut App) {
         .add_systems(
             Update,
             (
-                follow_player.before(face_camera),
+                (aim_camera, follow_player).chain().before(face_camera),
                 update_animation
                     .in_set(PlayerAnimationSystems::UpdateState)
                     .in_set(PausableSystems),
@@ -76,16 +82,48 @@ pub(super) struct Harvest;
 
 fn spawn_player(
     spawn: On<Insert<PlayerSpawn>>,
+    arrived: Single<&Arrived>,
     mut commands: Commands,
     transforms: Query<&GlobalTransform>,
     player_assets: Res<PlayerAssets>,
 ) {
-    let Ok(feet) = transforms.get(spawn.entity) else {
+    if through_door(&arrived) {
         return;
-    };
-    let spawn = feet.translation() + Vec3::Y * CAPSULE_HEIGHT / 2.0;
+    }
+    if let Ok(feet) = transforms.get(spawn.entity) {
+        spawn_outdoor_player(&mut commands, feet, &player_assets);
+    }
+}
 
-    let animation = PlayerAnimation::default();
+fn come_outside(
+    entrance: On<Insert<Entrance>>,
+    arrived: Single<&Arrived>,
+    mut commands: Commands,
+    transforms: Query<&GlobalTransform>,
+    player_assets: Res<PlayerAssets>,
+) {
+    if arrived.0 != Travel::LeaveHouse {
+        return;
+    }
+    if let Ok(feet) = transforms.get(entrance.entity) {
+        spawn_outdoor_player(&mut commands, feet, &player_assets);
+    }
+}
+
+fn spawn_outdoor_player(
+    commands: &mut Commands,
+    feet: &GlobalTransform,
+    player_assets: &PlayerAssets,
+) {
+    let spawn = feet.translation() + Vec3::Y * CAPSULE_HEIGHT / 2.0;
+    let facing = feet.forward().xz().normalize_or(Vec2::NEG_Y);
+    let look = CharacterLook {
+        yaw: facing.x.atan2(facing.y),
+        pitch: 0.0,
+    };
+
+    let mut animation = PlayerAnimation::default();
+    animation.face_towards(facing);
     let sprite = PixelSprite {
         image: player_assets.player_sheet.clone(),
         size: Some(PLAYER_FRAME),
@@ -111,7 +149,7 @@ fn spawn_player(
                 ..CharacterController::default()
             }
             ~ActiveInStates::<ExamplePlayer, InControl>::single(InControl)
-            CharacterLook::default()
+            look
             DespawnOnExit::<GameplayScene>(GameplayScene::Outdoors)
         })
         .insert(CharacterName("Aruna"))
@@ -178,6 +216,16 @@ fn apply_look(
 ) {
     let (yaw, _, _) = camera.rotation.to_euler(EulerRot::YXZ);
     look.yaw = yaw;
+}
+
+fn aim_camera(
+    players: Query<&CharacterLook, Added<ExamplePlayer>>,
+    mut camera: Single<&mut Transform, SceneCamera>,
+) {
+    for look in &players {
+        let (_, pitch, roll) = camera.rotation.to_euler(EulerRot::YXZ);
+        camera.rotation = Quat::from_euler(EulerRot::YXZ, look.yaw, pitch, roll);
+    }
 }
 
 fn follow_player(
