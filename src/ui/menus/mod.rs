@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 
-use crate::GameState;
+use crate::loading_screen::Travel;
 
 mod controls;
 mod credits;
@@ -57,6 +57,6 @@ pub(super) fn open_settings_menu(_: On<PointerClick>, mut next_menu: ResMut<Next
     next_menu.set(Menu::Settings);
 }
 
-pub(super) fn quit_to_title(_: On<PointerClick>, mut next_screen: ResMut<NextState<GameState>>) {
-    next_screen.set(GameState::Title);
+pub(super) fn quit_to_title(_: On<PointerClick>, mut commands: Commands) {
+    commands.trigger(Travel::Title);
 }

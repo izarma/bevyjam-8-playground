@@ -3,6 +3,7 @@ mod base;
 mod candles;
 pub(crate) mod clock;
 mod dialogue;
+pub(crate) mod entrance;
 pub(crate) mod herbs;
 pub(crate) mod inventory;
 mod outdoors;

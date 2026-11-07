@@ -129,16 +129,21 @@ pub fn plugin(app: &mut App) {
     }
 }
 
-fn simulating(pause: Option<Res<State<Pause>>>, loading: Query<(), scene_ready::Loading>) -> bool {
-    pause.is_some_and(|pause| !pause.0) && loading.is_empty()
+fn simulating(
+    pause: Option<Res<State<Pause>>>,
+    loading: Query<(), scene_ready::Loading>,
+    trips: Query<(), With<loading_screen::Trip>>,
+) -> bool {
+    pause.is_some_and(|pause| !pause.0) && loading.is_empty() && trips.is_empty()
 }
 
 fn hold_physics_time(
     pause: Option<Res<State<Pause>>>,
     loading: Query<(), scene_ready::Loading>,
+    trips: Query<(), With<loading_screen::Trip>>,
     mut time: ResMut<Time<Physics>>,
 ) {
-    let held = !simulating(pause, loading);
+    let held = !simulating(pause, loading, trips);
     if held != time.is_paused() {
         if held {
             time.pause();

@@ -4,6 +4,7 @@ use jackdaw_runtime::prelude::*;
 use crate::GameplayScene;
 
 mod camera_effects;
+mod door;
 mod harvest;
 mod player;
 
@@ -14,6 +15,7 @@ pub(super) fn plugin(app: &mut App) {
         player::plugin,
         camera_effects::plugin,
         harvest::plugin,
+        door::plugin,
         plants::PlantsPlugin {
             pick: plants::Pick::Random,
         },

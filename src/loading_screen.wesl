@@ -7,10 +7,12 @@ struct LoadingScreen {
 
 @group(1) @binding(0) var<uniform> loading_screen: LoadingScreen;
 
+// dither cell size, in texels
+const CELL_TEXELS: f32 = 2.0;
 // width of the dithered part
 const FRONT: f32 = 0.6;
 // clockwise from the right. 0 is left to right
-const ANGLE_DEGREES: f32 = 45.0;
+const ANGLE_DEGREES: f32 = 225.0;
 
 fn bayer(cell: vec2<u32>) -> f32 {
     let lo = cell & vec2<u32>(1u);
@@ -21,7 +23,7 @@ fn bayer(cell: vec2<u32>) -> f32 {
 
 @fragment
 fn fragment(in: UiVertexOutput) -> @location(0) vec4<f32> {
-    let cell = vec2<u32>(floor(in.position.xy / loading_screen.pixels_per_texel));
+    let cell = vec2<u32>(floor(in.position.xy / (loading_screen.pixels_per_texel * CELL_TEXELS)));
     let front = loading_screen.swept * (1.0 + FRONT) - FRONT;
     let angle = radians(ANGLE_DEGREES);
     let direction = vec2(cos(angle), sin(angle));
