@@ -4,7 +4,9 @@ use pixel_art::PixelSprite;
 
 use crate::{
     GameState,
-    gameplay::{Facing, PlayerAnimation, apply_player_animation, tick_player_animation},
+    gameplay::{
+        Facing, PlayerAnimation, apply_player_animation, clock::Clock, tick_player_animation,
+    },
     loading::{PLAYER_FRAME, PlayerAssets},
     ui::{font, palette::HEADER_TEXT, scale::texels},
 };
@@ -27,9 +29,19 @@ pub(super) fn plugin(app: &mut App) {
         );
 }
 
+const TITLE_HOUR: f32 = 16.75;
+
 fn spawn_title_scene(mut commands: Commands, asset_server: Res<AssetServer>) {
     commands.spawn((
         JackdawSceneRoot(asset_server.load("title.bsn")),
+        DespawnOnExit(GameState::Title),
+    ));
+    commands.spawn((
+        Name::new("Title Clock"),
+        Clock {
+            hours: TITLE_HOUR,
+            ..default()
+        },
         DespawnOnExit(GameState::Title),
     ));
 }

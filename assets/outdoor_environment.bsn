@@ -2,9 +2,10 @@
 #"Outdoor Environment"
 bevy_transform::components::transform::Transform
 jackdaw_scene_types::node_id::SceneNodeId(3391703645149169079)
+pixel_art::sky::PixelSky
 jackdaw_scene_types::environment::Environment {
     sky: jackdaw_scene_types::environment::Sky {
-        enabled: true,
+        enabled: false,
         zenith: bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.20477008819580078, green: 0.41999998688697815, blue: 0.5697605609893799, alpha: 1.0 }),
     },
     ambient: jackdaw_scene_types::environment::Ambient {

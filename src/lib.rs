@@ -16,6 +16,7 @@ mod loading;
 mod loading_screen;
 mod render_scale;
 mod scene_ready;
+mod sky_ambient;
 mod ui;
 
 /// Application-level states. See `gameplay` for gameplay-owned state.
@@ -90,6 +91,7 @@ pub fn plugin(app: &mut App) {
         graphics::plugin,
         render_scale::plugin,
         scene_ready::plugin,
+        sky_ambient::plugin,
         audio::plugin,
         bevy_enhanced_input::EnhancedInputPlugin,
         ui::plugin,

@@ -1,26 +1,5 @@
 // jackdaw 0.20.0 | bevy 0.20
 bevy_ecs::hierarchy::Children [
-    #"Directional Light"
-    jackdaw_scene_types::node_id::SceneNodeId(6413514645213545415)
-    bevy_light::cascade::CascadeShadowConfig
-    bevy_transform::components::transform::Transform {
-        translation: glam::Vec3 {
-            x: 0.0,
-            y: 10.0,
-            z: 0.0,
-        },
-        rotation: glam::Quat {
-            x: -0.38165590167045593,
-            y: 0.1829865723848343,
-            z: -0.07736548036336899,
-            w: 0.9027010798454285,
-        },
-    }
-    bevy_light::directional_light::DirectionalLight {
-        color: bevy_color::color::Color::LinearRgba(bevy_color::linear_rgba::LinearRgba { red: 1.0, green: 1.0, blue: 1.0, alpha: 1.0 }),
-        shadow_maps_enabled: true,
-    }
-    --
     #Terrain
     bevy_transform::components::transform::Transform {
         translation: glam::Vec3 {
@@ -547,29 +526,39 @@ bevy_ecs::hierarchy::Children [
         lap_speed: 0.25,
     }
     --
-    #"Sun"
+    #Sun
     jackdaw_scene_types::node_id::SceneNodeId(3117122848111186592)
-    bevy_transform::components::transform::Transform
+    bevy_transform::components::transform::Transform {
+        rotation: glam::Quat {
+            x: 0.0,
+            y: 0.9238795325112867,
+            z: 0.0,
+            w: 0.3826834323650898,
+        },
+    }
     jackdaw::prefab::components::IsA {
         source: "sun.bsn",
         deleted: [],
     }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    bevy_ecs::hierarchy::Children [
+        jackdaw::prefab::components::PrefabEntityId(1)
+    ]
     --
-    #"Outdoor Environment"
     jackdaw_scene_types::node_id::SceneNodeId(4977659659605109418)
-    bevy_transform::components::transform::Transform
     jackdaw::prefab::components::IsA {
         source: "outdoor_environment.bsn",
         deleted: [],
     }
+    jackdaw::prefab::components::PrefabEntityId(0)
     --
     #"Title Player Spawn"
     jackdaw_scene_types::node_id::SceneNodeId(7012345678901234567)
     bevy_transform::components::transform::Transform {
         translation: glam::Vec3 {
-            x: -9.162610054016113,
+            x: -4.961014747619629,
             y: -1.0431914329528809,
-            z: 4.6012492179870605,
+            z: 4.544482707977295,
         },
         rotation: glam::Quat {
             x: 0.0,
@@ -585,15 +574,15 @@ bevy_ecs::hierarchy::Children [
     jackdaw_scene_types::node_id::SceneNodeId(7624495097706319438)
     bevy_transform::components::transform::Transform {
         translation: glam::Vec3 {
-            x: -13.292937278747559,
-            y: 1.9983768463134766,
-            z: 5.0,
+            x: -14.347902297973633,
+            y: 3.722498893737793,
+            z: 3.6585726737976074,
         },
         rotation: glam::Quat {
-            x: -0.08494170755147934,
-            y: -0.6813939213752747,
-            z: -0.09222983568906784,
-            w: 0.721096932888031,
+            x: -0.06777282804250717,
+            y: -0.7672428488731384,
+            z: -0.1100902333855629,
+            w: 0.6281920075416565,
         },
     }
     bevy_camera::camera::RenderTarget::None {
