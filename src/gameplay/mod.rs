@@ -17,7 +17,8 @@ pub(crate) use animation::{
 pub(crate) use dialogue::{Concoction, DialogueTarget};
 pub(crate) use remedy::Mark;
 pub(crate) use visitors::{
-    BALANCED, Brew, BrewHistory, DAY_END, DAY_START, Health, MAX_HEALTH, MIN_HEALTH, Met, Visitor,
+    BALANCED, Brew, BrewHistory, DAY_END, DAY_START, Health, InLineup, MAX_HEALTH, MIN_HEALTH, Met,
+    Visitor,
 };
 
 use bevy::prelude::*;
