@@ -1,4 +1,4 @@
-use crate::{GameState, PausableSystems};
+use crate::GameState;
 use bevy::{
     anti_alias::taa::TemporalAntiAliasing,
     camera::Hdr,
@@ -14,10 +14,6 @@ use bevy::{
 pub(crate) struct NoSceneCamera;
 
 pub(crate) type SceneCamera = (With<Camera3d>, Without<NoSceneCamera>);
-
-// `Clone` + `Default` are required for these tokens in BSN spawn scenes.
-#[derive(Component, Clone, Default)]
-pub(crate) struct FaceCamera; // tag entity to make it always face the camera
 
 /// Default mouse sensitivity (horizontal, vertical) of the gameplay camera, in
 /// radians per pixel of mouse motion. It's often nicer to have a faster
@@ -54,16 +50,7 @@ pub(super) fn plugin(app: &mut App) {
             OnEnter(GameState::GameOver),
             spawn_no_scene_camera(GameState::GameOver),
         )
-        .add_systems(
-            Update,
-            (
-                face_camera
-                    .in_set(PausableSystems)
-                    .run_if(in_state(GameState::Gameplay)),
-                set_up_scene_cameras,
-                fit_sun_cascades,
-            ),
-        );
+        .add_systems(Update, (set_up_scene_cameras, fit_sun_cascades));
 }
 
 fn spawn_no_scene_camera(state: GameState) -> impl Fn(Commands) {
@@ -119,21 +106,5 @@ fn fit_sun_cascades(mut commands: Commands, suns: Query<Entity, Added<Directiona
             }
             .build(),
         );
-    }
-}
-
-/// Rotate billboarded entities so they face the active scene camera.
-pub(crate) fn face_camera(
-    cam_transform: Single<&Transform, SceneCamera>,
-    mut query: Query<&mut Transform, (With<FaceCamera>, Without<Camera3d>)>,
-) {
-    for mut transform in query.iter_mut() {
-        let mut delta = cam_transform.translation - transform.translation;
-        delta.y = 0.0;
-        delta += transform.translation;
-        transform.look_at(delta, Vec3::Y);
-        // `look_at` points the entity's forward (-Z) at the camera, but `Sprite3d`
-        // quads face +Z
-        transform.rotate_y(std::f32::consts::PI);
     }
 }

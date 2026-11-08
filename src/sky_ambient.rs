@@ -1,18 +1,11 @@
-// the ambient light is what the sky shines on things: each scene's ambient is the
-// light its PixelSky's gradient sends onto faces turned up, sideways and down, as
-// bright as the sky looks. the sky is drawn as its colours, unexposed, while lit
-// surfaces are scaled by the camera's exposure, so the sky's luminance is its
-// colours over that exposure
 use std::f32::consts::{FRAC_PI_2, PI, TAU};
 
 use bevy::{camera::Exposure, prelude::*};
 use jackdaw_scene_types::environment::{AmbientMode, Environment};
 use pixel_art::PixelSky;
 
-use crate::camera::SceneCamera;
-
 pub(super) fn plugin(app: &mut App) {
-    app.add_systems(PostUpdate, light_from_sky);
+    app.add_systems(PostUpdate, (light_from_sky, fog_from_sky));
 }
 
 #[derive(Component, PartialEq)]
@@ -24,14 +17,16 @@ struct LitFrom {
 
 fn light_from_sky(
     mut commands: Commands,
-    camera: Single<&Exposure, SceneCamera>,
     mut skies: Query<(Entity, &PixelSky, &mut Environment, Option<&LitFrom>)>,
 ) {
     for (entity, sky, mut environment, lit) in &mut skies {
         let from = LitFrom {
             gradient: [sky.zenith, sky.middle, sky.horizon, sky.ground],
             horizon_reach: sky.horizon_reach,
-            exposure: camera.exposure(),
+            exposure: Exposure {
+                ev100: environment.post.exposure,
+            }
+            .exposure(),
         };
         if lit == Some(&from) {
             continue;
@@ -43,6 +38,14 @@ fn light_from_sky(
         ambient.equator = facing(sky, Vec3::X).into();
         ambient.ground = facing(sky, Vec3::NEG_Y).into();
         commands.entity(entity).insert(from);
+    }
+}
+
+fn fog_from_sky(sky: Single<&PixelSky>, mut environments: Query<&mut Environment>) {
+    for mut environment in &mut environments {
+        if environment.fog.color != sky.horizon {
+            environment.fog.color = sky.horizon;
+        }
     }
 }
 

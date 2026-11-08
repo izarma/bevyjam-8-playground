@@ -26,11 +26,9 @@ pub(crate) use visitors::{
 pub(crate) use visitors::{DAY_END, DAY_START};
 
 use bevy::prelude::*;
-use bevy_sprite3d::Sprite3dPlugin;
 
 pub(super) fn plugin(app: &mut App) {
     app.add_plugins((
-        Sprite3dPlugin,
         pixel_art::PixelArtPlugin,
         animation::plugin,
         base::plugin,

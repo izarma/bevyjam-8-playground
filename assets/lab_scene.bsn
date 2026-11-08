@@ -618,7 +618,7 @@ bevy_ecs::hierarchy::Children [
     jackdaw_scene_types::types::MaterialOverrides {
         materials: map[
             ("counter_bottom", "material_wall.bsn"),
-            ("counter_top", "floor_material"),
+            ("counter_top", "floor_material/floor_material.bsn"),
             ("room_walls", "material_wall.bsn")
         ],
     }
@@ -628,7 +628,7 @@ bevy_ecs::hierarchy::Children [
         translation: glam::Vec3 {
             x: -1.9942188262939453,
             y: 0.0,
-            z: 0.9227733612060547,
+            z: -3.5,
         },
     }
     jackdaw_scene_types::node_id::SceneNodeId(1370859086427422297)
@@ -674,9 +674,15 @@ bevy_ecs::hierarchy::Children [
             brightness: 250.0,
         },
         post: jackdaw_scene_types::environment::PostProcess {
-            tonemapper: jackdaw_scene_types::environment::Tonemapper::AcesFitted,
+            tonemapper: jackdaw_scene_types::environment::Tonemapper::KhronosPbrNeutral,
             enabled: true,
             shadow_filtering: jackdaw_scene_types::environment::ShadowFiltering::Hardware2x2,
+        },
+        fog: jackdaw_scene_types::environment::Fog {
+            mode: jackdaw_scene_types::environment::FogMode::Linear,
+            start: 20.0,
+            end: 80.0,
+            density: 0.029999999329447746,
         },
     }
     bevy_game::gameplay::time_of_day::DaylitAmbient {

@@ -12,7 +12,7 @@ use pixel_art::PixelSprite;
 
 use crate::{
     GameplayScene, InControl, PausableSystems,
-    camera::{CameraSensitivity, SceneCamera, face_camera},
+    camera::{CameraSensitivity, SceneCamera},
     gameplay::{
         CharacterName, Player, PlayerAnimation,
         animation::PlayerAnimationSystems,
@@ -65,7 +65,7 @@ pub(super) fn plugin(app: &mut App) {
         .add_systems(
             Update,
             (
-                (aim_camera, follow_player).chain().before(face_camera),
+                (aim_camera, follow_player).chain(),
                 update_animation
                     .in_set(PlayerAnimationSystems::UpdateState)
                     .in_set(PausableSystems),

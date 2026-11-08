@@ -19,7 +19,8 @@
 //!
 
 use bevy::prelude::*;
-use bevy::ui::UiSystems;
+use bevy::ui::{UiGlobalTransform, UiSystems};
+use bevy::window::PrimaryWindow;
 use bevy::ui_widgets::{ControlOrientation, ScrollArea, Scrollbar, ScrollbarThumb};
 use plants::Plant;
 
@@ -39,7 +40,7 @@ use crate::{
             BUTTON_HOVERED_TINT, BUTTON_PRESSED_TINT, CAUTION, GAIN_TEXT, HEADER_TEXT, LABEL_TEXT,
             LOSS_TEXT,
         },
-        scale::texels,
+        scale::{TEXEL, texels},
         widget,
     },
 };
@@ -48,7 +49,7 @@ pub(super) fn plugin(app: &mut App) {
     app.add_systems(OnEnter(Menu::Journal), spawn_journal_menu);
     app.add_systems(
         PostUpdate,
-        update_history_scrollbar.in_set(UiSystems::PostLayout),
+        (update_history_scrollbar, place_brew_tooltip).in_set(UiSystems::PostLayout),
     );
 }
 
@@ -165,19 +166,29 @@ fn heading(ailment: Option<Option<(Ailment, f32)>>) -> impl Scene {
             Box::new(bsn! {
                 Node {
                     width: texels(HEALTH_PANEL_WIDTH),
-                    justify_content: JustifyContent::SpaceBetween,
+                    column_gap: texels(6),
+                    overflow: Overflow::visible(),
                 }
                 Pickable::IGNORE
                 Children [
                     Text({ name })
                     @font::text(1)
                     TextColor(HEADER_TEXT)
+                    TextLayout::no_wrap()
+                    Node {
+                        flex_shrink: 0.0,
+                    }
                     JournalAilmentName
                     Pickable::IGNORE
                     --
                     Text({ hours })
                     @font::text(1)
                     TextColor(LABEL_TEXT)
+                    TextLayout::no_wrap()
+                    Node {
+                        flex_shrink: 0.0,
+                        margin: UiRect::left(auto()),
+                    }
                     JournalAilmentCountdown
                     Pickable::IGNORE
                 ]
@@ -229,8 +240,80 @@ fn journal_root(body: Vec<Box<dyn Scene>>) -> impl Scene {
             }
             @widget::panel()
             Children [ { body } ]
+            --
+            JournalTooltip
+            Node {
+                position_type: PositionType::Absolute,
+            }
+            Visibility::Hidden
+            GlobalZIndex(3)
+            Pickable::IGNORE
         ]
     }
+}
+
+#[derive(Component, Clone, Default)]
+struct JournalTooltip {
+    slot: Option<Rect>,
+    placed: bool,
+}
+
+#[derive(Component, Clone, Default)]
+struct BrewHerb(Plant);
+
+fn show_brew_tooltip(
+    over: On<PointerOver>,
+    mut commands: Commands,
+    herbs: Query<(&BrewHerb, &ComputedNode, &UiGlobalTransform)>,
+    tooltip: Single<(Entity, &mut JournalTooltip, &mut Visibility)>,
+) {
+    let Ok((&BrewHerb(plant), node, at)) = herbs.get(over.entity) else {
+        return;
+    };
+    let (entity, mut tooltip, mut shown) = tooltip.into_inner();
+    let scale = node.inverse_scale_factor();
+    tooltip.slot = Some(Rect::from_center_size(at.translation * scale, node.size() * scale));
+    tooltip.placed = false;
+    *shown = Visibility::Hidden;
+    commands.entity(entity).despawn_children();
+    commands.spawn_scene(herbs::card(plant)).insert(ChildOf(entity));
+}
+
+fn hide_brew_tooltip(
+    _: On<PointerOut>,
+    tooltip: Single<(&mut JournalTooltip, &mut Visibility)>,
+) {
+    let (mut tooltip, mut shown) = tooltip.into_inner();
+    tooltip.slot = None;
+    *shown = Visibility::Hidden;
+}
+
+fn place_brew_tooltip(
+    window: Single<&Window, With<PrimaryWindow>>,
+    tooltip: Single<(&mut JournalTooltip, &mut Node, &ComputedNode, &mut Visibility)>,
+) {
+    let (mut tooltip, mut node, size, mut shown) = tooltip.into_inner();
+    let Some(slot) = tooltip.slot else {
+        return;
+    };
+    if tooltip.placed {
+        shown.set_if_neq(Visibility::Inherited);
+        return;
+    }
+    if size.size().x <= 0.0 {
+        return;
+    }
+    let scale = size.inverse_scale_factor();
+    let width = size.size().x * scale;
+    let gap = 2.0 * TEXEL;
+    let left = if slot.max.x + gap + width <= window.physical_width() as f32 * scale {
+        slot.max.x + gap
+    } else {
+        slot.min.x - gap - width
+    };
+    node.left = px(left);
+    node.top = px(slot.min.y);
+    tooltip.placed = true;
 }
 
 /// for portraits with headroom
@@ -698,10 +781,25 @@ fn brew_slot(plant: Option<Plant>, mark: Mark) -> Box<dyn Scene> {
     let mut children: Vec<Box<dyn Scene>> = vec![Box::new(bsn! {
         @widget::panel_face_color(mark_color(mark))
     })];
-    if let Some(plant) = plant {
-        children.push(Box::new(herbs::icon(plant)));
-    }
+    let Some(plant) = plant else {
+        return Box::new(bsn! {
+            @brew_slot_frame()
+            Pickable::IGNORE
+            Children [ { children } ]
+        });
+    };
+    children.push(Box::new(herbs::icon(plant)));
     Box::new(bsn! {
+        @brew_slot_frame()
+        BrewHerb(plant)
+        @on(show_brew_tooltip)
+        @on(hide_brew_tooltip)
+        Children [ { children } ]
+    })
+}
+
+fn brew_slot_frame() -> impl Scene {
+    bsn! {
         Node {
             width: texels(BREW_SLOT_SIZE),
             height: texels(BREW_SLOT_SIZE),
@@ -709,9 +807,7 @@ fn brew_slot(plant: Option<Plant>, mark: Mark) -> Box<dyn Scene> {
             align_items: AlignItems::Center,
         }
         @widget::panel()
-        Pickable::IGNORE
-        Children [ { children } ]
-    })
+    }
 }
 
 fn mark_color(mark: Mark) -> Color {

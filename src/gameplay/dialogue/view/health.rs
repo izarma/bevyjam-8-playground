@@ -123,7 +123,9 @@ fn show_ailment(
             (Some(ailing), true, ..) => ailing.ailment.name(),
             (None, true, ..) => "Health".to_string(),
             (Some(ailing), _, true, _) => ailment_countdown(ailing.next - clock.hours),
-            (Some(ailing), .., Some(&AilmentMark(element))) => ailment_mark(ailing.ailment, element),
+            (Some(ailing), .., Some(&AilmentMark(element))) => {
+                ailment_mark(ailing.ailment, element)
+            }
             _ => String::new(),
         };
         if text.0 != shown {

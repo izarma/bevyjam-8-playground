@@ -2,6 +2,7 @@ use bevy::prelude::*;
 
 use crate::{
     GameState,
+    audio::Volume,
     camera::{
         CAMERA_SENSITIVITY_STEP, CameraSensitivity, DEFAULT_CAMERA_SENSITIVITY,
         MAX_CAMERA_SENSITIVITY, MIN_CAMERA_SENSITIVITY,
@@ -19,6 +20,7 @@ pub(super) fn plugin(app: &mut App) {
             update_horizontal_sensitivity_label,
             update_vertical_sensitivity_label,
             update_graphics_labels,
+            update_volume_labels,
         )
             .run_if(in_state(Menu::Settings)),
     );
@@ -49,8 +51,24 @@ fn settings_grid() -> impl Scene {
             row_gap: texels(4),
             column_gap: texels(12),
             grid_template_columns: cols,
+            padding: UiRect::all(texels(8)),
         }
+        @widget::panel()
         Children [
+            @widget::label("Sound Volume")
+            Node {
+                justify_self: JustifySelf::End,
+            }
+            --
+            @sound_volume_widget()
+            --
+            @widget::label("Music Volume")
+            Node {
+                justify_self: JustifySelf::End,
+            }
+            --
+            @music_volume_widget()
+            --
             @widget::label("Horizontal Sensitivity")
             Node {
                 justify_self: JustifySelf::End,
@@ -159,6 +177,87 @@ fn fog_widget() -> impl Scene {
             @widget::button_small("+", turn_on_fog)
         ]
     }
+}
+
+fn sound_volume_widget() -> impl Scene {
+    bsn! {
+        #SoundVolumeWidget
+        Node {
+            justify_self: JustifySelf::Start,
+        }
+        Children [
+            @widget::button_small("-", lower_sound_volume)
+            --
+            #SoundVolumeValue
+            Node {
+                padding: UiRect::horizontal(texels(4)),
+                justify_content: JustifyContent::Center,
+            }
+            Children [
+                @widget::label("")
+                SoundVolumeLabel
+            ]
+            --
+            @widget::button_small("+", raise_sound_volume)
+        ]
+    }
+}
+
+fn music_volume_widget() -> impl Scene {
+    bsn! {
+        #MusicVolumeWidget
+        Node {
+            justify_self: JustifySelf::Start,
+        }
+        Children [
+            @widget::button_small("-", lower_music_volume)
+            --
+            #MusicVolumeValue
+            Node {
+                padding: UiRect::horizontal(texels(4)),
+                justify_content: JustifyContent::Center,
+            }
+            Children [
+                @widget::label("")
+                MusicVolumeLabel
+            ]
+            --
+            @widget::button_small("+", raise_music_volume)
+        ]
+    }
+}
+
+#[derive(Component, Clone, Default)]
+struct SoundVolumeLabel;
+
+#[derive(Component, Clone, Default)]
+struct MusicVolumeLabel;
+
+const VOLUME_STEP: u32 = 10;
+
+fn lower_sound_volume(_: On<PointerClick>, mut volume: ResMut<Volume>) {
+    volume.sound = volume.sound.saturating_sub(VOLUME_STEP);
+}
+
+fn raise_sound_volume(_: On<PointerClick>, mut volume: ResMut<Volume>) {
+    volume.sound = (volume.sound + VOLUME_STEP).min(100);
+}
+
+fn lower_music_volume(_: On<PointerClick>, mut volume: ResMut<Volume>) {
+    volume.music = volume.music.saturating_sub(VOLUME_STEP);
+}
+
+fn raise_music_volume(_: On<PointerClick>, mut volume: ResMut<Volume>) {
+    volume.music = (volume.music + VOLUME_STEP).min(100);
+}
+
+fn update_volume_labels(
+    volume: Res<Volume>,
+    mut sound: Single<&mut Text, (With<SoundVolumeLabel>, Without<MusicVolumeLabel>)>,
+    mut music: Single<&mut Text, With<MusicVolumeLabel>>,
+) {
+    sound.0 = format!("{:3}%", volume.sound);
+    music.0 = format!("{:3}%", volume.music);
 }
 
 #[derive(Component, Clone, Default)]

@@ -550,6 +550,9 @@ bevy_ecs::hierarchy::Children [
         source: "outdoor_environment.bsn",
         deleted: [],
     }
+    bevy_game::gameplay::time_of_day::DaylitExposure {
+        day: 8.6,
+    }
     jackdaw::prefab::components::PrefabEntityId(0)
     --
     #"Title Player Spawn"

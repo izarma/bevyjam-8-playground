@@ -11,12 +11,10 @@ use crate::gameplay::clock::Clock;
 const DAWN_SUN: Color = Color::srgb(1.0, 0.7, 0.55);
 const DUSK_SUN: Color = Color::srgb(1.0, 0.55, 0.3);
 const LOW_SUN_BRIGHTNESS: f32 = 0.6;
-const DAWN_FOG: Color = Color::srgb(0.35, 0.28, 0.3);
-const DUSK_FOG: Color = Color::srgb(0.3, 0.22, 0.2);
-const NIGHT_FOG: Color = Color::srgb(0.02, 0.03, 0.06);
 const MOONLIGHT: Color = Color::srgb(0.55, 0.65, 0.9);
-const MOON_BRIGHTNESS: f32 = 0.3;
+const MOON_BRIGHTNESS: f32 = 0.2;
 const MOON_RISES: f32 = -0.04;
+const ATMOSPHERE: f32 = 0.2;
 
 struct SkyTint {
     zenith: Color,
@@ -124,7 +122,7 @@ struct DaySun {
 }
 
 #[derive(Component)]
-struct DayEnvironment(Environment);
+struct DayAmbient(f32);
 
 #[derive(Component)]
 struct DaySky(PixelSky);
@@ -146,10 +144,20 @@ pub struct DaylitAmbient {
     pub night: f32,
 }
 
+#[derive(Component, Reflect, Default)]
+#[reflect(Component, Default)]
+pub struct DaylitExposure {
+    pub day: f32,
+}
+
+#[derive(Component)]
+struct NightExposure(f32);
+
 fn remember_day(
     mut commands: Commands,
     suns: Query<(Entity, &Transform, &DirectionalLight), Without<DaySun>>,
-    environments: Query<(Entity, &Environment), Without<DayEnvironment>>,
+    ambient_lit: Query<(Entity, &Environment), (With<DaylitAmbient>, Without<DayAmbient>)>,
+    exposed: Query<(Entity, &Environment), (With<DaylitExposure>, Without<NightExposure>)>,
     skies: Query<(Entity, &PixelSky), Without<DaySky>>,
 ) {
     for (entity, transform, light) in &suns {
@@ -159,10 +167,15 @@ fn remember_day(
             illuminance: light.illuminance,
         });
     }
-    for (entity, environment) in &environments {
+    for (entity, environment) in &ambient_lit {
         commands
             .entity(entity)
-            .insert(DayEnvironment(environment.clone()));
+            .insert(DayAmbient(environment.ambient.brightness));
+    }
+    for (entity, environment) in &exposed {
+        commands
+            .entity(entity)
+            .insert(NightExposure(environment.post.exposure));
     }
     for (entity, sky) in &skies {
         commands.entity(entity).insert(DaySky(sky.clone()));
@@ -172,7 +185,11 @@ fn remember_day(
 fn follow_clock(
     clock: Single<&Clock>,
     mut suns: Query<(&DaySun, &mut Transform, &mut DirectionalLight)>,
-    mut environments: Query<(&DayEnvironment, &mut Environment, Option<&DaylitAmbient>)>,
+    mut environments: Query<(
+        &mut Environment,
+        Option<(&DayAmbient, &DaylitAmbient)>,
+        Option<(&DaylitExposure, &NightExposure)>,
+    )>,
     mut skies: Query<(&DaySky, &mut PixelSky)>,
     mut spots: Query<(&Daylit, &mut SpotLight)>,
     mut points: Query<(&Daylit, &mut PointLight), Without<Nightlit>>,
@@ -195,8 +212,13 @@ fn follow_clock(
         let (from, color, brightness) = if toward.y < MOON_RISES {
             (-toward, MOONLIGHT, MOON_BRIGHTNESS)
         } else {
-            (toward, moment.blend(|look| sun_color_of(look, day), mix).into(), daylight)
+            (
+                toward,
+                moment.blend(|look| sun_color_of(look, day), mix).into(),
+                daylight,
+            )
         };
+        let brightness = brightness * through_air(from.y);
         transform.look_to(-from, Vec3::Y);
         light.color = color;
         light.illuminance = day.illuminance * brightness;
@@ -212,14 +234,18 @@ fn follow_clock(
         sky.set_if_neq(now);
     }
 
-    for (day, mut environment, ambient) in &mut environments {
-        let day = &day.0;
-        environment.fog.color = moment
-            .blend(|look| fog_color(look, day.fog.color), mix)
-            .into();
-        if let Some(ambient) = ambient {
-            environment.ambient.brightness =
-                ambient.night + (day.ambient.brightness - ambient.night) * daylight;
+    for (mut environment, ambient, exposure) in &mut environments {
+        if let Some((&DayAmbient(day), ambient)) = ambient {
+            let brightness = ambient.night + (day - ambient.night) * daylight;
+            if environment.ambient.brightness != brightness {
+                environment.ambient.brightness = brightness;
+            }
+        }
+        if let Some((exposure, &NightExposure(night))) = exposure {
+            let ev100 = night + (exposure.day - night) * daylight;
+            if environment.post.exposure != ev100 {
+                environment.post.exposure = ev100;
+            }
         }
     }
 
@@ -238,6 +264,12 @@ fn follow_clock(
         light.intensity = lit.intensity * brightness;
         light.color = color;
     }
+}
+
+fn through_air(height: f32) -> f32 {
+    let degrees = height.clamp(0.0, 1.0).asin().to_degrees();
+    let air = 1.0 / (height.max(0.0) + 0.50572 * (degrees + 6.07995).powf(-1.6364));
+    (-ATMOSPHERE * (air - 1.0)).exp()
 }
 
 fn sun_color_of(look: Look, day: &DaySun) -> LinearRgba {
@@ -280,14 +312,4 @@ fn mix_skies(from: PixelSky, to: PixelSky, t: f32) -> PixelSky {
         stars: from.stars.lerp(to.stars, t),
         ..to
     }
-}
-
-fn fog_color(look: Look, day: Color) -> LinearRgba {
-    match look {
-        Look::Day => day,
-        Look::Dawn => DAWN_FOG,
-        Look::Dusk => DUSK_FOG,
-        Look::Night => NIGHT_FOG,
-    }
-    .into()
 }

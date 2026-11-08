@@ -41,13 +41,14 @@ fn source_attenuation(distance_squared: f32, inverse_range_squared: f32, radius:
 }
 
 // the color / amount of light at `at` from point or spot light `id`
-fn light_arriving(id: u32, at: vec3<f32>) -> vec3<f32> {
+fn light_arriving(id: u32, at: vec3<f32>, spread: f32) -> vec3<f32> {
     let light = &clustered_lights.data[id];
     let to_light = (*light).position_radius.xyz - at;
+    let radius = (*light).position_radius.w;
     return (*light).color_inverse_square_range.rgb * source_attenuation(
         dot(to_light, to_light),
         (*light).color_inverse_square_range.w,
-        (*light).position_radius.w,
+        sqrt(radius * radius + spread * spread),
     );
 }
 
@@ -102,7 +103,7 @@ fn matte_lighting(in: PbrInput) -> vec3<f32> {
         if receives && (clustered_lights.data[id].flags & POINT_LIGHT_FLAGS_SHADOWS_ENABLED_BIT) != 0u {
             shadow = shadows::fetch_point_shadow(id, at, in.world_normal, in.frag_coord.xy);
         }
-        arriving += light_arriving(id, at.xyz) * saturate(dot(n, to_light)) * shadow;
+        arriving += light_arriving(id, at.xyz, 0.0) * saturate(dot(n, to_light)) * shadow;
     }
     for (var i = ranges.first_spot_light_index_offset; i < ranges.first_rect_light_index_offset; i += 1u) {
         let id = clustering::get_clusterable_object_id(i);
@@ -112,7 +113,7 @@ fn matte_lighting(in: PbrInput) -> vec3<f32> {
         if receives && ((*light).flags & POINT_LIGHT_FLAGS_SHADOWS_ENABLED_BIT) != 0u {
             shadow = shadows::fetch_spot_shadow(id, at, in.world_normal, (*light).shadow_map_near_z, in.frag_coord.xy);
         }
-        arriving += light_arriving(id, at.xyz) * saturate(dot(n, to_light)) * spot_cone(id, at.xyz) * shadow;
+        arriving += light_arriving(id, at.xyz, 0.0) * saturate(dot(n, to_light)) * spot_cone(id, at.xyz) * shadow;
     }
 
     var ambient = diffuse * lights.ambient_color.rgb * in.diffuse_occlusion;

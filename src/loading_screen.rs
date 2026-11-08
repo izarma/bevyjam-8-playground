@@ -25,6 +25,9 @@ pub(super) fn plugin(app: &mut App) {
         .add_systems(Update, sweep);
 }
 
+#[derive(Event)]
+pub(crate) struct Revealed;
+
 #[derive(Event, Clone, Copy, PartialEq, Eq)]
 pub(crate) enum Travel {
     Title,
@@ -176,6 +179,10 @@ fn sweep(
     } else {
         Visibility::Hidden
     });
+
+    if material.swept < 1.0 && swept == 1.0 {
+        commands.trigger(Revealed);
+    }
 
     let pixels_per_texel = pixels_per_texel(&window);
     if (material.swept != swept || material.pixels_per_texel != pixels_per_texel)
