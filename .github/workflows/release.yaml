@@ -221,7 +221,10 @@ jobs:
       - name: Install Dependencies
         run: sudo apt-get update; sudo apt-get install -y g++ pkg-config libx11-dev libasound2-dev libudev-dev libxkbcommon-x11-0 libwayland-dev
       - name: Install trunk
-        run: cargo install --locked trunk
+        run: |
+          if ! cargo install --list | grep -q '^trunk '; then
+            cargo install --locked --force trunk
+          fi
       - name: Add wasm target
         run: |
           rustup target add wasm32-unknown-unknown
