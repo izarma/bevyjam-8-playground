@@ -5,7 +5,9 @@ use plants::Plant;
 
 use crate::{
     GameResult, GameState,
-    gameplay::{BodyOf, Health, InDialogue, clock::Clock, inventory::Inventory},
+    gameplay::{
+        BodyOf, DAY_END, DAY_START, Health, InDialogue, Visitor, clock::Clock, inventory::Inventory,
+    },
     loading_screen::Travel,
 };
 
@@ -45,6 +47,11 @@ pub(super) fn plugin(app: &mut App) {
     app.add_systems(
         Update,
         pass_hour.run_if(in_state(GameState::Gameplay).and_then(input_just_pressed(KeyCode::F6))),
+    );
+    app.add_systems(
+        Update,
+        force_spawn_npcs
+            .run_if(in_state(GameState::Gameplay).and_then(input_just_pressed(KeyCode::F7))),
     );
 }
 
@@ -100,4 +107,20 @@ fn adjust_npc_health(
 fn pass_hour(mut clock: Single<&mut Clock>) {
     clock.bank += 1.0;
     println!("Passed an hour");
+}
+
+fn force_spawn_npcs(
+    mut visitors: Query<&mut Health, With<Visitor>>,
+    mut clock: Single<&mut Clock>,
+) {
+    for mut health in &mut visitors {
+        if !health.dead() {
+            health.make_unwell();
+        }
+    }
+    let hour = clock.hours.rem_euclid(24.0);
+    if !(DAY_START..DAY_END).contains(&hour) {
+        clock.hours += (DAY_START - hour).rem_euclid(24.0);
+    }
+    println!("Force-spawned all living NPCs");
 }

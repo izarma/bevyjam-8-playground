@@ -10,7 +10,7 @@ use super::{
 };
 use crate::{
     GameplayScene, InControl, PausableSystems,
-    gameplay::{CharacterName, Player, PlayerAnimation, PlayerAnimationSystems},
+    gameplay::{CharacterName, Met, Player, PlayerAnimation, PlayerAnimationSystems},
     ui::{
         billboard::Billboards,
         font,
@@ -151,6 +151,7 @@ fn talk_panel() -> impl Scene {
 fn start_interaction(
     _: On<Start<Touch>>,
     npcs: Query<(Entity, &CharacterName), With<InReach>>,
+    bodies: Query<&BodyOf>,
     mut runner: Query<&mut DialogueRunner>,
     mut commands: Commands,
 ) {
@@ -174,6 +175,9 @@ fn start_interaction(
         Ok(_) => {
             info!("interacting with NPC {npc:?}");
             commands.entity(npc).insert(InDialogue);
+            if let Ok(body) = bodies.get(npc) {
+                commands.entity(body.0).insert(Met);
+            }
         }
         Err(error) => {
             // the player can just interact again.

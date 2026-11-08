@@ -7,7 +7,7 @@ pub(crate) const KEY_ESCAPE: u32 = 17;
 pub(crate) const KEY_F: u32 = 123;
 pub(crate) const KEY_LEFT: u32 = 169;
 pub(crate) const MOUSE: u32 = 76;
-pub(crate) const KEY_I: u32 = 92;
+// pub(crate) const KEY_I: u32 = 92;
 
 const TILE: u32 = 16;
 const COLUMNS: u32 = 34;

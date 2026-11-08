@@ -33,6 +33,8 @@ pub struct UIAssets {
     pub panel: Handle<Image>,
     #[asset(path = "ui/9slice_fill.png")]
     pub panel_fill: Handle<Image>,
+    #[asset(path = "ui/Element Icons.png")]
+    pub elements: Handle<Image>,
     #[asset(path = "ui/Bell Button.png")]
     pub inventory_icon: Handle<Image>,
 }
@@ -91,9 +93,13 @@ pub const NPC_FRAME: UVec2 = UVec2::new(16, 32);
 impl NPCAssets {
     pub fn sprite(&self, name: &str) -> (&Handle<Image>, UVec2) {
         match name {
-            "Monk" => (&self.old_beggar, MONK_MAN_FRAME),
             "Guardian" => (&self.guardian, PLAYER_FRAME),
-            _ => (&self.monk_man, NPC_FRAME),
+            "Monk" => (&self.monk_man, MONK_MAN_FRAME),
+            "Woman" => (&self.lady, NPC_FRAME),
+            "OldMan" => (&self.old_beggar, NPC_FRAME),
+            "OldWoman" => (&self.old_lady, NPC_FRAME),
+            "Kid" => (&self.kid, NPC_FRAME),
+            _ => (&self.monk_man, MONK_MAN_FRAME),
         }
     }
 }

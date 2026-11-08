@@ -7,7 +7,7 @@ use crate::{
     gameplay::{
         clock::{Clock, START_HOUR},
         herbs::{self, Element},
-        remedy::Remedy,
+        remedy::{Mark, Remedy, SLOTS},
     },
     loading_screen::Travel,
 };
@@ -17,8 +17,8 @@ const AILMENT_HOURS: f32 = 24.0;
 // how far off balanced any element has to be before someone feels unwell
 const UNWELL: u8 = 2;
 // unwell visitors come to the lab between these hours
-const DAY_START: f32 = 6.0;
-const DAY_END: f32 = 20.0;
+pub(crate) const DAY_START: f32 = 6.0;
+pub(crate) const DAY_END: f32 = 20.0;
 
 pub(super) fn plugin(app: &mut App) {
     app.add_systems(OnEnter(GameState::Gameplay), spawn_visitors)
@@ -77,6 +77,11 @@ impl Health {
         }
     }
 
+    #[cfg(debug_assertions)]
+    pub(crate) fn make_unwell(&mut self) {
+        self.wood = BALANCED - UNWELL;
+    }
+
     pub(crate) fn dose(&mut self, plant: Plant) {
         for (element, delta) in herbs::effect(plant).shifts() {
             self.shift(element, delta);
@@ -116,6 +121,15 @@ impl Default for Health {
 }
 
 const NAMES: [&str; 6] = ["Guardian", "Monk", "Woman", "OldMan", "OldWoman", "Kid"];
+
+const DESCRIPTIONS: [&str; 6] = [
+    "Weakens by the day and taught you the craft.",
+    "Monk of the west. Strong. Bereft of once material wealth.",
+    "Celebrated bride. Forgotten widow.",
+    "Once invaded kingdoms for glory, now takes pennies for a living",
+    "Once upon a time her beauty is unparalleled in all five directions. Now she's just old",
+    "Unmothered, unfathered, uneducated.",
+];
 // already at the house when the game starts, further gone than the others
 const GUARDIAN: usize = 0;
 // days ill before the game starts
@@ -130,10 +144,18 @@ impl Visitor {
         NAMES[self.0]
     }
 
+    pub(crate) fn description(&self) -> &'static str {
+        DESCRIPTIONS[self.0]
+    }
+
     pub(crate) fn guardian(&self) -> bool {
         self.0 == GUARDIAN
     }
 }
+
+/// A visitor the player has started talking to, and so should appear in the journal.
+#[derive(Component)]
+pub(crate) struct Met;
 
 // the herbs the guardian hands over to be brewed foor the tutorial
 #[derive(Component)]
@@ -170,6 +192,19 @@ pub(crate) struct Died;
 // drank their remedy
 #[derive(Component)]
 pub(crate) struct Cured;
+
+/// One brew a visitor actually drank: what went in and how it graded.
+#[derive(Clone, Copy)]
+pub(crate) struct Brew {
+    pub(crate) mix: [Option<Plant>; SLOTS],
+    pub(crate) marks: [Mark; SLOTS],
+}
+
+/// Every brew a visitor has drunk, in the order they drank them.
+#[derive(Component, Default, Clone)]
+pub(crate) struct BrewHistory {
+    pub(crate) brews: Vec<Brew>,
+}
 
 #[derive(Clone, Copy)]
 pub(crate) enum Ailment {
@@ -256,6 +291,7 @@ fn spawn_visitors(mut commands: Commands) {
                 ailment,
                 next: arrives - AILMENT_HOURS * f32::from(days_ill - 1),
             },
+            BrewHistory::default(),
             DespawnOnExit(GameState::Gameplay),
         ));
         if guardian {

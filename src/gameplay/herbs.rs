@@ -46,6 +46,16 @@ impl Element {
             Element::Water => "Water",
         }
     }
+
+    pub(crate) fn icon_index(self) -> u32 {
+        match self {
+            Element::Fire => 0,
+            Element::Water => 1,
+            Element::Wood => 2,
+            Element::Metal => 3,
+            Element::Earth => 4,
+        }
+    }
 }
 
 pub(crate) fn name(plant: Plant) -> &'static str {
@@ -113,6 +123,46 @@ pub(crate) fn icon(plant: Plant) -> impl Scene {
             rect: { Some(rect) },
         }
         Pickable::IGNORE
+    }
+}
+
+// cell indices in the sheet, in the order: Fire, Water, Wood, Metal, Earth
+const ELEMENT_SHEET: &str = "ui/Element Icons.png";
+const ELEMENT_TILE: u32 = 16;
+const ELEMENT_COLUMNS: u32 = 3;
+
+pub(crate) fn element_icon(element: Element) -> impl Scene {
+    let rect = pixel_art::grid_rect(
+        element.icon_index(),
+        ELEMENT_COLUMNS,
+        UVec2::splat(ELEMENT_TILE),
+    )
+    .as_rect();
+    bsn! {
+        Node {
+            width: texels(16),
+            height: texels(16),
+        }
+        ImageNode {
+            image: ELEMENT_SHEET,
+            rect: { Some(rect) },
+        }
+        Pickable::IGNORE
+    }
+}
+
+/// frames icon
+pub(crate) fn element_icon_slot(element: Element) -> impl Scene {
+    bsn! {
+        Node {
+            width: texels(24),
+            height: texels(24),
+            justify_content: JustifyContent::Center,
+            align_items: AlignItems::Center,
+        }
+        @widget::panel()
+        Pickable::IGNORE
+        Children [ { vec![element_icon(element)] } ]
     }
 }
 
@@ -235,10 +285,7 @@ pub(crate) fn card(plant: Plant) -> impl Scene {
                 }
                 Pickable::IGNORE
                 Children [
-                    Text({ element.name().to_string() })
-                    @font::text(1)
-                    TextColor(BUTTON_TEXT)
-                    Pickable::IGNORE
+                    { vec![element_icon_slot(element)] }
                     --
                     Text({ format!("{amount:+}") })
                     @font::text(1)

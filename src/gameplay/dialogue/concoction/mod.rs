@@ -15,7 +15,7 @@ use crate::gameplay::{
     clock::Clock,
     inventory::Inventory,
     remedy::{Mark, Remedy, SLOTS, grade},
-    visitors::{Cured, Visitor},
+    visitors::{Brew, BrewHistory, Cured, Visitor},
 };
 
 const HOURS_PER_DOSE: f32 = 2.0;
@@ -247,7 +247,7 @@ fn brew(
     mut commands: Commands,
     time: Res<Time>,
     mut concoction: Single<&mut Concoction>,
-    mut visitors: Query<(&Visitor, &mut Health)>,
+    mut visitors: Query<(&Visitor, &mut Health, &mut BrewHistory)>,
     mut clock: Single<&mut Clock>,
     mut runner: Single<&mut DialogueRunner>,
 ) {
@@ -258,7 +258,7 @@ fn brew(
     };
     let step = concoction.advance(seconds);
     let cures = concoction.cures();
-    let Ok((visitor, mut health)) = visitors.get_mut(concoction.visitor) else {
+    let Ok((visitor, mut health, mut history)) = visitors.get_mut(concoction.visitor) else {
         return;
     };
     if !cures {
@@ -268,6 +268,14 @@ fn brew(
     }
     if step.drunk {
         clock.bank += HOURS_PER_DOSE;
+        // only record a brew once it has actually been drunk
+        let Stage::Drunk { marks } = &concoction.stage else {
+            unreachable!("a drunk brew is always in the drunk stage");
+        };
+        history.brews.push(Brew {
+            mix: concoction.mix,
+            marks: *marks,
+        });
         if cures {
             commands.entity(concoction.visitor).insert(Cured);
         }
