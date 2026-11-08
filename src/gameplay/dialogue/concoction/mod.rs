@@ -9,9 +9,9 @@ use bevy::prelude::*;
 use bevy_yarnspinner::prelude::{DialogueRunner, YarnValue};
 use plants::Plant;
 
-use super::{YarnSpinnerDialogueViewSystemSet, view::DialogueOptionsNode};
+use super::{DialogueTarget, YarnSpinnerDialogueViewSystemSet, view::DialogueOptionsNode};
 use crate::gameplay::{
-    BodyOf, Health, InDialogue,
+    Health,
     clock::Clock,
     inventory::Inventory,
     remedy::{Mark, Remedy, SLOTS, grade},
@@ -220,20 +220,18 @@ impl Concoction {
 // hold the dialogue open while we brew
 pub(super) fn offer_concoction(
     mut commands: Commands,
-    npc: Query<&BodyOf, With<InDialogue>>,
+    target: Res<DialogueTarget>,
     options: Query<Entity, With<DialogueOptionsNode>>,
     inventory: Query<&Inventory>,
 ) -> Arc<AtomicBool> {
-    let (Some(body), Some(options), Some(inventory)) = (
-        npc.iter().next(),
-        options.iter().next(),
-        inventory.iter().next(),
-    ) else {
+    let (Some(visitor), Some(options), Some(inventory)) =
+        (target.0, options.iter().next(), inventory.iter().next())
+    else {
         error!("offer_concoction ran without a visitor in dialogue");
         return Arc::new(AtomicBool::new(true));
     };
     let done = Arc::new(AtomicBool::new(false));
-    panel::spawn(&mut commands, options, inventory).insert(Concoction::new(body.0, done.clone()));
+    panel::spawn(&mut commands, options, inventory).insert(Concoction::new(visitor, done.clone()));
     done
 }
 

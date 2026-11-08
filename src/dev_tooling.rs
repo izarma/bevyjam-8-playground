@@ -6,7 +6,7 @@ use plants::Plant;
 use crate::{
     GameResult, GameState,
     gameplay::{
-        BodyOf, DAY_END, DAY_START, Health, InDialogue, Visitor, clock::Clock, inventory::Inventory,
+        DAY_END, DAY_START, DialogueTarget, Health, Visitor, clock::Clock, inventory::Inventory,
     },
     loading_screen::Travel,
 };
@@ -79,24 +79,16 @@ fn lose(mut commands: Commands) {
     commands.trigger(Travel::GameOver);
 }
 
-fn decrease_npc_health(npcs: Query<&BodyOf, With<InDialogue>>, visitors: Query<&mut Health>) {
-    adjust_npc_health(npcs, visitors, -1);
+fn decrease_npc_health(target: Res<DialogueTarget>, visitors: Query<&mut Health>) {
+    adjust_npc_health(target, visitors, -1);
 }
 
-fn increase_npc_health(npcs: Query<&BodyOf, With<InDialogue>>, visitors: Query<&mut Health>) {
-    adjust_npc_health(npcs, visitors, 1);
+fn increase_npc_health(target: Res<DialogueTarget>, visitors: Query<&mut Health>) {
+    adjust_npc_health(target, visitors, 1);
 }
 
-fn adjust_npc_health(
-    npcs: Query<&BodyOf, With<InDialogue>>,
-    mut visitors: Query<&mut Health>,
-    delta: i8,
-) {
-    let Some(mut health) = npcs
-        .iter()
-        .next()
-        .and_then(|body| visitors.get_mut(body.0).ok())
-    else {
+fn adjust_npc_health(target: Res<DialogueTarget>, mut visitors: Query<&mut Health>, delta: i8) {
+    let Some(mut health) = target.0.and_then(|visitor| visitors.get_mut(visitor).ok()) else {
         println!("Health editor: no NPC in dialogue");
         return;
     };

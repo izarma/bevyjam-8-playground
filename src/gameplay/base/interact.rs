@@ -10,7 +10,7 @@ use super::{
 };
 use crate::{
     GameplayScene, InControl, PausableSystems,
-    gameplay::{Met, Player, PlayerAnimation, PlayerAnimationSystems, Visitor},
+    gameplay::{DialogueTarget, Met, Player, PlayerAnimation, PlayerAnimationSystems, Visitor},
     ui::{
         billboard::Billboards,
         font,
@@ -151,9 +151,11 @@ fn talk_panel() -> impl Scene {
 fn start_interaction(
     _: On<Start<Touch>>,
     npcs: Query<Entity, With<InReach>>,
+    in_dialogue: Query<Entity, With<InDialogue>>,
     bodies: Query<&BodyOf>,
     visitors: Query<&Visitor>,
     mut runner: Query<&mut DialogueRunner>,
+    mut target: ResMut<DialogueTarget>,
     mut commands: Commands,
 ) {
     let Some(npc) = npcs.iter().next() else {
@@ -165,12 +167,11 @@ fn start_interaction(
     if runner.is_running() {
         return;
     }
-    let Some(node) = bodies
-        .get(npc)
-        .ok()
-        .and_then(|body| visitors.get(body.0).ok())
-        .map(Visitor::node)
-    else {
+    let Some(body) = bodies.get(npc).ok() else {
+        error!("Refusing to start dialogue with {npc:?}: no body to talk to");
+        return;
+    };
+    let Some(node) = visitors.get(body.0).ok().map(Visitor::node) else {
         error!("Refusing to start dialogue with {npc:?}: no visitor to talk to");
         return;
     };
@@ -183,10 +184,15 @@ fn start_interaction(
     match runner.try_start_node(node) {
         Ok(_) => {
             info!("interacting with NPC {npc:?}");
-            commands.entity(npc).insert(InDialogue);
-            if let Ok(body) = bodies.get(npc) {
-                commands.entity(body.0).insert(Met);
+            // Replace the previous visitor so first-match consumers can never pick it up.
+            target.0 = Some(body.0);
+            for other in &in_dialogue {
+                if other != npc {
+                    commands.entity(other).remove::<InDialogue>();
+                }
             }
+            commands.entity(npc).insert(InDialogue);
+            commands.entity(body.0).insert(Met);
         }
         Err(error) => {
             // the player can just interact again.
@@ -221,15 +227,12 @@ fn face_in_reach(
 /// Turns the player toward the in-dialogue NPC once, on the frame the
 /// dialogue starts.
 fn face_npc(
-    _: On<Add<InDialogue>>,
+    added: On<Add<InDialogue>>,
     player: Query<&GlobalTransform, With<Player>>,
-    npcs: Query<&GlobalTransform, With<InDialogue>>,
+    npcs: Query<&GlobalTransform>,
     mut player_animations: Query<&mut PlayerAnimation>,
 ) {
-    let Ok(player) = player.single() else {
-        return;
-    };
-    let Some(npc) = npcs.iter().next() else {
+    let (Ok(player), Ok(npc)) = (player.single(), npcs.get(added.entity)) else {
         return;
     };
 

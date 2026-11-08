@@ -6,7 +6,7 @@ use bevy_yarnspinner::prelude::DialogueRunner;
 use crate::{
     GameplayScene, PausableSystems,
     gameplay::{
-        CharacterName,
+        CharacterName, DialogueTarget,
         base::{BODY_HEIGHT, LabScene, ground_below, indoor_body},
         visitors::{InLineup, Visitor},
     },
@@ -187,10 +187,12 @@ fn end_npc_dialogue(
     mut commands: Commands,
     npcs: Query<Entity, With<InDialogue>>,
     runners: Query<&DialogueRunner>,
+    mut target: ResMut<DialogueTarget>,
 ) {
     if runners.iter().any(|runner| runner.is_running()) {
         return;
     }
+    target.0 = None;
     for npc in &npcs {
         commands.entity(npc).remove::<InDialogue>();
     }
