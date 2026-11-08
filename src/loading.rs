@@ -29,6 +29,10 @@ pub struct UIAssets {
     pub button_click: Handle<AudioSource>,
     #[asset(path = "textures/bevy.png")]
     pub bevy: Handle<Image>,
+    #[asset(path = "ui/9slice.png")]
+    pub panel: Handle<Image>,
+    #[asset(path = "ui/9slice_fill.png")]
+    pub panel_fill: Handle<Image>,
 }
 
 #[derive(AssetCollection, Resource)]

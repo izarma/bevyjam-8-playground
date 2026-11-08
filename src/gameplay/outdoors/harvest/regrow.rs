@@ -11,7 +11,7 @@ use crate::{
     GameplayScene, InControl,
     gameplay::clock::Clock,
     ui::{
-        billboard::Billboards,
+        billboard::{Billboards, Fade},
         font,
         palette::{GAIN_TEXT, LABEL_TEXT},
         scale::texels,
@@ -43,10 +43,9 @@ struct RegrowFill;
 struct RegrowHours;
 
 fn show_panel(
-    mut commands: Commands,
     in_reach: Option<Single<Entity, With<InReach>>>,
     in_control: Option<Res<State<InControl>>>,
-    panels: Query<(Entity, &RegrowPanel)>,
+    mut panels: Query<(&RegrowPanel, &mut Fade)>,
     plants: Query<(&GlobalTransform, &PixelSprite), With<Harvested>>,
     mut billboards: Billboards,
 ) {
@@ -54,15 +53,19 @@ fn show_panel(
     let target = in_reach
         .map(|plant| *plant)
         .filter(|&plant| in_control.is_some() && plants.contains(plant));
-    for (panel, shown) in &panels {
-        if Some(shown.plant) != target {
-            commands.entity(panel).despawn();
+    let mut showing = false;
+    for (shown, mut fade) in &mut panels {
+        if Some(shown.plant) == target {
+            fade.stay();
+            showing = true;
+        } else {
+            fade.leave();
         }
     }
     let Some(plant) = target else {
         return;
     };
-    if panels.iter().any(|(_, shown)| shown.plant == plant) {
+    if showing {
         return;
     }
     let Ok((at, sprite)) = plants.get(plant) else {
@@ -122,7 +125,7 @@ fn panel() -> impl Scene {
 }
 
 fn show_progress(
-    panels: Query<&RegrowPanel>,
+    panels: Query<(&RegrowPanel, &Fade)>,
     plants: Query<&ChildOf>,
     spots: Query<&SceneNodeId>,
     fields: Single<&Fields>,
@@ -132,8 +135,8 @@ fn show_progress(
 ) {
     let Some(ready) = panels
         .iter()
-        .next()
-        .and_then(|panel| plants.get(panel.plant).ok())
+        .find(|(_, fade)| !fade.leaving())
+        .and_then(|(panel, _)| plants.get(panel.plant).ok())
         .and_then(|spot| spots.get(spot.parent()).ok())
         .and_then(|&spot| fields.ready(spot))
     else {

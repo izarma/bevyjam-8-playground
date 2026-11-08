@@ -10,6 +10,8 @@ use bevy::{
 use jackdaw_runtime::{AwaitingModelSettings, JackdawSceneRoot, TerrainReady};
 use jackdaw_scene_types::Terrain;
 
+use crate::{GameplayScene, ui::billboard::Primer};
+
 pub(super) fn plugin(app: &mut App) {
     app.add_systems(Last, settle);
     app.sub_app_mut(RenderApp).add_systems(
@@ -58,15 +60,19 @@ fn settle(
     spawner: Res<WorldInstanceSpawner>,
     awaiting: Query<(), With<AwaitingModelSettings>>,
     terrains: Terrains,
+    scene: Option<Res<State<GameplayScene>>>,
+    primers: Query<&Visibility, With<Primer>>,
 ) {
     if unsettled.is_empty() {
         return;
     }
+    let primed = scene.is_none()
+        || (!primers.is_empty() && primers.iter().all(|shown| *shown != Visibility::Hidden));
     let models_spawned = models.iter().all(|(root, instance)| {
         instance.is_some_and(|instance| spawner.instance_is_ready(**instance))
             || matches!(asset_server.load_state(&root.0), LoadState::Failed(_))
     });
-    if !models_spawned || !awaiting.is_empty() || !terrains.ready() {
+    if !models_spawned || !awaiting.is_empty() || !terrains.ready() || !primed {
         return;
     }
     for (entity, scene) in &unsettled {
@@ -111,7 +117,28 @@ fn warn_late_pipelines(
     pipelines: Res<PipelineCache>,
     mut known: Local<usize>,
 ) {
-    use bevy::material::descriptor::PipelineDescriptor;
+    use bevy::material::descriptor::{PipelineDescriptor, RenderPipelineDescriptor};
+    use std::collections::BTreeSet;
+
+    fn variant(d: &RenderPipelineDescriptor) -> BTreeSet<String> {
+        let mut parts: BTreeSet<String> = d
+            .vertex
+            .shader_defs
+            .iter()
+            .map(|def| format!("vertex {def:?}"))
+            .collect();
+        parts.insert(format!("vertex shader {:?}", d.vertex.shader.path()));
+        if let Some(fragment) = &d.fragment {
+            parts.extend(
+                fragment
+                    .shader_defs
+                    .iter()
+                    .map(|def| format!("fragment {def:?}")),
+            );
+            parts.insert(format!("fragment shader {:?}", fragment.shader.path()));
+        }
+        parts
+    }
 
     let drawn = main_world
         .query_filtered::<(), (With<JackdawSceneRoot>, With<SceneDrawn>)>()
@@ -123,15 +150,41 @@ fn warn_late_pipelines(
         .iter(&main_world)
         .next()
         .is_some();
+    let all: Vec<_> = pipelines.pipelines().collect();
     if drawn && !undrawn {
-        for pipeline in pipelines.pipelines().skip(*known) {
-            let label = match &pipeline.descriptor {
-                PipelineDescriptor::RenderPipelineDescriptor(d) => d.label.clone(),
-                PipelineDescriptor::ComputePipelineDescriptor(d) => d.label.clone(),
-                PipelineDescriptor::MeshPipelineDescriptor(d) => d.label.clone(),
+        for (index, pipeline) in all.iter().enumerate().skip(*known) {
+            let PipelineDescriptor::RenderPipelineDescriptor(late) = &pipeline.descriptor else {
+                let label = match &pipeline.descriptor {
+                    PipelineDescriptor::ComputePipelineDescriptor(d) => d.label.clone(),
+                    PipelineDescriptor::MeshPipelineDescriptor(d) => d.label.clone(),
+                    PipelineDescriptor::RenderPipelineDescriptor(_) => unreachable!(),
+                };
+                warn!("pipeline compiled during play: {label:?}");
+                continue;
             };
-            warn!("pipeline compiled during play: {label:?}");
+            let parts = variant(late);
+            let nearest = all[..index]
+                .iter()
+                .filter_map(|other| match &other.descriptor {
+                    PipelineDescriptor::RenderPipelineDescriptor(d) if d.label == late.label => {
+                        Some(variant(d))
+                    }
+                    _ => None,
+                })
+                .min_by_key(|other| parts.symmetric_difference(other).count());
+            match nearest {
+                Some(other) => warn!(
+                    "pipeline compiled during play: {:?}, unlike the nearest earlier one it has {:?} and lacks {:?}",
+                    late.label,
+                    parts.difference(&other).collect::<Vec<_>>(),
+                    other.difference(&parts).collect::<Vec<_>>(),
+                ),
+                None => warn!(
+                    "pipeline compiled during play: {:?}, the first of its kind: {:?}",
+                    late.label, parts,
+                ),
+            }
         }
     }
-    *known = pipelines.pipelines().count();
+    *known = all.len();
 }

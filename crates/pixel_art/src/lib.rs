@@ -11,7 +11,7 @@ mod sprite;
 mod water;
 
 pub use model::PixelModel;
-pub use sprite::PixelSprite;
+pub use sprite::{PixelSprite, PixelSpriteMaterial};
 pub use water::PixelWater;
 
 // // given a "cell" index, provides its `URect` on a particular sheet configuration
@@ -29,9 +29,11 @@ impl Plugin for PixelArtPlugin {
     fn build(&self, app: &mut App) {
         embedded_asset!(app, "billboard.wesl");
         embedded_asset!(app, "texel.wesl");
+        embedded_asset!(app, "lighting.wesl");
         let library = [
             load_embedded_asset!(app, "billboard.wesl"),
             load_embedded_asset!(app, "texel.wesl"),
+            load_embedded_asset!(app, "lighting.wesl"),
         ];
         app.insert_resource(ShaderLibrary(library)).add_plugins((
             model::plugin,
@@ -43,5 +45,5 @@ impl Plugin for PixelArtPlugin {
 
 #[derive(Resource)]
 struct ShaderLibrary(
-    #[expect(dead_code, reason = "this keeps the shaders loaded")] [Handle<Shader>; 2],
+    #[expect(dead_code, reason = "this keeps the shaders loaded")] [Handle<Shader>; 3],
 );

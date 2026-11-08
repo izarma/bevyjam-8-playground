@@ -30,6 +30,7 @@ const CAM_RADIUS: f32 = 10.0;
 const CAM_LOOK_OFFSET: Vec3 = Vec3::new(0.0, 1.0, 0.0);
 // how far the camera keeps from whatever it would clip into
 const CAM_CLEARANCE: f32 = 0.3;
+const CAM_RETURN_RATE: f32 = 4.0;
 
 pub(super) fn plugin(app: &mut App) {
     app.add_observer(spawn_player)
@@ -232,11 +233,13 @@ fn follow_player(
     player: Single<(Entity, &Transform), (With<ExamplePlayer>, Without<Camera3d>)>,
     mut camera: Single<&mut Transform, SceneCamera>,
     spatial: SpatialQuery,
+    time: Res<Time>,
+    mut distance: Local<f32>,
 ) {
     let (player, at) = *player;
     let look_at = at.translation + CAM_LOOK_OFFSET;
     let back = camera.rotation * Dir3::Z;
-    let distance = spatial
+    let clear = spatial
         .cast_shape(
             &Collider::sphere(CAM_CLEARANCE),
             look_at,
@@ -250,7 +253,12 @@ fn follow_player(
             &SpatialQueryFilter::from_excluded_entities([player]),
         )
         .map_or(CAM_RADIUS, |hit| hit.distance);
-    camera.translation = look_at + back * distance;
+    *distance = if clear < *distance {
+        clear
+    } else {
+        clear.lerp(*distance, (-CAM_RETURN_RATE * time.delta_secs()).exp())
+    };
+    camera.translation = look_at + back * *distance;
 }
 
 fn update_animation(

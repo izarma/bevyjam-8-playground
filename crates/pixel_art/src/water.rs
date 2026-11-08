@@ -29,6 +29,14 @@ pub struct PixelWater {
     /// laps per second, in radians
     pub lap_speed: f32,
     pub refraction: f32,
+    /// how bright the sun's sparkles are; 0 turns them off
+    pub glint: f32,
+    /// how exactly a square has to tip to catch the sun: higher is fewer sparkles
+    pub glint_sharpness: f32,
+    /// how far squares tip as the water moves: higher spreads sparkles wider
+    pub glint_wobble: f32,
+    /// how fast the tipping moves across the water, so how quickly sparkles come and go
+    pub glint_speed: f32,
 
     pub foam_amount: f32,
     pub foam_spacing: f32,
@@ -50,6 +58,10 @@ impl Default for PixelWater {
             lap_depth: 0.0,
             lap_speed: 1.5,
             refraction: 2.0,
+            glint: 1.0,
+            glint_sharpness: 200.0,
+            glint_wobble: 0.15,
+            glint_speed: 1.2,
             foam_amount: 0.2,
             foam_spacing: 0.25,
             foam_drift: Vec2::new(0.6, 0.25),
@@ -93,6 +105,10 @@ struct PixelWaterSettings {
     second_foam: Mat2,
     foam_drift: Vec2,
     second_foam_drift: Vec2,
+    glint: f32,
+    glint_sharpness: f32,
+    glint_wobble: f32,
+    glint_speed: f32,
 }
 
 impl PixelWater {
@@ -103,8 +119,6 @@ impl PixelWater {
             base: StandardMaterial {
                 specular_transmission: 1.0,
                 ior: 1.0,
-                perceptual_roughness: 1.0,
-                reflectance: 0.0,
                 ..default()
             },
             extension: PixelWaterExtension {
@@ -125,6 +139,10 @@ impl PixelWater {
                         * self.second_foam_scale,
                     foam_drift: self.foam_drift * mask_texel,
                     second_foam_drift: self.second_foam_drift * mask_texel,
+                    glint: self.glint,
+                    glint_sharpness: self.glint_sharpness,
+                    glint_wobble: self.glint_wobble,
+                    glint_speed: self.glint_speed,
                 },
                 foam_mask: images.add(foam_mask(1.0 - self.foam_amount)),
             },
