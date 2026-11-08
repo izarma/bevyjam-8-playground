@@ -207,7 +207,7 @@ jobs:
           overwrite: true
 
   build-web:
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     needs: get-version
     env:
       VERSION: ${{needs.get-version.outputs.version}}
@@ -229,7 +229,7 @@ jobs:
           rustup target add wasm32-unknown-unknown
       - name: Build Release
         run: |
-          trunk build --cargo-profile web
+          trunk build --release
       - name: Optimize Wasm
         uses: NiklasEi/wasm-opt-action@v2
         with:
