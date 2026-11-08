@@ -1,5 +1,6 @@
 // jackdaw 0.20.0 | bevy 0.20
-bevy_ecs::hierarchy::Children [    #Camera
+bevy_ecs::hierarchy::Children [
+    #Camera
     bevy_camera::camera::CameraMainTextureUsages
     jackdaw_scene_types::node_id::SceneNodeId(6939876226162166055)
     bevy_transform::components::transform::Transform {
@@ -138,6 +139,17 @@ bevy_ecs::hierarchy::Children [    #Camera
         },
     }
     bevy_game::gameplay::base::npc::NpcSlot(4)
+    --
+    #"NPC Slot 5"
+    jackdaw_scene_types::node_id::SceneNodeId(1435604647073738921)
+    bevy_transform::components::transform::Transform {
+        translation: glam::Vec3 {
+            x: 12.0,
+            y: 0.0,
+            z: -3.355088710784912,
+        },
+    }
+    bevy_game::gameplay::base::npc::NpcSlot(5)
     --
     #Chandelier
     bevy_transform::components::transform::Transform {
@@ -1363,7 +1375,7 @@ bevy_ecs::hierarchy::Children [    #Camera
     avian3d::dynamics::rigid_body::RigidBody::Static
     jackdaw_avian_integration::AvianCollider(avian3d::collision::collider::constructor::ColliderConstructor::TrimeshFromMesh)
     --
-    #"Sun"
+    #Sun
     jackdaw_scene_types::node_id::SceneNodeId(2358906628257438875)
     bevy_transform::components::transform::Transform {
         rotation: glam::Quat {
@@ -1377,6 +1389,10 @@ bevy_ecs::hierarchy::Children [    #Camera
         source: "sun.bsn",
         deleted: [],
     }
+    jackdaw::prefab::components::PrefabEntityId(0)
+    bevy_ecs::hierarchy::Children [
+        jackdaw::prefab::components::PrefabEntityId(1)
+    ]
     --
     #"Lab Environment"
     bevy_transform::components::transform::Transform
@@ -1488,10 +1504,18 @@ bevy_ecs::hierarchy::Children [    #Camera
             y: 4.6,
             z: -14.0,
         },
+        rotation: glam::Quat {
+            x: 0.0,
+            y: 0.9832970348023149,
+            z: 0.18200808044967454,
+            w: 0.0,
+        },
     }
-    bevy_light::point_light::PointLight {
+    bevy_light::spot_light::SpotLight {
         intensity: 5000000.0,
         range: 40.0,
+        inner_angle: 0.8,
+        outer_angle: 1.2,
         shadow_maps_enabled: false,
     }
     bevy_game::gameplay::time_of_day::Daylit {
@@ -1506,10 +1530,18 @@ bevy_ecs::hierarchy::Children [    #Camera
             y: 4.6,
             z: -14.0,
         },
+        rotation: glam::Quat {
+            x: 0.0,
+            y: 0.9832970348023149,
+            z: 0.18200808044967454,
+            w: 0.0,
+        },
     }
-    bevy_light::point_light::PointLight {
+    bevy_light::spot_light::SpotLight {
         intensity: 5000000.0,
         range: 40.0,
+        inner_angle: 0.8,
+        outer_angle: 1.2,
         shadow_maps_enabled: false,
     }
     bevy_game::gameplay::time_of_day::Daylit {
@@ -1524,10 +1556,18 @@ bevy_ecs::hierarchy::Children [    #Camera
             y: 4.6,
             z: -14.0,
         },
+        rotation: glam::Quat {
+            x: 0.0,
+            y: 0.9832970348023149,
+            z: 0.18200808044967454,
+            w: 0.0,
+        },
     }
-    bevy_light::point_light::PointLight {
+    bevy_light::spot_light::SpotLight {
         intensity: 5000000.0,
         range: 40.0,
+        inner_angle: 0.8,
+        outer_angle: 1.2,
         shadow_maps_enabled: false,
     }
     bevy_game::gameplay::time_of_day::Daylit {
@@ -1542,10 +1582,18 @@ bevy_ecs::hierarchy::Children [    #Camera
             y: 6.0,
             z: 16.0,
         },
+        rotation: glam::Quat {
+            x: -0.11150592856108646,
+            y: 0.0,
+            z: 0.0,
+            w: 0.9937637686571844,
+        },
     }
-    bevy_light::point_light::PointLight {
+    bevy_light::spot_light::SpotLight {
         intensity: 20000000.0,
         range: 45.0,
+        inner_angle: 0.8,
+        outer_angle: 1.2,
         shadow_maps_enabled: false,
     }
     bevy_game::gameplay::time_of_day::Daylit {

@@ -6,6 +6,7 @@ use std::sync::{
 };
 
 use bevy::prelude::*;
+use bevy_yarnspinner::prelude::{DialogueRunner, YarnValue};
 use plants::Plant;
 
 use super::{YarnSpinnerDialogueViewSystemSet, view::DialogueOptionsNode};
@@ -14,6 +15,7 @@ use crate::gameplay::{
     clock::Clock,
     inventory::Inventory,
     remedy::{Mark, Remedy, SLOTS, grade},
+    visitors::{Cured, Visitor},
 };
 
 const HOURS_PER_DOSE: f32 = 2.0;
@@ -147,6 +149,15 @@ impl Concoction {
         }
     }
 
+    fn cures(&self) -> bool {
+        match &self.stage {
+            Stage::Mixing => false,
+            Stage::Brewing { marks, .. } | Stage::Drunk { marks } => {
+                *marks == [Mark::Correct; SLOTS]
+            }
+        }
+    }
+
     pub(super) fn marks(&self) -> [Option<Mark>; SLOTS] {
         match &self.stage {
             Stage::Mixing => [None; SLOTS],
@@ -232,12 +243,13 @@ fn release_dialogue(remove: On<Remove<Concoction>>, concoctions: Query<&Concocti
     }
 }
 
-// if one of the stamp steps happened, dose the npc
 fn brew(
+    mut commands: Commands,
     time: Res<Time>,
     mut concoction: Single<&mut Concoction>,
-    mut visitors: Query<&mut Health>,
+    mut visitors: Query<(&Visitor, &mut Health)>,
     mut clock: Single<&mut Clock>,
+    mut runner: Single<&mut DialogueRunner>,
 ) {
     let seconds = if concoction.hurried {
         f32::INFINITY
@@ -245,12 +257,26 @@ fn brew(
         time.delta_secs()
     };
     let step = concoction.advance(seconds);
-    if let Ok(mut health) = visitors.get_mut(concoction.visitor) {
+    let cures = concoction.cures();
+    let Ok((visitor, mut health)) = visitors.get_mut(concoction.visitor) else {
+        return;
+    };
+    if !cures {
         for plant in step.stamped {
             health.dose(plant);
         }
     }
     if step.drunk {
         clock.bank += HOURS_PER_DOSE;
+        if cures {
+            commands.entity(concoction.visitor).insert(Cured);
+        }
+        if visitor.guardian()
+            && let Err(error) = runner
+                .variable_storage_mut()
+                .set("$treated_guardian".into(), YarnValue::Boolean(true))
+        {
+            error!("Couldn't tell the dialogue the guardian was treated: {error}");
+        }
     }
 }

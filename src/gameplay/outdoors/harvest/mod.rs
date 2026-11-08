@@ -1,9 +1,13 @@
 use bevy::prelude::*;
 use bevy_enhanced_input::prelude::*;
+use jackdaw_scene_types::node_id::SceneNodeId;
 use pixel_art::PixelSprite;
 use plants::Growing;
 
-use super::player::Harvest;
+use super::{
+    biomes::{Fields, Harvested},
+    player::Harvest,
+};
 use crate::{
     GameplayScene, Harvesting,
     gameplay::{Player, clock::Clock, inventory::Inventory},
@@ -11,6 +15,7 @@ use crate::{
 };
 
 mod popup;
+mod regrow;
 mod wipe;
 mod yields;
 
@@ -20,7 +25,7 @@ const OVERLAY_ALPHA: f32 = 0.6;
 const HOURS_PER_HARVEST: f32 = 2.0;
 
 pub(super) fn plugin(app: &mut App) {
-    app.add_plugins((popup::plugin, wipe::plugin, yields::plugin))
+    app.add_plugins((popup::plugin, regrow::plugin, wipe::plugin, yields::plugin))
         .add_systems(
             Update,
             find_in_reach.run_if(in_state(GameplayScene::Outdoors)),
@@ -35,12 +40,9 @@ pub(super) fn plugin(app: &mut App) {
         .add_systems(Update, fade_overlay);
 }
 
-// the nearest plant you can harvest
+// the nearest plant, picked or not
 #[derive(Component)]
 struct InReach;
-
-#[derive(Component)]
-struct Harvested;
 
 #[derive(EntityEvent)]
 struct Won {
@@ -67,7 +69,7 @@ struct Overlay {
 fn find_in_reach(
     mut commands: Commands,
     player: Option<Single<&GlobalTransform, With<Player>>>,
-    plants: Query<(Entity, &GlobalTransform), (With<Growing>, Without<Harvested>)>,
+    plants: Query<(Entity, &GlobalTransform), With<Growing>>,
     in_reach: Query<Entity, With<InReach>>,
 ) {
     let ground = |at: &GlobalTransform| Vec2::new(at.translation().x, at.translation().z);
@@ -96,7 +98,7 @@ fn find_in_reach(
 fn start_harvest(
     _: On<Start<Harvest>>,
     mut commands: Commands,
-    plants: Query<(Entity, &Growing, &PixelSprite), With<InReach>>,
+    plants: Query<(Entity, &Growing, &PixelSprite), (With<InReach>, Without<Harvested>)>,
     images: Res<Assets<Image>>,
 ) {
     let Some((plant, &Growing(kind), sprite)) = plants.iter().next() else {
@@ -140,7 +142,10 @@ fn collect(
     won: On<Won>,
     mut commands: Commands,
     overlays: Query<&Overlay>,
-    mut plants: Query<(&Growing, &GlobalTransform, &mut PixelSprite)>,
+    mut plants: Query<(&Growing, &GlobalTransform, &ChildOf, &mut PixelSprite)>,
+    spots: Query<&SceneNodeId>,
+    mut fields: Single<&mut Fields>,
+    clock: Single<&Clock>,
     mut inventory: Single<&mut Inventory>,
     mut billboards: Billboards,
 ) {
@@ -148,9 +153,12 @@ fn collect(
     let Ok(overlay) = overlays.get(won.entity) else {
         return;
     };
-    let Ok((&Growing(plant), at, mut sprite)) = plants.get_mut(overlay.plant) else {
+    let Ok((&Growing(plant), at, spot, mut sprite)) = plants.get_mut(overlay.plant) else {
         return;
     };
+    if let Ok(&spot) = spots.get(spot.parent()) {
+        fields.picked(spot, clock.hours);
+    }
 
     if let Some(above) = billboards.above(&sprite, at) {
         popup::spawn(&mut billboards, above, plant);

@@ -3,6 +3,7 @@ use jackdaw_runtime::prelude::*;
 
 use crate::GameplayScene;
 
+mod biomes;
 mod camera_effects;
 mod door;
 mod harvest;
@@ -14,9 +15,7 @@ pub(super) fn plugin(app: &mut App) {
         camera_effects::plugin,
         harvest::plugin,
         door::plugin,
-        plants::PlantsPlugin {
-            pick: plants::Pick::Random,
-        },
+        biomes::plugin,
     ))
     .add_systems(OnEnter(GameplayScene::Outdoors), spawn_example_scene);
 }

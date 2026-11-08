@@ -70,6 +70,9 @@ pub struct NPCAssets {
     pub old_lady: Handle<Image>,
     #[asset(path = "textures/character/kid.png")]
     pub kid: Handle<Image>,
+    // a recolor of the player
+    #[asset(path = "textures/character/Guardian.png")]
+    pub guardian: Handle<Image>,
 }
 
 // size of one cell of the monk placeholder sheet, in texels
@@ -83,6 +86,7 @@ impl NPCAssets {
             "OldMan" => (&self.old_beggar, OLD_FRAME),
             "OldWoman" => (&self.old_lady, OLD_FRAME),
             "Kid" => (&self.kid, OLD_FRAME),
+            "Guardian" => (&self.guardian, PLAYER_FRAME),
             _ => (&self.monk_man, MONK_MAN_FRAME),
         }
     }

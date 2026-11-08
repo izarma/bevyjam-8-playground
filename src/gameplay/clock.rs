@@ -8,7 +8,7 @@ use crate::{
     },
 };
 
-const START_HOUR: f32 = 6.0;
+pub(crate) const START_HOUR: f32 = 6.0;
 // for clock progress smoothing
 // how many seconds to spend 2/3 of the time bank in
 const SPEND_SECONDS: f32 = 0.5;
