@@ -533,6 +533,7 @@ bevy_ecs::hierarchy::Children [
         },
     }
     jackdaw_scene_types::node_id::SceneNodeId(9111000000000000005)
+    bevy_game::gameplay::base::interact::Gong
     pixel_art::sprite::PixelSprite {
         image: "sprites/gong.png",
         size: core::option::Option::Some(glam::UVec2 { x: 34, y: 38 }),
@@ -912,6 +913,7 @@ bevy_ecs::hierarchy::Children [
         },
     }
     jackdaw_scene_types::node_id::SceneNodeId(560507654700494402)
+    bevy_game::gameplay::base::interact::Gong
     pixel_art::sprite::PixelSprite {
         image: "sprites/gong.png",
         size: core::option::Option::Some(glam::UVec2 { x: 34, y: 38 }),

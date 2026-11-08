@@ -44,6 +44,8 @@ pub(crate) enum FootstepSurface {
     WetDirt,
     Grass,
     Water,
+    Stone,
+    Sand,
 }
 
 impl FootstepSurface {
@@ -51,6 +53,8 @@ impl FootstepSurface {
         match material {
             "material_1.bsn" => Some(Self::Dirt),
             "material_2.bsn" => Some(Self::Grass),
+            "tiles_material/tiles_material.bsn" => Some(Self::Stone),
+            "material_sand.bsn" => Some(Self::Sand),
             _ => None,
         }
     }
@@ -62,13 +66,8 @@ impl FootstepSurface {
             Self::WetDirt => &assets.wet_dirt,
             Self::Grass => &assets.grass,
             Self::Water => &assets.water,
-        }
-    }
-
-    fn volume_db(self) -> f32 {
-        match self {
-            Self::Dirt | Self::Grass | Self::Water | Self::Wood => 0.0,
-            Self::WetDirt => -15.0,
+            Self::Stone => &assets.concrete,
+            Self::Sand => &assets.sand,
         }
     }
 
@@ -79,12 +78,14 @@ impl FootstepSurface {
             Self::WetDirt => 2,
             Self::Grass => 3,
             Self::Water => 4,
+            Self::Stone => 5,
+            Self::Sand => 6,
         }
     }
 }
 
 #[derive(Resource, Default)]
-struct FootstepSequence([usize; 5]);
+struct FootstepSequence([usize; 7]);
 
 impl FootstepSequence {
     fn play(
@@ -98,7 +99,7 @@ impl FootstepSequence {
         if let Some(index) = self.next(surface, clips.len()) {
             audio
                 .play(clips[index].clone())
-                .with_volume(surface.volume_db() + volume_offset_db);
+                .with_volume(volume_offset_db);
         }
     }
 

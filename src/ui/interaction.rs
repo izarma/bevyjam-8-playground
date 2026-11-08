@@ -9,7 +9,7 @@ pub(super) fn plugin(app: &mut App) {
     app.add_observer(apply_interaction_palette_on_out);
     app.add_observer(apply_interaction_palette_on_release);
 
-    app.add_observer(play_sound_effect_on_click);
+    app.add_observer(play_sound_effect_on_press);
     app.add_observer(play_sound_effect_on_over);
 }
 
@@ -68,14 +68,14 @@ fn apply_interaction_palette_on_out(
     image.color = palette.none;
 }
 
-fn play_sound_effect_on_click(
-    on: On<PointerClick>,
+fn play_sound_effect_on_press(
+    on: On<PointerPress>,
     ui_asset: If<Res<UIAssets>>,
     audio: Res<Audio>,
     interaction_entities: Query<Entity, (With<InteractionPalette>, Without<InteractionDisabled>)>,
 ) {
     if interaction_entities.contains(on.event_target()) {
-        audio.play(ui_asset.button_click.clone()).with_volume(3.0);
+        audio.play(ui_asset.button_press.clone());
     }
 }
 

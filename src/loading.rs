@@ -26,18 +26,37 @@ pub(super) fn plugin(app: &mut App) {
 
 #[derive(AssetCollection, Resource)]
 pub struct AmbienceAssets {
-    #[asset(path = "audio/ambience/outside.ogg")]
-    pub outdoors: Handle<AudioSource>,
+    #[asset(path = "audio/sfx/start.ogg")]
+    pub title: Handle<AudioSource>,
+    #[asset(path = "audio/ambience/outside_daytime.ogg")]
+    pub outdoor_daytime: Handle<AudioSource>,
+    #[asset(path = "audio/ambience/outside_night.ogg")]
+    pub outdoor_night: Handle<AudioSource>,
     #[asset(path = "audio/music/explore.ogg")]
     pub outdoor_music: Handle<AudioSource>,
+    #[asset(path = "audio/music/explore_night.ogg")]
+    pub outdoor_night_music: Handle<AudioSource>,
 }
 
 #[derive(AssetCollection, Resource)]
 pub struct UIAssets {
+    #[asset(path = "audio/sfx/gong.ogg")]
+    pub gong: Handle<AudioSource>,
+    #[asset(
+        paths(
+            "audio/sfx/transition_1.ogg",
+            "audio/sfx/transition_2.ogg",
+            "audio/sfx/transition_3.ogg",
+        ),
+        collection(typed)
+    )]
+    pub transitions: Vec<Handle<AudioSource>>,
     #[asset(path = "audio/sfx/button_hover.ogg")]
     pub button_hover: Handle<AudioSource>,
     #[asset(path = "audio/sfx/button_click.ogg")]
     pub button_click: Handle<AudioSource>,
+    #[asset(path = "audio/sfx/button_press.ogg")]
+    pub button_press: Handle<AudioSource>,
     #[asset(path = "textures/bevy.png")]
     pub bevy: Handle<Image>,
     #[asset(path = "ui/9slice.png")]
@@ -93,6 +112,34 @@ pub struct FootstepAssets {
         collection(typed)
     )]
     pub wood: Vec<Handle<AudioSource>>,
+    #[asset(
+        paths(
+            "audio/sfx/footsteps/concrete/walk_concrete_1.ogg",
+            "audio/sfx/footsteps/concrete/walk_concrete_2.ogg",
+            "audio/sfx/footsteps/concrete/walk_concrete_3.ogg",
+            "audio/sfx/footsteps/concrete/walk_concrete_4.ogg",
+            "audio/sfx/footsteps/concrete/walk_concrete_5.ogg",
+            "audio/sfx/footsteps/concrete/walk_concrete_6.ogg",
+            "audio/sfx/footsteps/concrete/walk_concrete_7.ogg",
+            "audio/sfx/footsteps/concrete/walk_concrete_8.ogg",
+        ),
+        collection(typed)
+    )]
+    pub concrete: Vec<Handle<AudioSource>>,
+    #[asset(
+        paths(
+            "audio/sfx/footsteps/sand/walk_sand_1.ogg",
+            "audio/sfx/footsteps/sand/walk_sand_2.ogg",
+            "audio/sfx/footsteps/sand/walk_sand_3.ogg",
+            "audio/sfx/footsteps/sand/walk_sand_4.ogg",
+            "audio/sfx/footsteps/sand/walk_sand_5.ogg",
+            "audio/sfx/footsteps/sand/walk_sand_6.ogg",
+            "audio/sfx/footsteps/sand/walk_sand_7.ogg",
+            "audio/sfx/footsteps/sand/walk_sand_8.ogg",
+        ),
+        collection(typed)
+    )]
+    pub sand: Vec<Handle<AudioSource>>,
     pub wet_dirt: Vec<Handle<AudioSource>>,
     #[asset(
         paths(
@@ -134,6 +181,10 @@ pub struct HarvestingAssets {
             "audio/sfx/harvesting/harvesting_2.ogg",
             "audio/sfx/harvesting/harvesting_3.ogg",
             "audio/sfx/harvesting/harvesting_4.ogg",
+            "audio/sfx/harvesting/harvesting_5.ogg",
+            "audio/sfx/harvesting/harvesting_6.ogg",
+            "audio/sfx/harvesting/harvesting_7.ogg",
+            "audio/sfx/harvesting/harvesting_8.ogg",
         ),
         collection(typed)
     )]
@@ -193,6 +244,8 @@ pub struct ConcoctionAssets {
 pub struct NPCAssets {
     #[asset(path = "audio/sfx/dialogue_open.ogg")]
     pub dialogue_open: Handle<AudioSource>,
+    #[asset(path = "audio/sfx/dialogue_continue.ogg")]
+    pub dialogue_continue: Handle<AudioSource>,
     #[asset(path = "audio/sfx/dialogue_close.ogg")]
     pub dialogue_close: Handle<AudioSource>,
     #[asset(path = "textures/character/MonkMan.png")]

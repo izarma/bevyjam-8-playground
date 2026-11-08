@@ -5,22 +5,45 @@ use bevy_kira_audio::prelude::*;
 use bevy_yarnspinner::events::{DialogueCompleted, DialogueStarted};
 
 use crate::{
-    GameplayScene,
-    loading::{AmbienceAssets, NPCAssets},
-    loading_screen::Revealed,
+    GameState, GameplayScene,
+    gameplay::clock::Clock,
+    loading::{AmbienceAssets, NPCAssets, UIAssets},
+    loading_screen::{Revealed, Travel},
 };
 
 mod footsteps;
 mod harvesting;
-
-const FADE_IN: Duration = Duration::from_secs(1);
-const FADE_OUT: Duration = Duration::from_millis(600);
 
 #[derive(Resource)]
 struct Ambience;
 
 #[derive(Resource)]
 struct Music;
+
+const OUTDOOR_FADE: Duration = Duration::from_secs(2);
+const FADE_OUT: Duration = Duration::from_millis(600);
+
+#[derive(Clone, Copy, PartialEq, Eq)]
+enum OutdoorPeriod {
+    Day,
+    Night,
+}
+
+impl OutdoorPeriod {
+    fn at(hours: f32) -> Self {
+        if (6.0..18.0).contains(&hours.rem_euclid(24.0)) {
+            Self::Day
+        } else {
+            Self::Night
+        }
+    }
+}
+
+#[derive(Resource, Default)]
+struct OutdoorPlayback {
+    period: Option<OutdoorPeriod>,
+    revealed: bool,
+}
 
 #[derive(Resource, Clone, Copy)]
 pub(crate) struct Volume {
@@ -84,48 +107,103 @@ pub(super) fn plugin(app: &mut App) {
     add_mixed_channel::<MainTrack>(app, Mix::Sound, AudioTrack::new());
     add_mixed_channel::<Ambience>(app, Mix::Sound, AudioTrack::new());
     add_mixed_channel::<Music>(app, Mix::Music, AudioTrack::new());
-    app.add_systems(Update, apply_volume.run_if(resource_changed::<Volume>))
+    app.init_resource::<OutdoorPlayback>()
+        .add_systems(Update, apply_volume.run_if(resource_changed::<Volume>))
         .add_plugins((footsteps::plugin, harvesting::plugin))
         .add_observer(play_dialogue_open)
         .add_observer(play_dialogue_close)
-        .add_observer(start_outdoor_sound)
-        .add_systems(OnExit(GameplayScene::Outdoors), stop_ambience);
+        .add_observer(play_transition)
+        .add_observer(reveal_outdoor_audio)
+        .add_systems(OnEnter(GameState::Title), start_title_ambience)
+        .add_systems(OnExit(GameState::Title), stop_title_music)
+        .add_systems(
+            PostUpdate,
+            update_outdoor_audio.run_if(in_state(GameplayScene::Outdoors)),
+        )
+        .add_systems(OnExit(GameplayScene::Outdoors), stop_outdoor_audio);
 }
 
-fn play_dialogue_open(_: On<DialogueStarted>, npc_assets: Res<NPCAssets>, audio: Res<Audio>) {
-    audio.play(npc_assets.dialogue_open.clone());
+fn play_transition(
+    travel: On<Travel>,
+    assets: Res<UIAssets>,
+    audio: Res<Audio>,
+    mut next: Local<usize>,
+) {
+    if matches!(*travel, Travel::EnterHouse | Travel::LeaveHouse) && !assets.transitions.is_empty()
+    {
+        audio.play(assets.transitions[*next % assets.transitions.len()].clone());
+        *next = (*next + 1) % assets.transitions.len();
+    }
+}
+
+fn play_dialogue_open(_: On<DialogueStarted>, assets: Res<NPCAssets>, audio: Res<Audio>) {
+    audio.play(assets.dialogue_open.clone()).with_volume(3.0);
 }
 
 fn play_dialogue_close(_: On<DialogueCompleted>, npc_assets: Res<NPCAssets>, audio: Res<Audio>) {
     audio.play(npc_assets.dialogue_close.clone());
 }
 
-fn start_outdoor_sound(
+fn start_title_ambience(assets: Res<AmbienceAssets>, music: Res<AudioChannel<Music>>) {
+    music
+        .play(assets.title.clone())
+        .linear_fade_in(Duration::from_secs(2))
+        .looped();
+}
+
+fn reveal_outdoor_audio(
     _: On<Revealed>,
     scene: Option<Res<State<GameplayScene>>>,
-    assets: Res<AmbienceAssets>,
-    ambience: Res<AudioChannel<Ambience>>,
-    music: Res<AudioChannel<Music>>,
+    mut playback: ResMut<OutdoorPlayback>,
 ) {
-    if scene.is_none_or(|scene| *scene.get() != GameplayScene::Outdoors) {
-        return;
-    }
-    if !ambience.is_playing_sound() {
-        ambience
-            .play(assets.outdoors.clone())
-            .linear_fade_in(FADE_IN)
-            .looped();
-    }
-    if !music.is_playing_sound() {
-        music
-            .play(assets.outdoor_music.clone())
-            .with_volume(6.0)
-            .linear_fade_in(FADE_IN)
-            .looped();
+    if scene.is_some_and(|scene| *scene.get() == GameplayScene::Outdoors) {
+        playback.revealed = true;
     }
 }
 
-fn stop_ambience(ambience: Res<AudioChannel<Ambience>>, music: Res<AudioChannel<Music>>) {
-    ambience.stop().linear_fade_out(FADE_OUT);
+fn update_outdoor_audio(
+    clock: Single<&Clock>,
+    assets: Res<AmbienceAssets>,
+    music: Res<AudioChannel<Music>>,
+    ambience: Res<AudioChannel<Ambience>>,
+    mut playback: ResMut<OutdoorPlayback>,
+) {
+    let period = OutdoorPeriod::at(clock.hours);
+    if !playback.revealed || playback.period == Some(period) {
+        return;
+    }
+    music.stop().linear_fade_out(OUTDOOR_FADE);
+    ambience.stop().linear_fade_out(OUTDOOR_FADE);
+    let background = match period {
+        OutdoorPeriod::Day => &assets.outdoor_daytime,
+        OutdoorPeriod::Night => &assets.outdoor_night,
+    };
+    ambience
+        .play(background.clone())
+        .linear_fade_in(OUTDOOR_FADE)
+        .looped();
+    let track = match period {
+        OutdoorPeriod::Day => &assets.outdoor_music,
+        OutdoorPeriod::Night => &assets.outdoor_night_music,
+    };
+    music
+        .play(track.clone())
+        .with_volume(6.0)
+        .linear_fade_in(OUTDOOR_FADE)
+        .looped();
+    playback.period = Some(period);
+}
+
+fn stop_outdoor_audio(
+    music: Res<AudioChannel<Music>>,
+    ambience: Res<AudioChannel<Ambience>>,
+    mut playback: ResMut<OutdoorPlayback>,
+) {
     music.stop().linear_fade_out(FADE_OUT);
+    ambience.stop().linear_fade_out(FADE_OUT);
+    *playback = OutdoorPlayback::default();
+}
+
+fn stop_title_music(music: Res<AudioChannel<Music>>) {
+    music.stop();
 }
