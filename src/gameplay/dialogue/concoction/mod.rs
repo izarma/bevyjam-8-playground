@@ -290,8 +290,8 @@ fn brew(
             .fade_out(AudioTween::linear(Duration::from_millis(10)));
         let (clips, index) = match mark {
             Mark::Correct => (&assets.herb_good, 0),
-            Mark::Misplaced => (&assets.herb_neutral, 1),
-            Mark::Absent => (&assets.herb_bad, 2),
+            Mark::Misplaced => (&assets.herb_bad, 1),
+            Mark::Absent => (&assets.herb_neutral, 2),
         };
         if !clips.is_empty() {
             audio
