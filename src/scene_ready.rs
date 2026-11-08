@@ -74,12 +74,7 @@ fn settle(
         instance.is_some_and(|instance| spawner.instance_is_ready(**instance))
             || matches!(asset_server.load_state(&root.0), LoadState::Failed(_))
     });
-    if !models_spawned
-        || !awaiting.is_empty()
-        || unswapped.any()
-        || !terrains.ready()
-        || !primed
-    {
+    if !models_spawned || !awaiting.is_empty() || unswapped.any() || !terrains.ready() || !primed {
         return;
     }
     for (entity, scene) in &unsettled {

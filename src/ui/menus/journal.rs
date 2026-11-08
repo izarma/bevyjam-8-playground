@@ -20,8 +20,8 @@
 
 use bevy::prelude::*;
 use bevy::ui::{UiGlobalTransform, UiSystems};
-use bevy::window::PrimaryWindow;
 use bevy::ui_widgets::{ControlOrientation, ScrollArea, Scrollbar, ScrollbarThumb};
+use bevy::window::PrimaryWindow;
 use plants::Plant;
 
 use crate::{
@@ -272,17 +272,19 @@ fn show_brew_tooltip(
     };
     let (entity, mut tooltip, mut shown) = tooltip.into_inner();
     let scale = node.inverse_scale_factor();
-    tooltip.slot = Some(Rect::from_center_size(at.translation * scale, node.size() * scale));
+    tooltip.slot = Some(Rect::from_center_size(
+        at.translation * scale,
+        node.size() * scale,
+    ));
     tooltip.placed = false;
     *shown = Visibility::Hidden;
     commands.entity(entity).despawn_children();
-    commands.spawn_scene(herbs::card(plant)).insert(ChildOf(entity));
+    commands
+        .spawn_scene(herbs::card(plant))
+        .insert(ChildOf(entity));
 }
 
-fn hide_brew_tooltip(
-    _: On<PointerOut>,
-    tooltip: Single<(&mut JournalTooltip, &mut Visibility)>,
-) {
+fn hide_brew_tooltip(_: On<PointerOut>, tooltip: Single<(&mut JournalTooltip, &mut Visibility)>) {
     let (mut tooltip, mut shown) = tooltip.into_inner();
     tooltip.slot = None;
     *shown = Visibility::Hidden;
@@ -290,7 +292,12 @@ fn hide_brew_tooltip(
 
 fn place_brew_tooltip(
     window: Single<&Window, With<PrimaryWindow>>,
-    tooltip: Single<(&mut JournalTooltip, &mut Node, &ComputedNode, &mut Visibility)>,
+    tooltip: Single<(
+        &mut JournalTooltip,
+        &mut Node,
+        &ComputedNode,
+        &mut Visibility,
+    )>,
 ) {
     let (mut tooltip, mut node, size, mut shown) = tooltip.into_inner();
     let Some(slot) = tooltip.slot else {
