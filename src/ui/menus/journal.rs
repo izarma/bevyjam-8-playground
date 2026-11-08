@@ -155,11 +155,11 @@ fn centered_crop(frame: UVec2, width: u16, height: u16, top: u32) -> Rect {
     URect::from_corners(min, min + crop).as_rect()
 }
 
-/// Kid and Old Woman are drawn with extra headroom in their frames.
+/// Orphan and Old Beauty are drawn with extra headroom in their frames.
 fn portrait_top(name: &str) -> u32 {
     match name {
-        "Kid" => 8,
-        "OldWoman" => 6,
+        "Orphan" => 8,
+        "Old Beauty" => 6,
         _ => 0,
     }
 }

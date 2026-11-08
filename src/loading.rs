@@ -95,10 +95,10 @@ impl NPCAssets {
         match name {
             "Guardian" => (&self.guardian, PLAYER_FRAME),
             "Monk" => (&self.monk_man, MONK_MAN_FRAME),
-            "Woman" => (&self.lady, NPC_FRAME),
-            "OldMan" => (&self.old_beggar, NPC_FRAME),
-            "OldWoman" => (&self.old_lady, NPC_FRAME),
-            "Kid" => (&self.kid, NPC_FRAME),
+            "Bride" => (&self.lady, NPC_FRAME),
+            "Beggar" => (&self.old_beggar, NPC_FRAME),
+            "Old Beauty" => (&self.old_lady, NPC_FRAME),
+            "Orphan" => (&self.kid, NPC_FRAME),
             _ => (&self.monk_man, MONK_MAN_FRAME),
         }
     }

@@ -120,7 +120,17 @@ impl Default for Health {
     }
 }
 
-const NAMES: [&str; 6] = ["Guardian", "Monk", "Woman", "OldMan", "OldWoman", "Kid"];
+const NAMES: [&str; 6] = [
+    "Guardian",
+    "Monk",
+    "Bride",
+    "Beggar",
+    "Old Beauty",
+    "Orphan",
+];
+
+// Yarn node titles these names map to.
+const NODES: [&str; 6] = ["Guardian", "Monk", "Bride", "Beggar", "OldBeauty", "Orphan"];
 
 const DESCRIPTIONS: [&str; 6] = [
     "Weakens by the day and taught you the craft.",
@@ -142,6 +152,10 @@ pub(crate) struct Visitor(pub(crate) usize);
 impl Visitor {
     pub(crate) fn name(&self) -> &'static str {
         NAMES[self.0]
+    }
+
+    pub(crate) fn node(&self) -> &'static str {
+        NODES[self.0]
     }
 
     pub(crate) fn description(&self) -> &'static str {
