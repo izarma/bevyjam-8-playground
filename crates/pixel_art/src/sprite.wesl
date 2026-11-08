@@ -25,7 +25,7 @@ import bevy_render::maths::PI;
 @if(ENVIRONMENT_MAP) import pixel_art::lighting::sky_irradiance;
 import pixel_art::billboard::{billboard_facing, billboard_point, facing_toward};
 import pixel_art::lighting::{light_arriving, spot_cone};
-import pixel_art::texel::{texel_center, texel_sharp};
+import pixel_art::texel::{dither_rank, stepped_fog_position, texel_center, texel_sharp};
 
 @group(constants::MATERIAL_BIND_GROUP) @binding(100) var sprite_texture: texture_2d<f32>;
 
@@ -114,7 +114,7 @@ fn vertex(packed: Vertex) -> BillboardOutput {
 
 // from bevy_pbr/src/light_probe/environment_map.wesl
 // reads bevys point/spot/direction lights and jackdaws env map
-fn sprite_lighting(in: PbrInput, quad: Quad, local: vec2<f32>) -> vec4<f32> {
+fn sprite_lighting(in: PbrInput, quad: Quad, local: vec2<f32>, spread: f32) -> vec4<f32> {
     let diffuse = in.material.base_color.rgb;
     let receives = (in.flags & MESH_FLAGS_SHADOW_RECEIVER_BIT) != 0u;
     var arriving = vec3<f32>(0.0);
@@ -151,7 +151,7 @@ fn sprite_lighting(in: PbrInput, quad: Quad, local: vec2<f32>) -> vec4<f32> {
         if receives && ((*light).flags & POINT_LIGHT_FLAGS_SHADOWS_ENABLED_BIT) != 0u {
             shadow = shadows::fetch_point_shadow(id, vec4<f32>(at, 1.0), facing, in.frag_coord.xy);
         }
-        arriving += light_arriving(id, at) * shadow;
+        arriving += light_arriving(id, at, spread) * shadow;
     }
     for (var i = ranges.first_spot_light_index_offset; i < ranges.first_rect_light_index_offset; i += 1u) {
         let id = clustering::get_clusterable_object_id(i);
@@ -163,7 +163,7 @@ fn sprite_lighting(in: PbrInput, quad: Quad, local: vec2<f32>) -> vec4<f32> {
             shadow = shadows::fetch_spot_shadow(
                 id, vec4<f32>(at, 1.0), facing, (*light).shadow_map_near_z, in.frag_coord.xy);
         }
-        arriving += light_arriving(id, at) * spot_cone(id, at) * shadow;
+        arriving += light_arriving(id, at, spread) * spot_cone(id, at) * shadow;
     }
 
     var ambient = diffuse * lights.ambient_color.rgb * in.diffuse_occlusion;
@@ -186,9 +186,15 @@ fn sprite_lighting(in: PbrInput, quad: Quad, local: vec2<f32>) -> vec4<f32> {
     );
 }
 
-fn dither_rank(texel: vec2<u32>) -> f32 {
-    var bayer = array<u32, 16>(0u, 8u, 2u, 10u, 12u, 4u, 14u, 6u, 3u, 11u, 1u, 9u, 15u, 7u, 13u, 5u);
-    return (f32(bayer[(texel.y % 4u) * 4u + texel.x % 4u]) + 0.5) / 16.0;
+fn metres_per_uv(local_dx: f32, local_dy: f32, uv_dx: f32, uv_dy: f32) -> f32 {
+    return abs(local_dx * uv_dx + local_dy * uv_dy) / max(uv_dx * uv_dx + uv_dy * uv_dy, 1e-12);
+}
+
+fn sprite_spread(quad: Quad, ddx: vec2<f32>, ddy: vec2<f32>, local_ddx: vec2<f32>, local_ddy: vec2<f32>) -> f32 {
+    let frame = quad.frame.zw - quad.frame.xy;
+    let width = metres_per_uv(local_ddx.x, local_ddy.x, ddx.x, ddy.x) * frame.x * length(quad.x);
+    let height = metres_per_uv(local_ddx.y, local_ddy.y, ddx.y, ddy.y) * frame.y * length(quad.y);
+    return sqrt(width * height / PI);
 }
 
 @fragment
@@ -200,7 +206,7 @@ fn fragment(in: VertexOutput, quad: Quad, @builtin(front_facing) is_front: bool)
     let color = sprite_color(in.uv, ddx, ddy, quad.frame);
     // the material's alpha is how far it has faded in
     let tint = pbr_bindings::material.base_color;
-    let texel = vec2<u32>(in.uv * vec2<f32>(textureDimensions(sprite_texture)));
+    let texel = vec2<i32>(in.uv * vec2<f32>(textureDimensions(sprite_texture)));
     if tint.a < dither_rank(texel) {
         discard;
     }
@@ -212,7 +218,6 @@ fn fragment(in: VertexOutput, quad: Quad, @builtin(front_facing) is_front: bool)
         color * vec4<f32>(tint.rgb, 1.0),
     );
 
-    // every fragment of a texel should be lit and postprocessed the same
     let size = vec2<f32>(textureDimensions(sprite_texture));
     let local = texel_center(in.uv, size, vec3<f32>(quad.local, 0.0), ddx, ddy, local_ddx, local_ddy).xy;
     let seen = billboard_point(quad.origin, quad.x, quad.y, local, billboard_facing(quad.origin, quad.own));
@@ -222,8 +227,10 @@ fn fragment(in: VertexOutput, quad: Quad, @builtin(front_facing) is_front: bool)
     if (pbr_input.material.flags & STANDARD_MATERIAL_FLAGS_UNLIT_BIT) != 0u {
         out.color = pbr_input.material.base_color;
     } else {
-        out.color = sprite_lighting(pbr_input, quad, local);
+        out.color = sprite_lighting(pbr_input, quad, local, sprite_spread(quad, ddx, ddy, local_ddx.xy, local_ddy.xy));
     }
-    out.color = pbr_functions::main_pass_post_lighting_processing(pbr_input, out.color);
+    var fogged = pbr_input;
+    fogged.world_position = vec4<f32>(stepped_fog_position(seen, texel), 1.0);
+    out.color = pbr_functions::main_pass_post_lighting_processing(fogged, out.color);
     return out;
 }

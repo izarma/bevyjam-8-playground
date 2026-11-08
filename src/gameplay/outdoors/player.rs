@@ -12,11 +12,12 @@ use pixel_art::PixelSprite;
 
 use crate::{
     GameplayScene, InControl, PausableSystems,
-    camera::{CameraSensitivity, SceneCamera, face_camera},
+    camera::{CameraSensitivity, SceneCamera},
     gameplay::{
         CharacterName, Player, PlayerAnimation,
         animation::PlayerAnimationSystems,
         entrance::{Entrance, through_door},
+        time_of_day::Nightlit,
     },
     loading::{PLAYER_FRAME, PlayerAssets},
     loading_screen::{Arrived, Travel},
@@ -31,6 +32,12 @@ const CAM_LOOK_OFFSET: Vec3 = Vec3::new(0.0, 1.0, 0.0);
 // how far the camera keeps from whatever it would clip into
 const CAM_CLEARANCE: f32 = 0.3;
 const CAM_RETURN_RATE: f32 = 4.0;
+
+const LANTERN_AT: Vec3 = Vec3::new(0.4, 0.0, 0.0);
+const LANTERN_COLOR: Color = Color::srgb(1.0, 0.72, 0.4);
+const LANTERN_INTENSITY: f32 = 600_000.0;
+const LANTERN_RADIUS: f32 = 2.0;
+const LANTERN_RANGE: f32 = 15.0;
 
 pub(super) fn plugin(app: &mut App) {
     app.add_observer(spawn_player)
@@ -58,7 +65,7 @@ pub(super) fn plugin(app: &mut App) {
         .add_systems(
             Update,
             (
-                (aim_camera, follow_player).chain().before(face_camera),
+                (aim_camera, follow_player).chain(),
                 update_animation
                     .in_set(PlayerAnimationSystems::UpdateState)
                     .in_set(PausableSystems),
@@ -156,18 +163,35 @@ fn spawn_outdoor_player(
         .insert(CharacterName("Aruna"))
         .insert((
             ExamplePlayer,
-            children![(
-                ExamplePlayerSprite,
-                // feet on the ground
-                Transform::from_xyz(
-                    0.0,
-                    -CAPSULE_HEIGHT / 2.0
-                        - CharacterController::default().move_and_slide.skin_width,
-                    0.0,
+            children![
+                (
+                    ExamplePlayerSprite,
+                    // feet on the ground
+                    Transform::from_xyz(
+                        0.0,
+                        -CAPSULE_HEIGHT / 2.0
+                            - CharacterController::default().move_and_slide.skin_width,
+                        0.0,
+                    ),
+                    animation,
+                    sprite,
                 ),
-                animation,
-                sprite,
-            )],
+                (
+                    Name::new("Lantern"),
+                    Transform::from_translation(LANTERN_AT),
+                    PointLight {
+                        color: LANTERN_COLOR,
+                        intensity: 0.0,
+                        range: LANTERN_RANGE,
+                        radius: LANTERN_RADIUS,
+                        shadow_maps_enabled: false,
+                        ..default()
+                    },
+                    Nightlit {
+                        intensity: LANTERN_INTENSITY,
+                    },
+                ),
+            ],
         ))
         .queue_spawn_related_scenes::<Actions<ExamplePlayer>>(bsn_list! {
             Action::<Movement>::new()

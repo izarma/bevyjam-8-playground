@@ -14,7 +14,7 @@ use crate::{
     },
 };
 
-const CANVAS: UVec2 = UVec2::new(128, 96);
+const CANVAS: UVec2 = UVec2::new(160, 96);
 
 pub(super) fn plugin(app: &mut App) {
     app.add_systems(

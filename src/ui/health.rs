@@ -1,9 +1,22 @@
 use bevy::prelude::*;
 
 use crate::{
-    gameplay::{BALANCED, MAX_HEALTH, MIN_HEALTH},
+    gameplay::{Ailment, BALANCED, MAX_HEALTH, MIN_HEALTH, herbs::Element},
     ui::palette::{GAIN_TEXT, LOSS_TEXT},
 };
+
+pub(crate) fn ailment_countdown(hours: f32) -> String {
+    format!("{}h", hours.ceil().max(0.0))
+}
+
+pub(crate) fn ailment_mark(ailment: Ailment, element: Element) -> String {
+    ailment
+        .effects()
+        .into_iter()
+        .find(|&(affected, _)| affected == element)
+        .map(|(_, delta)| format!("{delta:+}"))
+        .unwrap_or_default()
+}
 
 pub(crate) fn bar_width(value: u8) -> f32 {
     f32::from(value - MIN_HEALTH) / f32::from(MAX_HEALTH - MIN_HEALTH) * 100.0

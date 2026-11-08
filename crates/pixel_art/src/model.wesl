@@ -5,7 +5,7 @@ import bevy_pbr::render::{
     pbr_functions,
     pbr_types::{STANDARD_MATERIAL_FLAGS_BASE_COLOR_TEXTURE_BIT, STANDARD_MATERIAL_FLAGS_DOUBLE_SIDED_BIT},
 };
-import pixel_art::texel::{texel_center, texel_sharp};
+import pixel_art::texel::{stepped_fog_position, texel_center, texel_sharp};
 import pixel_art::lighting::matte_lighting;
 
 fn premultiplied(texel: vec2<i32>, size: vec2<i32>) -> vec4<f32> {
@@ -36,6 +36,7 @@ fn fragment(in: VertexOutput, @builtin(front_facing) is_front: bool) -> Fragment
     @if(VERTEX_COLORS)
     pbr_input.material.base_color *= in.color;
 
+    var fogged_at = in.world_position.xyz;
     @if(VERTEX_UVS_A) {
         let ddx = dpdx(in.uv);
         let ddy = dpdy(in.uv);
@@ -48,10 +49,9 @@ fn fragment(in: VertexOutput, @builtin(front_facing) is_front: bool) -> Fragment
             pbr_input.material.base_color = color;
             // every fragment of a texel is lit, shadowed and fogged as one
             let size = vec2<f32>(textureDimensions(pbr_bindings::base_color_texture));
-            pbr_input.world_position = vec4<f32>(
-                texel_center(in.uv, size, in.world_position.xyz, ddx, ddy, world_ddx, world_ddy),
-                1.0,
-            );
+            let center = texel_center(in.uv, size, in.world_position.xyz, ddx, ddy, world_ddx, world_ddy);
+            pbr_input.world_position = vec4<f32>(center, 1.0);
+            fogged_at = stepped_fog_position(center, vec2<i32>(floor(in.uv * size)));
         }
     }
     pbr_input.material.base_color = pbr_functions::alpha_discard(
@@ -62,6 +62,8 @@ fn fragment(in: VertexOutput, @builtin(front_facing) is_front: bool) -> Fragment
 
     var out: FragmentOutput;
     out.color = vec4<f32>(matte_lighting(pbr_input), pbr_input.material.base_color.a);
-    out.color = pbr_functions::main_pass_post_lighting_processing(pbr_input, out.color);
+    var fogged = pbr_input;
+    fogged.world_position = vec4<f32>(fogged_at, 1.0);
+    out.color = pbr_functions::main_pass_post_lighting_processing(fogged, out.color);
     return out;
 }

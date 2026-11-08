@@ -1,7 +1,7 @@
 // 3d model equivalent of the billboard material
 
 use bevy::{
-    asset::embedded_asset,
+    asset::{LoadState, embedded_asset},
     ecs::system::SystemParam,
     pbr::{ExtendedMaterial, MaterialExtension},
     platform::collections::HashMap,
@@ -14,7 +14,7 @@ pub(crate) fn plugin(app: &mut App) {
     embedded_asset!(app, "model.wesl");
     app.add_plugins(MaterialPlugin::<PixelModelMaterial>::default())
         .init_resource::<PixelModelMaterials>()
-        .add_systems(Update, swap_to_pixel_materials)
+        .add_systems(PostUpdate, swap_to_pixel_materials)
         .add_observer(restore_standard_materials);
 }
 
@@ -62,36 +62,53 @@ impl PixelMaterials<'_> {
     }
 }
 
+#[derive(SystemParam)]
+pub struct UnswappedModels<'w, 's> {
+    standard_meshes: Query<'w, 's, (Entity, &'static MeshMaterial3d<StandardMaterial>)>,
+    tree: Query<'w, 's, (Option<&'static ChildOf>, Has<PixelModel>)>,
+    assets: Res<'w, AssetServer>,
+}
+
+impl UnswappedModels<'_, '_> {
+    fn under_model(&self, mut entity: Entity) -> bool {
+        loop {
+            let Ok((parent, is_model)) = self.tree.get(entity) else {
+                return false;
+            };
+            if is_model {
+                return true;
+            }
+            let Some(parent) = parent else {
+                return false;
+            };
+            entity = parent.parent();
+        }
+    }
+
+    fn iter(&self) -> impl Iterator<Item = (Entity, &Handle<StandardMaterial>)> {
+        self.standard_meshes
+            .iter()
+            .filter(|&(entity, MeshMaterial3d(source))| {
+                self.under_model(entity)
+                    && !matches!(
+                        self.assets.get_load_state(source.id()),
+                        Some(LoadState::Failed(_))
+                    )
+            })
+            .map(|(entity, MeshMaterial3d(source))| (entity, source))
+    }
+
+    pub fn any(&self) -> bool {
+        self.iter().next().is_some()
+    }
+}
+
 fn swap_to_pixel_materials(
     mut commands: Commands,
-    changed: Query<Entity, Changed<MeshMaterial3d<StandardMaterial>>>,
-    added: Query<Entity, Added<PixelModel>>,
-    standard_meshes: Query<&MeshMaterial3d<StandardMaterial>>,
-    tree: Query<(Option<&ChildOf>, Has<PixelModel>)>,
-    children: Query<&Children>,
+    unswapped: UnswappedModels,
     mut materials: PixelMaterials,
 ) {
-    let under_model = |mut entity: Entity| loop {
-        let Ok((parent, is_model)) = tree.get(entity) else {
-            return false;
-        };
-        if is_model {
-            return true;
-        }
-        let Some(parent) = parent else {
-            return false;
-        };
-        entity = parent.parent();
-    };
-    let targets = changed.iter().filter(|&e| under_model(e)).chain(
-        added
-            .iter()
-            .flat_map(|root| std::iter::once(root).chain(children.iter_descendants(root))),
-    );
-    for entity in targets {
-        let Ok(MeshMaterial3d(source)) = standard_meshes.get(entity) else {
-            continue;
-        };
+    for (entity, source) in unswapped.iter() {
         let Some(material) = materials.of(source) else {
             continue;
         };

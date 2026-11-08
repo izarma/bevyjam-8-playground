@@ -3,6 +3,9 @@
 bevy_transform::components::transform::Transform
 jackdaw_scene_types::node_id::SceneNodeId(3391703645149169079)
 pixel_art::sky::PixelSky
+bevy_game::gameplay::time_of_day::DaylitExposure {
+    day: 10.3,
+}
 jackdaw_scene_types::environment::Environment {
     sky: jackdaw_scene_types::environment::Sky {
         enabled: false,
@@ -15,14 +18,14 @@ jackdaw_scene_types::environment::Environment {
         brightness: 200.0,
     },
     post: jackdaw_scene_types::environment::PostProcess {
-        tonemapper: jackdaw_scene_types::environment::Tonemapper::AcesFitted,
+        tonemapper: jackdaw_scene_types::environment::Tonemapper::KhronosPbrNeutral,
         enabled: true,
         shadow_filtering: jackdaw_scene_types::environment::ShadowFiltering::Hardware2x2,
     },
     fog: jackdaw_scene_types::environment::Fog {
         mode: jackdaw_scene_types::environment::FogMode::Linear,
-        start: 10.0,
-        end: 50.0,
+        start: 20.0,
+        end: 70.0,
         density: 0.029999999329447746,
     },
 }

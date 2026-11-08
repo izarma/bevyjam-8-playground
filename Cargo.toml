@@ -70,7 +70,6 @@ winit = { version = "0.30", default-features = false }
 image = { version = "0.25", default-features = false }
 ## This greatly improves WGPU's performance due to its heavy use of trace! calls
 log = { version = "0.4", features = ["max_level_debug", "release_max_level_warn"] }
-bevy_sprite3d = "10.1.0"
 pixel_art = { path = "crates/pixel_art" }
 plants = { path = "crates/plants" }
 bevy_enhanced_input = "0.27"

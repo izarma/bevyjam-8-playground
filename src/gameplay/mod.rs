@@ -18,16 +18,17 @@ pub(crate) use dialogue::{Concoction, DialogueTarget};
 pub(crate) use outdoors::HarvestScratch;
 pub(crate) use remedy::Mark;
 pub(crate) use visitors::{
-    BALANCED, Brew, BrewHistory, DAY_END, DAY_START, Health, InLineup, MAX_HEALTH, MIN_HEALTH, Met,
-    Visitor,
+    Ailing, Ailment, BALANCED, Brew, BrewHistory, Died, Health, InLineup, MAX_HEALTH, MIN_HEALTH,
+    Met, Visitor,
 };
+// for the dev tools
+#[cfg(debug_assertions)]
+pub(crate) use visitors::{DAY_END, DAY_START};
 
 use bevy::prelude::*;
-use bevy_sprite3d::Sprite3dPlugin;
 
 pub(super) fn plugin(app: &mut App) {
     app.add_plugins((
-        Sprite3dPlugin,
         pixel_art::PixelArtPlugin,
         animation::plugin,
         base::plugin,
