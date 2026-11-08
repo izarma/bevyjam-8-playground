@@ -1,5 +1,10 @@
 // jackdaw 0.20.0 | bevy 0.20
 bevy_ecs::hierarchy::Children [
+    #"Outside Sky"
+    bevy_transform::components::transform::Transform
+    jackdaw_scene_types::node_id::SceneNodeId(5290873140266781437)
+    pixel_art::sky::PixelSky
+    --
     #"Outside Terrain"
     bevy_transform::components::transform::Transform {
         translation: glam::Vec3 {

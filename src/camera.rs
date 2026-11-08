@@ -3,7 +3,7 @@ use bevy::{
     anti_alias::taa::TemporalAntiAliasing,
     camera::Hdr,
     core_pipeline::tonemapping::Tonemapping,
-    light::{PointLightShadowMap, ShadowFilteringMethod},
+    light::{CascadeShadowConfigBuilder, PointLightShadowMap, ShadowFilteringMethod},
     pbr::ScreenSpaceAmbientOcclusion,
     post_process::bloom::Bloom,
     prelude::*,
@@ -61,6 +61,7 @@ pub(super) fn plugin(app: &mut App) {
                     .in_set(PausableSystems)
                     .run_if(in_state(GameState::Gameplay)),
                 set_up_scene_cameras,
+                fit_sun_cascades,
             ),
         );
 }
@@ -104,6 +105,20 @@ fn set_up_scene_cameras(
         commands
             .entity(entity)
             .insert((IsDefaultUiCamera, ShadowFilteringMethod::Hardware2x2));
+    }
+}
+
+fn fit_sun_cascades(mut commands: Commands, suns: Query<Entity, Added<DirectionalLight>>) {
+    for sun in &suns {
+        commands.entity(sun).insert(
+            CascadeShadowConfigBuilder {
+                num_cascades: 2,
+                first_cascade_far_bound: 15.0,
+                maximum_distance: 50.0,
+                ..default()
+            }
+            .build(),
+        );
     }
 }
 

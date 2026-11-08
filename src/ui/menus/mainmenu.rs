@@ -16,22 +16,6 @@ pub(super) fn plugin(app: &mut App) {
 
 fn spawn_main_menu(mut commands: Commands) {
     commands.spawn_scene(bsn! {
-        #MainMenuScrim
-        Node {
-            width: percent(100),
-            height: percent(100),
-        }
-        GlobalZIndex(1)
-        BackgroundGradient(vec![
-            Gradient::Linear(LinearGradient::to_right(vec![
-                ColorStop::percent(Color::srgba(0.0, 0.0, 0.0, 1.0), 0.0),
-                ColorStop::percent(Color::srgba(0.0, 0.0, 0.0, 0.0), 100.0),
-            ]))
-        ])
-        DespawnOnExit<Menu>(Menu::Main)
-    });
-
-    commands.spawn_scene(bsn! {
         @widget::ui_root("Main Menu")
         Node {
             align_items: AlignItems::FlexStart,

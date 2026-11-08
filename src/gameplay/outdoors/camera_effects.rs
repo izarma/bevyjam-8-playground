@@ -1,9 +1,8 @@
 // usually you set Environment in jackdaw to change ambient / global camera settings
-// for ones it doesnt support like dof, contact shadows and shadow cascades we are
+// for ones it doesnt support like dof and contact shadows we are
 // doing it here
 
 use bevy::{
-    light::CascadeShadowConfigBuilder,
     pbr::ContactShadows,
     post_process::dof::{DepthOfField, DepthOfFieldMode},
     prelude::*,
@@ -15,7 +14,7 @@ use crate::{GameplayScene, camera::SceneCamera, gameplay::Player, graphics::Grap
 pub(super) fn plugin(app: &mut App) {
     app.add_systems(
         Update,
-        (add_camera_effects, focus_on_player, fit_sun_cascades)
+        (add_camera_effects, focus_on_player)
             .chain()
             .run_if(in_state(GameplayScene::Outdoors)),
     );
@@ -50,22 +49,5 @@ fn focus_on_player(
 ) {
     for (camera, mut depth_of_field) in &mut cameras {
         depth_of_field.focal_distance = camera.translation().distance(player.translation());
-    }
-}
-
-// performance
-// the defaults reach 150 m in 4 cascades; the whole map is 64 m across so we reduce it here
-// could be a perf setting later?
-fn fit_sun_cascades(mut commands: Commands, suns: Query<Entity, Added<DirectionalLight>>) {
-    for sun in &suns {
-        commands.entity(sun).insert(
-            CascadeShadowConfigBuilder {
-                num_cascades: 2,
-                first_cascade_far_bound: 15.0,
-                maximum_distance: 50.0,
-                ..default()
-            }
-            .build(),
-        );
     }
 }

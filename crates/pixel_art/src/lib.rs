@@ -7,10 +7,12 @@ use bevy::{
 };
 
 mod model;
+mod sky;
 mod sprite;
 mod water;
 
 pub use model::PixelModel;
+pub use sky::PixelSky;
 pub use sprite::{PixelSprite, PixelSpriteMaterial};
 pub use water::PixelWater;
 
@@ -37,6 +39,7 @@ impl Plugin for PixelArtPlugin {
         ];
         app.insert_resource(ShaderLibrary(library)).add_plugins((
             model::plugin,
+            sky::plugin,
             sprite::plugin,
             water::plugin,
         ));
