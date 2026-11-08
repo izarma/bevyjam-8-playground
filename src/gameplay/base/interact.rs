@@ -10,7 +10,7 @@ use super::{
 };
 use crate::{
     GameplayScene, InControl, PausableSystems,
-    gameplay::{CharacterName, Player, PlayerAnimation, PlayerAnimationSystems},
+    gameplay::{Met, Player, PlayerAnimation, PlayerAnimationSystems, Visitor},
     ui::{
         billboard::Billboards,
         font,
@@ -147,14 +147,16 @@ fn talk_panel() -> impl Scene {
     }
 }
 
-/// Starts the Yarn node named after the in-reach NPC when the player interacts.
+/// Starts the Yarn node for the in-reach NPC when the player interacts.
 fn start_interaction(
     _: On<Start<Touch>>,
-    npcs: Query<(Entity, &CharacterName), With<InReach>>,
+    npcs: Query<Entity, With<InReach>>,
+    bodies: Query<&BodyOf>,
+    visitors: Query<&Visitor>,
     mut runner: Query<&mut DialogueRunner>,
     mut commands: Commands,
 ) {
-    let Some((npc, name)) = npcs.iter().next() else {
+    let Some(npc) = npcs.iter().next() else {
         return;
     };
     let Ok(mut runner) = runner.single_mut() else {
@@ -163,7 +165,15 @@ fn start_interaction(
     if runner.is_running() {
         return;
     }
-    let node = name.0;
+    let Some(node) = bodies
+        .get(npc)
+        .ok()
+        .and_then(|body| visitors.get(body.0).ok())
+        .map(Visitor::node)
+    else {
+        error!("Refusing to start dialogue with {npc:?}: no visitor to talk to");
+        return;
+    };
     if !runner.node_exists(node) {
         error!(
             "Refusing to start dialogue with {npc:?}: node \"{node}\" is missing from the compiled Yarn project"
@@ -174,6 +184,9 @@ fn start_interaction(
         Ok(_) => {
             info!("interacting with NPC {npc:?}");
             commands.entity(npc).insert(InDialogue);
+            if let Ok(body) = bodies.get(npc) {
+                commands.entity(body.0).insert(Met);
+            }
         }
         Err(error) => {
             // the player can just interact again.

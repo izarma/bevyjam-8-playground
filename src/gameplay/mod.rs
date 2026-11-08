@@ -16,7 +16,10 @@ pub(crate) use animation::{
 };
 pub(crate) use base::{BodyOf, InDialogue};
 pub(crate) use dialogue::Concoction;
-pub(crate) use visitors::{BALANCED, Health, MAX_HEALTH, MIN_HEALTH};
+pub(crate) use remedy::Mark;
+pub(crate) use visitors::{
+    BALANCED, Brew, BrewHistory, DAY_END, DAY_START, Health, MAX_HEALTH, MIN_HEALTH, Met, Visitor,
+};
 
 use bevy::prelude::*;
 use bevy_sprite3d::Sprite3dPlugin;

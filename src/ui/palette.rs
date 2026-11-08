@@ -13,10 +13,10 @@ pub const LINK_TEXT_HOVERED: Color = Color::srgb(0.612, 0.761, 0.925);
 
 /// #ececec
 pub const BUTTON_TEXT: Color = Color::srgb(0.925, 0.925, 0.925);
-/// #6299d1
-pub const BUTTON_HOVERED_TINT: Color = Color::srgb(0.384, 0.600, 0.820);
-/// #3d4999
-pub const BUTTON_PRESSED_TINT: Color = Color::srgb(0.239, 0.286, 0.600);
+/// #f2c85e
+pub const BUTTON_HOVERED_TINT: Color = Color::srgb(0.949, 0.784, 0.369);
+/// #9a6b1e
+pub const BUTTON_PRESSED_TINT: Color = Color::srgb(0.604, 0.420, 0.118);
 /// #737373
 pub const BUTTON_DISABLED_TINT: Color = Color::srgb(0.451, 0.451, 0.451);
 

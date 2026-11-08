@@ -9,18 +9,19 @@ use super::{SpeakerChangeEvent, YarnSpinnerDialogueViewSystemSet, concoction::Co
 use crate::{
     GameplayScene,
     gameplay::{
-        BALANCED, BodyOf, Health, InDialogue, MAX_HEALTH, MIN_HEALTH,
+        BodyOf, Health, InDialogue,
         clock::Clock,
-        herbs::Element,
+        herbs::{self, Element},
         visitors::{Ailing, Ailment},
     },
     ui::{
         font,
+        health::{bar_width, health_bar_color},
         input_prompt::{KEY_ESCAPE, KEY_LEFT, prompt},
         interaction::InteractionPalette,
         palette::{
-            BUTTON_HOVERED_TINT, BUTTON_PRESSED_TINT, BUTTON_TEXT, GAIN_TEXT, HEADER_TEXT,
-            LABEL_TEXT, LOSS_TEXT,
+            BUTTON_HOVERED_TINT, BUTTON_PRESSED_TINT, BUTTON_TEXT, HEADER_TEXT, LABEL_TEXT,
+            LOSS_TEXT,
         },
         scale::{TEXEL, texels},
         widget,
@@ -579,13 +580,7 @@ fn health_rows(health: Health, ailment: Option<Ailment>) -> Vec<Box<dyn Scene>> 
                 }
                 Pickable::IGNORE
                 Children [
-                    Text({ element.name().to_string() })
-                    @font::text(1)
-                    TextColor(LABEL_TEXT)
-                    Node {
-                        flex_grow: 1.0,
-                    }
-                    Pickable::IGNORE
+                    { vec![herbs::element_icon(element)] }
                     --
                     Node {
                         width: texels(64),
@@ -691,21 +686,6 @@ fn rise_health_changes(
         node.top = px(-k * RISE_TEXELS * TEXEL);
         color.0.set_alpha(1.0 - k * k);
     }
-}
-
-fn bar_width(value: u8) -> f32 {
-    f32::from(value - MIN_HEALTH) / f32::from(MAX_HEALTH - MIN_HEALTH) * 100.0
-}
-
-// green or red based on distance from balanced
-fn health_bar_color(value: u8) -> Color {
-    let value = value.clamp(MIN_HEALTH, MAX_HEALTH);
-    let t = if value >= BALANCED {
-        f32::from(value - BALANCED) / f32::from(MAX_HEALTH - BALANCED)
-    } else {
-        f32::from(BALANCED - value) / f32::from(BALANCED - MIN_HEALTH)
-    };
-    GAIN_TEXT.mix(&LOSS_TEXT, t)
 }
 
 fn number_key_pressed(keys: &ButtonInput<KeyCode>) -> Option<usize> {

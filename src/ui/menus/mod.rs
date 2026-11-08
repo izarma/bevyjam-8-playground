@@ -6,6 +6,7 @@ mod controls;
 mod credits;
 mod gameover;
 mod inventory;
+mod journal;
 mod mainmenu;
 mod pause;
 mod settings;
@@ -21,6 +22,7 @@ pub(super) fn plugin(app: &mut App) {
         credits::plugin,
         gameover::plugin,
         inventory::plugin,
+        journal::plugin,
         settings::plugin,
     ));
 }
@@ -35,6 +37,7 @@ pub enum Menu {
     Pause,
     GameOver,
     Inventory,
+    Journal,
 }
 
 pub(super) fn open_main_menu(mut next_menu: ResMut<NextState<Menu>>) {

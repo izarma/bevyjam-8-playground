@@ -2,6 +2,7 @@ use bevy::prelude::*;
 
 pub(crate) mod billboard;
 pub(crate) mod font;
+pub(crate) mod health;
 pub(crate) mod input_prompt;
 
 pub(crate) mod interaction;
