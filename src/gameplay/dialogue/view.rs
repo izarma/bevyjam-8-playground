@@ -550,9 +550,7 @@ fn show_ailment(
         )>,
     >,
 ) {
-    let ailing = target
-        .0
-        .and_then(|visitor| visitors.get(visitor).ok());
+    let ailing = target.0.and_then(|visitor| visitors.get(visitor).ok());
     for (mut text, title, counting, marked) in &mut texts {
         let shown = match (ailing, title, counting, marked) {
             (Some(ailing), true, ..) => ailing.ailment.name(),
@@ -625,10 +623,7 @@ fn update_health_bars(
     concoction: Option<Single<&Concoction>>,
     mut fills: Query<(&DialogueHealthFill, &mut Node, &mut BackgroundColor)>,
 ) {
-    let Some(&health) = target
-        .0
-        .and_then(|visitor| visitors.get(visitor).ok())
-    else {
+    let Some(&health) = target.0.and_then(|visitor| visitors.get(visitor).ok()) else {
         return;
     };
     let health = concoction.map_or(health, |concoction| concoction.preview(health));
@@ -647,10 +642,7 @@ fn float_health_changes(
     mut shown: Single<&mut ShownHealth>,
     fills: Query<(&DialogueHealthFill, &ChildOf)>,
 ) {
-    let Some(&health) = target
-        .0
-        .and_then(|visitor| visitors.get(visitor).ok())
-    else {
+    let Some(&health) = target.0.and_then(|visitor| visitors.get(visitor).ok()) else {
         return;
     };
     if shown.0 == health {

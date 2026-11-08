@@ -17,6 +17,8 @@
 //!
 
 use bevy::prelude::*;
+use bevy::ui::UiSystems;
+use bevy::ui_widgets::{ControlOrientation, ScrollArea, Scrollbar, ScrollbarThumb};
 use plants::Plant;
 
 use crate::{
@@ -41,6 +43,10 @@ use crate::{
 
 pub(super) fn plugin(app: &mut App) {
     app.add_systems(OnEnter(Menu::Journal), spawn_journal_menu);
+    app.add_systems(
+        PostUpdate,
+        update_history_scrollbar.in_set(UiSystems::PostLayout),
+    );
 }
 
 // All sizes are in texels;
@@ -72,6 +78,8 @@ const DESCRIPTION_PANEL_WIDTH: u16 = TOP_ROW_WIDTH;
 const HISTORY_PANEL_WIDTH: u16 = 128;
 const BREW_SLOT_SIZE: u16 = 24;
 const BREW_SLOT_GAP: u16 = 2;
+const SCROLLBAR_WIDTH: u16 = 4;
+const SCROLLBAR_MIN_THUMB: f32 = 8.0;
 
 const LINE_HEIGHT: u16 = 16;
 
@@ -200,6 +208,9 @@ struct JournalDescription;
 struct JournalHistoryRoot;
 
 #[derive(Component, Clone, Default)]
+struct JournalHistoryScrollbar;
+
+#[derive(Component, Clone, Default)]
 struct JournalTabSelected;
 
 #[derive(Component, Clone, Copy, Default)]
@@ -217,6 +228,7 @@ fn select_journal_tab(
         Query<&mut Text, With<JournalDescription>>,
     )>,
     roots: Query<Entity, With<JournalHistoryRoot>>,
+    mut scrolls: Query<&mut ScrollPosition, With<JournalHistoryRoot>>,
     mut faces: Query<(&JournalTabSelected, &ChildOf, &mut Visibility)>,
     mut fills: Query<(&JournalHealthFill, &mut Node, &mut BackgroundColor)>,
 ) {
@@ -258,6 +270,10 @@ fn select_journal_tab(
         for entry in history_entries(history) {
             commands.spawn_scene(entry).insert(ChildOf(root));
         }
+        // New history starts scrolled back to the top.
+        if let Ok(mut scroll) = scrolls.single_mut() {
+            scroll.0 = Vec2::ZERO;
+        }
     }
 
     // Only the clicked tab keeps its highlight face.
@@ -267,6 +283,33 @@ fn select_journal_tab(
         } else {
             Visibility::Hidden
         };
+    }
+}
+
+/// Show the brew history scrollbar only when the list actually overflows.
+fn update_history_scrollbar(
+    scrollbars: Query<(Entity, &Scrollbar), With<JournalHistoryScrollbar>>,
+    scroll_areas: Query<&ComputedNode>,
+    mut visibility: Query<&mut Visibility>,
+) {
+    for (entity, scrollbar) in &scrollbars {
+        let Ok(computed) = scroll_areas.get(scrollbar.target) else {
+            continue;
+        };
+
+        // `content_size` and `size` are both in physical pixels, so we can compare them directly.
+        let needed = computed.content_size().y > computed.size().y + 0.5;
+        let wanted = if needed {
+            Visibility::Inherited
+        } else {
+            Visibility::Hidden
+        };
+
+        if let Ok(mut vis) = visibility.get_mut(entity)
+            && *vis != wanted
+        {
+            *vis = wanted;
+        }
     }
 }
 
@@ -468,13 +511,55 @@ fn history_panel(history: &BrewHistory) -> impl Scene {
             TextColor(HEADER_TEXT)
             Pickable::IGNORE
             --
+            // Scroll area beside its scrollbar.
             Node {
-                flex_direction: FlexDirection::Column,
-                row_gap: texels(BREW_SLOT_GAP),
+                display: Display::Grid,
+                flex_grow: 1.0,
+                grid_template_columns: vec![
+                    RepeatedGridTrack::flex(1, 1.0),
+                    RepeatedGridTrack::auto(1),
+                ],
+                grid_template_rows: vec![RepeatedGridTrack::flex(1, 1.0)],
+                column_gap: texels(1),
+                padding: UiRect{
+                    right: texels(3),
+                    bottom: texels(3),
+                },
+                align_items: AlignItems::Stretch,
             }
-            JournalHistoryRoot
             Pickable::IGNORE
-            Children [ { entries } ]
+            Children [
+                // The scrollable brew list.
+                #JournalHistoryScroll
+                Node {
+                    flex_direction: FlexDirection::Column,
+                    align_items: AlignItems::Center,
+                    row_gap: texels(BREW_SLOT_GAP),
+                    overflow: Overflow::scroll_y(),
+                }
+                ScrollArea
+                JournalHistoryRoot
+                Children [ { entries } ]
+                --
+                // The scrollbar track and draggable thumb.
+                Node {
+                    min_width: texels(SCROLLBAR_WIDTH),
+                }
+                BackgroundColor(BUTTON_PRESSED_TINT)
+                JournalHistoryScrollbar
+                Scrollbar {
+                    target: #JournalHistoryScroll,
+                    orientation: ControlOrientation::Vertical,
+                    min_thumb_length: SCROLLBAR_MIN_THUMB,
+                }
+                Children [
+                    ScrollbarThumb {
+                        border_radius: BorderRadius::all(texels(1)),
+                        border: UiRect::ZERO,
+                    }
+                    BackgroundColor(BUTTON_HOVERED_TINT)
+                ]
+            ]
         ]
     }
 }
