@@ -3,12 +3,12 @@ use bevy::prelude::*;
 use pixel_art::PixelSprite;
 use plants::{Growing, Plant};
 
-use super::InReach;
+use super::{super::biomes::Harvested, InReach};
 use crate::{
     GameplayScene, InControl,
     gameplay::herbs,
     ui::{
-        billboard::Billboards,
+        billboard::{Billboards, Fade},
         input_prompt::{KEY_F, prompt},
         scale::texels,
     },
@@ -31,26 +31,29 @@ struct YieldPanel {
 }
 
 fn show_panel(
-    mut commands: Commands,
     in_reach: Option<Single<Entity, With<InReach>>>,
     in_control: Option<Res<State<InControl>>>,
-    panels: Query<(Entity, &YieldPanel)>,
-    plants: Query<(&Growing, &GlobalTransform, &PixelSprite)>,
+    mut panels: Query<(&YieldPanel, &mut Fade)>,
+    plants: Query<(&Growing, &GlobalTransform, &PixelSprite), Without<Harvested>>,
     mut billboards: Billboards,
 ) {
-    // hidden while a menu or minigame is up
+    // hidden while a menu or minigame is up, and over picked plants
     let target = in_reach
         .map(|plant| *plant)
-        .filter(|_| in_control.is_some());
-    for (panel, shown) in &panels {
-        if Some(shown.plant) != target {
-            commands.entity(panel).despawn();
+        .filter(|&plant| in_control.is_some() && plants.contains(plant));
+    let mut showing = false;
+    for (shown, mut fade) in &mut panels {
+        if Some(shown.plant) == target {
+            fade.stay();
+            showing = true;
+        } else {
+            fade.leave();
         }
     }
     let Some(plant) = target else {
         return;
     };
-    if panels.iter().any(|(_, shown)| shown.plant == plant) {
+    if showing {
         return;
     }
     let Ok((Growing(kind), at, sprite)) = plants.get(plant) else {

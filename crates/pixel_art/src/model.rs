@@ -54,12 +54,7 @@ impl PixelMaterials<'_> {
             return Some(material.clone());
         }
         let material = self.pixel.add(ExtendedMaterial {
-            base: StandardMaterial {
-                perceptual_roughness: 1.0,
-                reflectance: 0.0,
-                metallic: 0.0,
-                ..self.standard.get(source)?.clone()
-            },
+            base: self.standard.get(source)?.clone(),
             extension: PixelModelExtension::default(),
         });
         self.cache.0.insert(source.id(), material.clone());

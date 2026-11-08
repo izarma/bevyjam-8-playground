@@ -2,7 +2,7 @@ use avian3d::prelude::LinearVelocity;
 use bevy::prelude::*;
 use bevy_ahoy::{input::AccumulatedInput, prelude::*};
 use bevy_enhanced_input::prelude::*;
-use bevy_yarnspinner::prelude::DialogueRunner;
+use bevy_yarnspinner::prelude::{DialogueRunner, YarnValue};
 use pixel_art::PixelSprite;
 
 use crate::{
@@ -80,6 +80,8 @@ const CAM_ZOOM_SPEED: f32 = 6.0;
 
 /// Past this X coordinate the player leaves the base through the right exit.
 const EXIT_X: f32 = 20.0;
+/// How far back from the exit the player is turned around when they can't leave yet.
+const TURNED_BACK: f32 = 1.0;
 
 fn sync_camera(
     player: Query<&Transform, (With<IndoorPlayer>, Without<Camera3d>)>,
@@ -114,19 +116,30 @@ fn sync_camera(
     }
 }
 
+// make sure player treated guardian before leaving the first time
 fn exit_to_outdoors(
-    player: Query<&Transform, With<IndoorPlayer>>,
-    runners: Query<&DialogueRunner>,
+    mut player: Query<&mut Transform, With<IndoorPlayer>>,
+    mut runner: Single<&mut DialogueRunner>,
     mut commands: Commands,
 ) {
-    let Ok(player) = player.single() else {
+    let Ok(mut player) = player.single_mut() else {
         return;
     };
-    if runners.iter().any(|runner| runner.is_running()) {
+    if runner.is_running() || player.translation.x < EXIT_X {
         return;
     }
-    if player.translation.x >= EXIT_X {
+    let treated = matches!(
+        runner.variable_storage().get("$treated_guardian"),
+        Ok(YarnValue::Boolean(true))
+    );
+    if treated {
         commands.trigger(Travel::LeaveHouse);
+        return;
+    }
+    player.translation.x = EXIT_X - TURNED_BACK;
+    if let Err(error) = runner.try_start_node("LeaveBeforeTending") {
+        error!("Failed to start the leave-before-tending dialogue: {error}");
+        runner.stop();
     }
 }
 

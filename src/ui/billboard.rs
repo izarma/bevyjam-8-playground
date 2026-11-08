@@ -11,18 +11,24 @@ use bevy::{
         view::{DebandDither, Tonemapping},
     },
 };
-use pixel_art::PixelSprite;
+use pixel_art::{PixelSprite, PixelSpriteMaterial};
 
-use crate::{GameState, GameplayScene, ui::scale::TEXEL};
+use crate::{
+    GameplayScene,
+    camera::SceneCamera,
+    scene_ready::Loading,
+    ui::{font, scale::TEXEL, widget},
+};
 
 // meters between a sprite's top and a billboard above it
 const GAP: f32 = 0.35;
+const FADE_SECONDS: f32 = 0.2;
 // this is DIFFERENT from our normal one because if its not the ui is HUGE in the world
 const TEXELS_PER_METER: f32 = 32.0;
 
 pub(crate) fn plugin(app: &mut App) {
     app.add_systems(Update, fit_canvas_scale.run_if(resource_changed::<UiScale>))
-        .add_systems(OnEnter(GameState::Loading), warm_up);
+        .add_systems(Update, (prime, fade).chain());
 }
 
 #[derive(Component)]
@@ -35,6 +41,26 @@ struct BillboardParts(Vec<Entity>);
 
 #[derive(Component)]
 struct CanvasCamera;
+
+#[derive(Component, Default)]
+pub(crate) struct Fade {
+    shown: f32,
+    leaving: bool,
+}
+
+impl Fade {
+    pub(crate) fn leave(&mut self) {
+        self.leaving = true;
+    }
+
+    pub(crate) fn stay(&mut self) {
+        self.leaving = false;
+    }
+
+    pub(crate) fn leaving(&self) -> bool {
+        self.leaving
+    }
+}
 
 #[derive(SystemParam)]
 pub(crate) struct Billboards<'w, 's> {
@@ -72,6 +98,9 @@ impl Billboards<'_, '_> {
                     ..default()
                 },
                 NotShadowCaster,
+                // shown once the fade has made it see-through
+                Visibility::Hidden,
+                Fade::default(),
                 Transform::from_translation(at),
                 DespawnOnExit(scene),
             ))
@@ -117,26 +146,89 @@ impl Billboards<'_, '_> {
     }
 }
 
-fn warm_up(mut billboards: Billboards) {
-    let (_, camera) = billboards.canvas(UVec2::splat(8));
-    let camera = billboards
-        .commands
-        .spawn((
-            Name::new("Billboard Warm-up"),
-            camera,
-            DespawnOnExit(GameState::Title),
-        ))
-        .id();
-    billboards.commands.spawn((
-        Node {
-            width: percent(100),
-            height: percent(100),
-            ..default()
-        },
-        BackgroundColor(Color::WHITE),
-        UiTargetCamera(camera),
-        DespawnOnExit(GameState::Title),
-    ));
+#[derive(Component)]
+pub(crate) struct Primer;
+
+// shader preloader for billboards
+fn prime(
+    mut commands: Commands,
+    mut billboards: Billboards,
+    loading: Query<(), Loading>,
+    primers: Query<Entity, With<Primer>>,
+    cameras: Query<Entity, SceneCamera>,
+    scene: Option<Res<State<GameplayScene>>>,
+) {
+    if loading.is_empty() {
+        for primer in &primers {
+            commands.entity(primer).despawn();
+        }
+        return;
+    }
+    let (Some(scene), Some(camera)) = (scene, cameras.iter().next()) else {
+        return;
+    };
+    if !primers.is_empty() {
+        return;
+    }
+    billboards
+        .spawn(UVec2::splat(16), Vec3::NEG_Z * 2.0, primer(), *scene.get())
+        .insert((Name::new("Billboard Primer"), Primer, ChildOf(camera)));
+}
+
+fn primer() -> impl Scene {
+    bsn! {
+        Node
+        @widget::panel()
+        Children [
+            Node {
+                width: px(2),
+                height: px(2),
+            }
+            BackgroundColor(Color::WHITE)
+            --
+            Text("0")
+            @font::text(1)
+        ]
+    }
+}
+
+fn fade(
+    mut commands: Commands,
+    time: Res<Time>,
+    mut billboards: Query<(
+        Entity,
+        &mut Fade,
+        &mut Visibility,
+        Option<&MeshMaterial3d<PixelSpriteMaterial>>,
+    )>,
+    mut materials: ResMut<Assets<PixelSpriteMaterial>>,
+) {
+    let step = time.delta_secs() / FADE_SECONDS;
+    for (billboard, mut fade, mut visibility, material) in &mut billboards {
+        let Some(material) = material else {
+            continue;
+        };
+        let shown = if fade.leaving {
+            fade.shown - step
+        } else {
+            fade.shown + step
+        }
+        .clamp(0.0, 1.0);
+        if fade.leaving && shown == 0.0 {
+            commands.entity(billboard).despawn();
+            continue;
+        }
+        fade.shown = shown;
+        // each billboard draws its own canvas, so its material is its own. only
+        // written when it changes: writing marks it for re-upload
+        let stale = materials
+            .get(&material.0)
+            .is_some_and(|material| material.base.base_color.alpha() != shown);
+        if stale && let Some(mut material) = materials.get_mut(&material.0) {
+            material.base.base_color.set_alpha(shown);
+        }
+        visibility.set_if_neq(Visibility::Inherited);
+    }
 }
 
 fn canvas_scale(ui_scale: &UiScale) -> f32 {

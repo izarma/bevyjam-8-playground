@@ -6,10 +6,9 @@ use bevy_yarnspinner::prelude::DialogueRunner;
 use crate::{
     GameplayScene, PausableSystems,
     gameplay::{
-        CharacterName,
+        CharacterName, DialogueTarget,
         base::{BODY_HEIGHT, LabScene, ground_below, indoor_body},
-        clock::Clock,
-        visitors::{Died, VISITORS, Visitor, lineup},
+        visitors::{InLineup, Visitor},
     },
     loading::NPCAssets,
 };
@@ -68,27 +67,20 @@ pub(super) struct LineupShown;
 #[derive(Component)]
 struct NpcTarget(Vec2);
 
-// time passed while you were outside, update npc standing positions
 fn sync_lineup(
     mut commands: Commands,
     lab: Single<(Entity, Has<LineupShown>), With<LabScene>>,
-    clock: Single<&Clock>,
     door: Single<&GlobalTransform, With<NpcDoor>>,
     slots: Query<(&NpcSlot, &GlobalTransform)>,
-    visitors: Query<(Entity, &Visitor, Option<&Died>, Option<&Body>)>,
+    visitors: Query<(Entity, &Visitor, Option<&InLineup>, Option<&Body>)>,
     mut bodies: Query<(&Transform, &mut NpcTarget)>,
     assets: Res<NPCAssets>,
     mut texture_atlas_layouts: ResMut<Assets<TextureAtlasLayout>>,
 ) {
     let (lab, shown) = *lab;
     let door = door.translation();
-    let mut deaths = [None; VISITORS];
-    for (_, visitor, died, _) in &visitors {
-        deaths[visitor.0] = died.map(|died| died.0);
-    }
-    let lineup = lineup(clock.hours, deaths);
-    for (entity, visitor, _, body) in &visitors {
-        let place = lineup[visitor.0].and_then(|slot| {
+    for (entity, visitor, lineup, body) in &visitors {
+        let place = lineup.map(|lineup| lineup.0).and_then(|slot| {
             let place = slots
                 .iter()
                 .find(|(marker, _)| marker.0 == slot)
@@ -195,10 +187,12 @@ fn end_npc_dialogue(
     mut commands: Commands,
     npcs: Query<Entity, With<InDialogue>>,
     runners: Query<&DialogueRunner>,
+    mut target: ResMut<DialogueTarget>,
 ) {
     if runners.iter().any(|runner| runner.is_running()) {
         return;
     }
+    target.0 = None;
     for npc in &npcs {
         commands.entity(npc).remove::<InDialogue>();
     }

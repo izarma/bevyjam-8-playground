@@ -1,7 +1,7 @@
 mod health;
 mod interaction;
 
-use health::health_rows;
+use health::health_panel;
 
 use bevy::{platform::time::Instant, prelude::*};
 use bevy_yarnspinner::{
@@ -10,10 +10,12 @@ use bevy_yarnspinner::{
 };
 use unicode_segmentation::UnicodeSegmentation;
 
-use super::{SpeakerChangeEvent, YarnSpinnerDialogueViewSystemSet, concoction::Concoction};
+use super::{
+    DialogueTarget, SpeakerChangeEvent, YarnSpinnerDialogueViewSystemSet, concoction::Concoction,
+};
 use crate::{
     GameplayScene,
-    gameplay::{BodyOf, Health, InDialogue},
+    gameplay::{Health, clock::Clock, visitors::Ailing},
     ui::{
         font,
         input_prompt::{KEY_ESCAPE, KEY_LEFT, prompt},
@@ -125,15 +127,21 @@ impl Typewriter {
 fn spawn_dialogue_ui(
     _: On<DialogueStarted>,
     mut commands: Commands,
-    npc: Query<&BodyOf, With<InDialogue>>,
-    visitors: Query<&Health>,
+    target: Res<DialogueTarget>,
+    visitors: Query<(&Health, Option<&Ailing>)>,
+    clock: Single<&Clock>,
 ) {
     commands.init_resource::<Typewriter>();
-    let health = npc
-        .iter()
-        .find_map(|body| visitors.get(body.0).ok())
-        .copied()
-        .unwrap_or_default();
+
+    let health = target
+        .0
+        .and_then(|visitor| visitors.get(visitor).ok())
+        .map(|(&health, ailing)| -> Box<dyn Scene> {
+            let ailment = ailing.map(|ailing| (ailing.ailment, ailing.next - clock.hours));
+            Box::new(health_panel(health, ailment))
+        })
+        .into_iter()
+        .collect::<Vec<_>>();
     commands.spawn_scene(bsn! {
         #DialogueRoot
         DialogueRoot
@@ -173,31 +181,7 @@ fn spawn_dialogue_ui(
                 DialogueOptionsNode
                 Pickable::IGNORE
                 --
-                #DialogueHealth
-                ShownHealth(health)
-                Node {
-                    flex_direction: FlexDirection::Column,
-                    align_items: AlignItems::FlexStart,
-                    width: percent(30),
-                    row_gap: texels(1),
-                    padding: UiRect::all(texels(4)),
-                }
-                @widget::panel()
-                Pickable::IGNORE
-                Children [
-                    #DialogueHealthTitle
-                    Text("Health")
-                    @font::text(1)
-                    TextColor(HEADER_TEXT)
-                    Node {
-                        margin: UiRect {
-                            bottom: texels(2),
-                        },
-                    }
-                    Pickable::IGNORE
-                    --
-                    { health_rows(health) }
-                ]
+                { health }
             ]
             --
             #DialogueBox

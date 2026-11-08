@@ -10,7 +10,7 @@ use super::{
 };
 use crate::{
     GameplayScene, InControl, PausableSystems,
-    gameplay::{CharacterName, Player, PlayerAnimation, PlayerAnimationSystems},
+    gameplay::{DialogueTarget, Met, Player, PlayerAnimation, PlayerAnimationSystems, Visitor},
     ui::{
         billboard::Billboards,
         font,
@@ -147,14 +147,18 @@ fn talk_panel() -> impl Scene {
     }
 }
 
-/// Starts the Yarn node named after the in-reach NPC when the player interacts.
+/// Starts the Yarn node for the in-reach NPC when the player interacts.
 fn start_interaction(
     _: On<Start<Touch>>,
-    npcs: Query<(Entity, &CharacterName), With<InReach>>,
+    npcs: Query<Entity, With<InReach>>,
+    in_dialogue: Query<Entity, With<InDialogue>>,
+    bodies: Query<&BodyOf>,
+    visitors: Query<&Visitor>,
     mut runner: Query<&mut DialogueRunner>,
+    mut target: ResMut<DialogueTarget>,
     mut commands: Commands,
 ) {
-    let Some((npc, name)) = npcs.iter().next() else {
+    let Some(npc) = npcs.iter().next() else {
         return;
     };
     let Ok(mut runner) = runner.single_mut() else {
@@ -163,7 +167,14 @@ fn start_interaction(
     if runner.is_running() {
         return;
     }
-    let node = name.0;
+    let Some(body) = bodies.get(npc).ok() else {
+        error!("Refusing to start dialogue with {npc:?}: no body to talk to");
+        return;
+    };
+    let Some(node) = visitors.get(body.0).ok().map(Visitor::node) else {
+        error!("Refusing to start dialogue with {npc:?}: no visitor to talk to");
+        return;
+    };
     if !runner.node_exists(node) {
         error!(
             "Refusing to start dialogue with {npc:?}: node \"{node}\" is missing from the compiled Yarn project"
@@ -173,7 +184,15 @@ fn start_interaction(
     match runner.try_start_node(node) {
         Ok(_) => {
             info!("interacting with NPC {npc:?}");
+            // Replace the previous visitor so first-match consumers can never pick it up.
+            target.0 = Some(body.0);
+            for other in &in_dialogue {
+                if other != npc {
+                    commands.entity(other).remove::<InDialogue>();
+                }
+            }
             commands.entity(npc).insert(InDialogue);
+            commands.entity(body.0).insert(Met);
         }
         Err(error) => {
             // the player can just interact again.
@@ -208,15 +227,12 @@ fn face_in_reach(
 /// Turns the player toward the in-dialogue NPC once, on the frame the
 /// dialogue starts.
 fn face_npc(
-    _: On<Add<InDialogue>>,
+    added: On<Add<InDialogue>>,
     player: Query<&GlobalTransform, With<Player>>,
-    npcs: Query<&GlobalTransform, With<InDialogue>>,
+    npcs: Query<&GlobalTransform>,
     mut player_animations: Query<&mut PlayerAnimation>,
 ) {
-    let Ok(player) = player.single() else {
-        return;
-    };
-    let Some(npc) = npcs.iter().next() else {
+    let (Ok(player), Ok(npc)) = (player.single(), npcs.get(added.entity)) else {
         return;
     };
 

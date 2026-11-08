@@ -10,8 +10,6 @@ mod interact;
 mod npc;
 mod player_indoor;
 
-pub(crate) use npc::{BodyOf, InDialogue};
-
 pub(super) fn plugin(app: &mut App) {
     app.add_plugins((
         anim::plugin,

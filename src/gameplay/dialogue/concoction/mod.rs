@@ -8,14 +8,16 @@ use std::time::Duration;
 
 use bevy::prelude::*;
 use bevy_kira_audio::prelude::*;
+use bevy_yarnspinner::prelude::{DialogueRunner, YarnValue};
 use plants::Plant;
 
-use super::{YarnSpinnerDialogueViewSystemSet, view::DialogueOptionsNode};
+use super::{DialogueTarget, YarnSpinnerDialogueViewSystemSet, view::DialogueOptionsNode};
 use crate::gameplay::{
-    BodyOf, Health, InDialogue,
+    Health,
     clock::Clock,
     inventory::Inventory,
     remedy::{Mark, Remedy, SLOTS, grade},
+    visitors::{Brew, BrewHistory, Cured, Visitor},
 };
 use crate::loading::ConcoctionAssets;
 
@@ -156,6 +158,15 @@ impl Concoction {
         }
     }
 
+    fn cures(&self) -> bool {
+        match &self.stage {
+            Stage::Mixing => false,
+            Stage::Brewing { marks, .. } | Stage::Drunk { marks } => {
+                *marks == [Mark::Correct; SLOTS]
+            }
+        }
+    }
+
     pub(super) fn marks(&self) -> [Option<Mark>; SLOTS] {
         match &self.stage {
             Stage::Mixing => [None; SLOTS],
@@ -219,20 +230,18 @@ impl Concoction {
 // hold the dialogue open while we brew
 pub(super) fn offer_concoction(
     mut commands: Commands,
-    npc: Query<&BodyOf, With<InDialogue>>,
+    target: Res<DialogueTarget>,
     options: Query<Entity, With<DialogueOptionsNode>>,
     inventory: Query<&Inventory>,
 ) -> Arc<AtomicBool> {
-    let (Some(body), Some(options), Some(inventory)) = (
-        npc.iter().next(),
-        options.iter().next(),
-        inventory.iter().next(),
-    ) else {
+    let (Some(visitor), Some(options), Some(inventory)) =
+        (target.0, options.iter().next(), inventory.iter().next())
+    else {
         error!("offer_concoction ran without a visitor in dialogue");
         return Arc::new(AtomicBool::new(true));
     };
     let done = Arc::new(AtomicBool::new(false));
-    panel::spawn(&mut commands, options, inventory).insert(Concoction::new(body.0, done.clone()));
+    panel::spawn(&mut commands, options, inventory).insert(Concoction::new(visitor, done.clone()));
     done
 }
 
@@ -249,17 +258,18 @@ fn release_dialogue(
     }
 }
 
-// if one of the stamp steps happened, dose the npc
 fn brew(
+    mut commands: Commands,
     time: Res<Time>,
     mut concoction: Single<&mut Concoction>,
-    mut visitors: Query<&mut Health>,
+    mut visitors: Query<(&Visitor, &mut Health, &mut BrewHistory)>,
     mut clock: Single<&mut Clock>,
     assets: Res<ConcoctionAssets>,
     audio: Res<Audio>,
     mut next_result: Local<[usize; 3]>,
     anticipation: Res<AudioChannel<Anticipation>>,
     mut next_anticipation: Local<usize>,
+    mut runner: Single<&mut DialogueRunner>,
 ) {
     let seconds = if concoction.hurried {
         f32::INFINITY
@@ -290,12 +300,34 @@ fn brew(
             next_result[index] = (next_result[index] + 1) % clips.len();
         }
     }
-    if let Ok(mut health) = visitors.get_mut(concoction.visitor) {
+    let cures = concoction.cures();
+    let Ok((visitor, mut health, mut history)) = visitors.get_mut(concoction.visitor) else {
+        return;
+    };
+    if !cures {
         for plant in step.stamped {
             health.dose(plant);
         }
     }
     if step.drunk {
         clock.bank += HOURS_PER_DOSE;
+        // only record a brew once it has actually been drunk
+        let Stage::Drunk { marks } = &concoction.stage else {
+            unreachable!("a drunk brew is always in the drunk stage");
+        };
+        history.brews.push(Brew {
+            mix: concoction.mix,
+            marks: *marks,
+        });
+        if cures {
+            commands.entity(concoction.visitor).insert(Cured);
+        }
+        if visitor.guardian()
+            && let Err(error) = runner
+                .variable_storage_mut()
+                .set("$treated_guardian".into(), YarnValue::Boolean(true))
+        {
+            error!("Couldn't tell the dialogue the guardian was treated: {error}");
+        }
     }
 }

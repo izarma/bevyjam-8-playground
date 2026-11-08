@@ -1,7 +1,12 @@
 use crate::{GameState, PausableSystems};
 use bevy::{
-    anti_alias::taa::TemporalAntiAliasing, camera::Hdr, core_pipeline::tonemapping::Tonemapping,
-    pbr::ScreenSpaceAmbientOcclusion, post_process::bloom::Bloom, prelude::*,
+    anti_alias::taa::TemporalAntiAliasing,
+    camera::Hdr,
+    core_pipeline::tonemapping::Tonemapping,
+    light::{PointLightShadowMap, ShadowFilteringMethod},
+    pbr::ScreenSpaceAmbientOcclusion,
+    post_process::bloom::Bloom,
+    prelude::*,
     ui::IsDefaultUiCamera,
 };
 
@@ -40,6 +45,7 @@ impl Default for CameraSensitivity {
 
 pub(super) fn plugin(app: &mut App) {
     app.init_resource::<CameraSensitivity>()
+        .insert_resource(PointLightShadowMap { size: 256 })
         .add_systems(
             OnEnter(GameState::Loading),
             spawn_no_scene_camera(GameState::Loading),
@@ -54,7 +60,7 @@ pub(super) fn plugin(app: &mut App) {
                 face_camera
                     .in_set(PausableSystems)
                     .run_if(in_state(GameState::Gameplay)),
-                add_default_ui_camera,
+                set_up_scene_cameras,
             ),
         );
 }
@@ -90,13 +96,14 @@ fn no_scene_camera(state: GameState) -> impl Scene {
     }
 }
 
-/// Tag scene cameras when they spawn. May want a better way to do this.
-fn add_default_ui_camera(
+fn set_up_scene_cameras(
     mut commands: Commands,
     cameras: Query<Entity, (Added<Camera3d>, Without<NoSceneCamera>)>,
 ) {
     for entity in &cameras {
-        commands.entity(entity).insert(IsDefaultUiCamera);
+        commands
+            .entity(entity)
+            .insert((IsDefaultUiCamera, ShadowFilteringMethod::Hardware2x2));
     }
 }
 

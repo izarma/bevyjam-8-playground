@@ -12,7 +12,8 @@ pub(super) fn plugin(app: &mut App) {
         .add_systems(Startup, spawn_controls)
         .add_observer(back)
         .add_observer(toggle_pause)
-        .add_observer(toggle_inventory);
+        .add_observer(toggle_inventory)
+        .add_observer(toggle_journal);
 }
 
 #[derive(Component)]
@@ -30,6 +31,10 @@ struct TogglePause;
 #[action_output(bool)]
 struct ToggleInventory;
 
+#[derive(Debug, InputAction)]
+#[action_output(bool)]
+struct ToggleJournal;
+
 fn spawn_controls(mut commands: Commands) {
     commands
         .spawn((Name::new("Menu Controls"), MenuControls))
@@ -42,6 +47,9 @@ fn spawn_controls(mut commands: Commands) {
             --
             Action::<ToggleInventory>::new()
             Bindings [ Binding(KeyCode::KeyI) ]
+            --
+            Action::<ToggleJournal>::new()
+            Bindings [ Binding(KeyCode::KeyJ) ]
         });
 }
 
@@ -73,7 +81,7 @@ fn back(
             }
         }
         Menu::None if in_game => open_pause_menu(&mut commands),
-        Menu::Pause | Menu::Inventory => commands.set_state(Menu::None),
+        Menu::Pause | Menu::Inventory | Menu::Journal => commands.set_state(Menu::None),
         Menu::Settings if in_game => commands.set_state(Menu::Pause),
         Menu::Settings | Menu::Credits => commands.set_state(Menu::Main),
         _ => {}
@@ -109,6 +117,24 @@ fn toggle_inventory(
             commands.set_state(Menu::Inventory);
         }
         Menu::Inventory => commands.set_state(Menu::None),
+        _ => {}
+    }
+}
+
+fn toggle_journal(
+    _: On<Start<ToggleJournal>>,
+    mut commands: Commands,
+    menu: Res<State<Menu>>,
+    screen: Res<State<GameState>>,
+    harvesting: Option<Res<State<Harvesting>>>,
+) {
+    let harvesting = harvesting.is_some_and(|harvesting| harvesting.0);
+    match menu.get() {
+        Menu::None if *screen.get() == GameState::Gameplay && !harvesting => {
+            commands.set_state(Pause(true));
+            commands.set_state(Menu::Journal);
+        }
+        Menu::Journal => commands.set_state(Menu::None),
         _ => {}
     }
 }

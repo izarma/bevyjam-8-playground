@@ -1,3 +1,47 @@
+title: Guardian
+---
+<<declare $treated_guardian = false>>
+<<declare $gifted_guardian = false>>
+<<declare $gift_1 = "">>
+<<declare $gift_2 = "">>
+<<declare $gift_3 = "">>
+<<declare $guardian_wants = "">>
+<<if not $treated_guardian>>
+    <<jump GuardianFirstBrew>>
+<<endif>>
+Guardian: Thank you for tending to me, Aruna.
+-> Chat
+    Guardian: ...
+-> Offer Concoction
+    <<jump OfferConcoction>>
+-> Bye
+===
+
+title: GuardianFirstBrew
+---
+<<if not $gifted_guardian>>
+    Guardian: Aruna. The cure for what ails me eludes me, and every day I am weaker.
+    Guardian: Could you prepare these herbs to ease my symptoms?
+    <<give_guardian_herbs>>
+    <<set $gifted_guardian to true>>
+    (You receive 1 {$gift_1}, 1 {$gift_2} and 1 {$gift_3}. Drag them to the empty slots to brew.)
+<<else>>
+    Guardian: The herbs, Aruna. Please.
+<<endif>>
+<<offer_concoction>>
+<<if $treated_guardian>>
+    Guardian: That helps. But it's no cure.
+    Guardian: Outdoors to the right are some more herbs. Can you find something to {$guardian_wants}?
+<<else>>
+    Guardian: Please, Aruna. I won't last long like this.
+<<endif>>
+===
+
+title: LeaveBeforeTending
+---
+It would be rude to leave before tending to your guest.
+===
+
 title: Monk
 ---
 Aruna: How are u today monk from rival school?
@@ -9,39 +53,39 @@ Monk: I'm dying.
 -> Bye
 ===
 
-title: Woman
+title: Bride
 ---
-Woman: buhh
+Bride: buhh
 -> Chat
-    Woman: ...
+    Bride: ...
 -> Offer Concoction
     <<jump OfferConcoction>>
 -> Bye
 ===
 
-title: OldMan
+title: Beggar
 ---
-Old Man: I have explosive diarrhea
+Beggar: I have explosive diarrhea
 -> Chat
-    Old Man: ...
+    Beggar: ...
 -> Offer Concoction
     <<jump OfferConcoction>>
 -> Bye
 ===
 
-title: OldWoman
+title: OldBeauty
 ---
-Old Woman: me got space herpes
+Old Beauty: me got space herpes
 -> Chat
-    Old Woman: ...
+    Old Beauty: ...
 -> Offer Concoction
     <<jump OfferConcoction>>
 -> Bye
 ===
 
-title: Kid
+title: Orphan
 ---
-Kid: i shit my pants
+Orphan: i shit my pants
 -> Chat
     -> So did I!
 -> Offer Concoction

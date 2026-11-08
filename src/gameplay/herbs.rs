@@ -27,6 +27,16 @@ impl Element {
         Element::Water,
     ];
 
+    pub(crate) fn next(self) -> Element {
+        match self {
+            Element::Wood => Element::Fire,
+            Element::Fire => Element::Earth,
+            Element::Earth => Element::Metal,
+            Element::Metal => Element::Water,
+            Element::Water => Element::Wood,
+        }
+    }
+
     pub(crate) fn name(self) -> &'static str {
         match self {
             Element::Wood => "Wood",
@@ -34,6 +44,16 @@ impl Element {
             Element::Earth => "Earth",
             Element::Metal => "Metal",
             Element::Water => "Water",
+        }
+    }
+
+    pub(crate) fn icon_index(self) -> u32 {
+        match self {
+            Element::Fire => 0,
+            Element::Water => 1,
+            Element::Wood => 2,
+            Element::Metal => 3,
+            Element::Earth => 4,
         }
     }
 }
@@ -48,23 +68,38 @@ pub(crate) fn name(plant: Plant) -> &'static str {
         Plant::Wolfberry => "Wolfberry",
         Plant::Lotus => "Lotus",
         Plant::Licorice => "Licorice",
-        Plant::BlueHibiscus => "Blue Hibiscus",
+        Plant::RedMushroom => "Red Mushroom",
+        Plant::Grapes => "Grapes",
     }
 }
 
-// placeholder values
-pub(crate) fn yields(plant: Plant) -> &'static [(Element, i8)] {
-    match plant {
-        Plant::Basil => &[(Element::Wood, 2), (Element::Earth, -1)],
-        Plant::Chili => &[(Element::Fire, 2), (Element::Metal, -1)],
-        Plant::Lemongrass => &[(Element::Metal, 1), (Element::Wood, -1)],
-        Plant::Ginseng => &[(Element::Earth, 2), (Element::Water, -1)],
-        Plant::Chrysanthemum => &[(Element::Water, 1), (Element::Fire, -2)],
-        Plant::Wolfberry => &[(Element::Water, 2), (Element::Fire, -1)],
-        Plant::Lotus => &[(Element::Metal, 2), (Element::Earth, -1)],
-        Plant::Licorice => &[(Element::Earth, 1), (Element::Wood, -1)],
-        Plant::BlueHibiscus => &[(Element::Wood, 1), (Element::Metal, -1)],
+// +2 an element and -1 the next (a tonic), or -2 and +1 (a cooling herb)
+#[derive(Clone, Copy)]
+pub(crate) struct Effect {
+    pub(crate) element: Element,
+    pub(crate) by: i8,
+}
+
+impl Effect {
+    pub(crate) fn shifts(self) -> [(Element, i8); 2] {
+        [(self.element, self.by), (self.element.next(), -self.by / 2)]
     }
+}
+
+pub(crate) fn effect(plant: Plant) -> Effect {
+    let (element, by) = match plant {
+        Plant::Basil => (Element::Wood, 2),
+        Plant::Chili => (Element::Fire, 2),
+        Plant::Ginseng => (Element::Earth, 2),
+        Plant::Lotus => (Element::Metal, 2),
+        Plant::Wolfberry => (Element::Water, 2),
+        Plant::Lemongrass => (Element::Wood, -2),
+        Plant::Chrysanthemum => (Element::Fire, -2),
+        Plant::Licorice => (Element::Earth, -2),
+        Plant::RedMushroom => (Element::Metal, -2),
+        Plant::Grapes => (Element::Water, -2),
+    };
+    Effect { element, by }
 }
 
 pub(crate) fn icon_rect(plant: Plant) -> Rect {
@@ -88,6 +123,46 @@ pub(crate) fn icon(plant: Plant) -> impl Scene {
             rect: { Some(rect) },
         }
         Pickable::IGNORE
+    }
+}
+
+// cell indices in the sheet, in the order: Fire, Water, Wood, Metal, Earth
+const ELEMENT_SHEET: &str = "ui/Element Icons.png";
+const ELEMENT_TILE: u32 = 16;
+const ELEMENT_COLUMNS: u32 = 3;
+
+pub(crate) fn element_icon(element: Element) -> impl Scene {
+    let rect = pixel_art::grid_rect(
+        element.icon_index(),
+        ELEMENT_COLUMNS,
+        UVec2::splat(ELEMENT_TILE),
+    )
+    .as_rect();
+    bsn! {
+        Node {
+            width: texels(16),
+            height: texels(16),
+        }
+        ImageNode {
+            image: ELEMENT_SHEET,
+            rect: { Some(rect) },
+        }
+        Pickable::IGNORE
+    }
+}
+
+/// frames icon
+pub(crate) fn element_icon_slot(element: Element) -> impl Scene {
+    bsn! {
+        Node {
+            width: texels(24),
+            height: texels(24),
+            justify_content: JustifyContent::Center,
+            align_items: AlignItems::Center,
+        }
+        @widget::panel()
+        Pickable::IGNORE
+        Children [ { vec![element_icon(element)] } ]
     }
 }
 
@@ -199,9 +274,10 @@ fn set_tooltip(
 
 // never pickable, so it can't block what's under it
 pub(crate) fn card(plant: Plant) -> impl Scene {
-    let rows = yields(plant)
-        .iter()
-        .map(|&(element, amount)| -> Box<dyn Scene> {
+    let rows: Vec<Box<dyn Scene>> = effect(plant)
+        .shifts()
+        .into_iter()
+        .map(|(element, amount)| -> Box<dyn Scene> {
             let color = if amount > 0 { GAIN_TEXT } else { LOSS_TEXT };
             Box::new(bsn! {
                 Node {
@@ -209,10 +285,7 @@ pub(crate) fn card(plant: Plant) -> impl Scene {
                 }
                 Pickable::IGNORE
                 Children [
-                    Text({ element.name().to_string() })
-                    @font::text(1)
-                    TextColor(BUTTON_TEXT)
-                    Pickable::IGNORE
+                    { vec![element_icon_slot(element)] }
                     --
                     Text({ format!("{amount:+}") })
                     @font::text(1)
@@ -221,7 +294,7 @@ pub(crate) fn card(plant: Plant) -> impl Scene {
                 ]
             })
         })
-        .collect::<Vec<_>>();
+        .collect();
 
     bsn! {
         #HerbCard

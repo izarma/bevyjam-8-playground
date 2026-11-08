@@ -212,6 +212,25 @@ pub fn panel_face() -> impl Scene {
     }
 }
 
+/// A [`panel_face`] tinted with `color`, used as a marker backdrop behind an icon.
+pub fn panel_face_color(color: Color) -> impl Scene {
+    bsn! {
+        Node {
+            position_type: PositionType::Absolute,
+            left: px(0),
+            top: px(0),
+            width: percent(100),
+            height: percent(100),
+        }
+        Pickable::IGNORE
+        ImageNode {
+            image: "ui/9slice_fill.png",
+            image_mode: { panel_slicing() },
+            color: { color },
+        }
+    }
+}
+
 // specific to how the 9slice pngs are authored
 fn panel_slicing() -> NodeImageMode {
     NodeImageMode::Sliced(TextureSlicer {

@@ -2,7 +2,9 @@ use bevy::prelude::*;
 
 const CANDLE_COLOR: Color = Color::srgb(1.0, 0.72, 0.4);
 const CANDLE_INTENSITY: f32 = 600_000.0;
-const CANDLE_RANGE: f32 = 8.0;
+// point lights are expensive so make them tiny
+// this is still expensive tbh
+const CANDLE_RANGE: f32 = 3.0;
 const FLICKER: f32 = 0.15;
 
 pub(super) fn plugin(app: &mut App) {

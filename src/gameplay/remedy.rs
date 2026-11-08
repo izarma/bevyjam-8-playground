@@ -1,40 +1,19 @@
 use bevy::prelude::*;
 use plants::Plant;
-use rand::{RngExt, seq::SliceRandom};
-
-use crate::GameState;
+use rand::{Rng, seq::IndexedRandom};
 
 // how many herbs are used to make the remedy?
 pub(crate) const SLOTS: usize = 3;
 
-pub(super) fn plugin(app: &mut App) {
-    app.add_systems(OnEnter(GameState::Gameplay), spawn_remedy);
-}
-
-// answer to the question: what is the cure?
-// for now, it ALWAYS includes blue hibiscus in a random slot
-// then is two other random herbs
+// a visitor's cure: three different herbs, in order
 #[derive(Component)]
 pub(crate) struct Remedy(pub(crate) [Plant; SLOTS]);
 
-fn spawn_remedy(mut commands: Commands) {
-    let mut rng = rand::rng();
-    let mut herbs = Plant::ALL
-        .into_iter()
-        .filter(|&plant| plant != Plant::BlueHibiscus)
-        .collect::<Vec<_>>();
-    herbs.shuffle(&mut rng);
-    let mut remedy = [Plant::BlueHibiscus; SLOTS];
-    let hibiscus = rng.random_range(0..SLOTS);
-    let others = (0..SLOTS).filter(|&slot| slot != hibiscus);
-    for (slot, herb) in others.zip(herbs) {
-        remedy[slot] = herb;
+impl Remedy {
+    pub(crate) fn roll(rng: &mut impl Rng) -> Self {
+        let herbs = Plant::ALL.sample_array::<_, SLOTS>(rng);
+        Remedy(herbs.expect("there are more herbs than slots"))
     }
-    commands.spawn((
-        Name::new("Remedy"),
-        Remedy(remedy),
-        DespawnOnExit(GameState::Gameplay),
-    ));
 }
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]

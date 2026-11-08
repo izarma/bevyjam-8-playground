@@ -10,6 +10,8 @@ use crate::{
 
 const CANVAS: UVec2 = UVec2::new(128, 16);
 const RISE_SPEED: f32 = 0.6;
+// how far above the plant the popup text should start
+const START_ABOVE: f32 = 0.75;
 const SECONDS: f32 = 1.2;
 
 pub(super) fn plugin(app: &mut App) {
@@ -28,7 +30,7 @@ pub(super) fn spawn(billboards: &mut Billboards, at: Vec3, plant: Plant) {
     billboards
         .spawn(
             CANVAS,
-            at,
+            at + Vec3::Y * START_ABOVE,
             bsn! {
                 #PopupCanvas
                 Node {

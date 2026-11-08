@@ -40,6 +40,14 @@ pub struct UIAssets {
     pub button_click: Handle<AudioSource>,
     #[asset(path = "textures/bevy.png")]
     pub bevy: Handle<Image>,
+    #[asset(path = "ui/9slice.png")]
+    pub panel: Handle<Image>,
+    #[asset(path = "ui/9slice_fill.png")]
+    pub panel_fill: Handle<Image>,
+    #[asset(path = "ui/Element Icons.png")]
+    pub elements: Handle<Image>,
+    #[asset(path = "ui/Bell Button.png")]
+    pub inventory_icon: Handle<Image>,
 }
 
 // size of one cell of the player sheet, in texels
@@ -189,25 +197,33 @@ pub struct NPCAssets {
     pub dialogue_close: Handle<AudioSource>,
     #[asset(path = "textures/character/MonkMan.png")]
     pub monk_man: Handle<Image>,
+    #[asset(path = "textures/character/RichLady.png")]
+    pub lady: Handle<Image>,
     #[asset(path = "textures/character/Old Beggar.png")]
     pub old_beggar: Handle<Image>,
     #[asset(path = "textures/character/OldLady.png")]
     pub old_lady: Handle<Image>,
     #[asset(path = "textures/character/kid.png")]
     pub kid: Handle<Image>,
+    // a recolor of the player
+    #[asset(path = "textures/character/Guardian.png")]
+    pub guardian: Handle<Image>,
 }
 
 // size of one cell of the monk placeholder sheet, in texels
 pub const MONK_MAN_FRAME: UVec2 = UVec2::new(16, 37);
-// the old beggar and old lady sheets are shorter cells
-pub const OLD_FRAME: UVec2 = UVec2::new(16, 32);
+// npc frames
+pub const NPC_FRAME: UVec2 = UVec2::new(16, 32);
 
 impl NPCAssets {
     pub fn sprite(&self, name: &str) -> (&Handle<Image>, UVec2) {
         match name {
-            "OldMan" => (&self.old_beggar, OLD_FRAME),
-            "OldWoman" => (&self.old_lady, OLD_FRAME),
-            "Kid" => (&self.kid, OLD_FRAME),
+            "Guardian" => (&self.guardian, PLAYER_FRAME),
+            "Monk" => (&self.monk_man, MONK_MAN_FRAME),
+            "Bride" => (&self.lady, NPC_FRAME),
+            "Beggar" => (&self.old_beggar, NPC_FRAME),
+            "Old Beauty" => (&self.old_lady, NPC_FRAME),
+            "Orphan" => (&self.kid, NPC_FRAME),
             _ => (&self.monk_man, MONK_MAN_FRAME),
         }
     }

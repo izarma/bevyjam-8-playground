@@ -14,10 +14,12 @@ mod visitors;
 pub(crate) use animation::{
     Facing, PlayerAnimation, PlayerAnimationSystems, apply_player_animation, tick_player_animation,
 };
-pub(crate) use base::{BodyOf, InDialogue};
-pub(crate) use dialogue::Concoction;
+pub(crate) use dialogue::{Concoction, DialogueTarget};
 pub(crate) use outdoors::HarvestScratch;
-pub(crate) use visitors::{BALANCED, Health, MAX_HEALTH, MIN_HEALTH};
+pub(crate) use remedy::Mark;
+pub(crate) use visitors::{
+    BALANCED, Brew, BrewHistory, DAY_END, DAY_START, Health, MAX_HEALTH, MIN_HEALTH, Met, Visitor,
+};
 
 use bevy::prelude::*;
 use bevy_sprite3d::Sprite3dPlugin;
@@ -30,7 +32,6 @@ pub(super) fn plugin(app: &mut App) {
         base::plugin,
         clock::plugin,
         inventory::plugin,
-        remedy::plugin,
         candles::plugin,
         time_of_day::plugin,
         visitors::plugin,

@@ -1,12 +1,21 @@
 use bevy::prelude::*;
 
-use super::{Concoction, ShownHealth, Typewriter, YarnSpinnerDialogueViewSystemSet};
+use super::{
+    Concoction, DialogueTarget, ShownHealth, Typewriter, YarnSpinnerDialogueViewSystemSet,
+};
 use crate::{
-    gameplay::{BALANCED, BodyOf, Health, InDialogue, MAX_HEALTH, MIN_HEALTH, herbs::Element},
+    gameplay::{
+        Health,
+        clock::Clock,
+        herbs::{self, Element},
+        visitors::{Ailing, Ailment},
+    },
     ui::{
         font,
-        palette::{GAIN_TEXT, LABEL_TEXT, LOSS_TEXT},
+        health::{bar_width, health_bar_color},
+        palette::{HEADER_TEXT, LABEL_TEXT, LOSS_TEXT},
         scale::{TEXEL, texels},
+        widget,
     },
 };
 
@@ -16,6 +25,7 @@ pub(super) fn plugin(app: &mut App) {
         (
             update_health_bars.run_if(resource_exists::<Typewriter>),
             float_health_changes.run_if(resource_exists::<Typewriter>),
+            show_ailment.run_if(resource_exists::<Typewriter>),
             rise_health_changes,
         )
             .in_set(YarnSpinnerDialogueViewSystemSet),
@@ -34,29 +44,130 @@ struct RisingChange {
 const RISE_SECONDS: f32 = 1.0;
 const RISE_TEXELS: f32 = 14.0;
 
-pub(super) fn health_rows(health: Health) -> Vec<Box<dyn Scene>> {
+#[derive(Component, Clone, Default)]
+struct AilmentTitle;
+
+#[derive(Component, Clone, Default)]
+struct AilmentCountdown;
+
+#[derive(Component, Clone, Default)]
+struct AilmentMark(Element);
+
+fn countdown(hours: f32) -> String {
+    format!("{}h", hours.ceil().max(0.0))
+}
+
+fn mark(ailment: Ailment, element: Element) -> String {
+    ailment
+        .effects()
+        .into_iter()
+        .find(|&(affected, _)| affected == element)
+        .map(|(_, delta)| format!("{delta:+}"))
+        .unwrap_or_default()
+}
+
+pub(super) fn health_panel(health: Health, ailment: Option<(Ailment, f32)>) -> impl Scene {
+    let title = ailment.map_or("Health".to_string(), |(ailment, _)| ailment.name());
+    let hours = ailment
+        .map(|(_, hours)| countdown(hours))
+        .unwrap_or_default();
+    bsn! {
+        #DialogueHealth
+        ShownHealth(health)
+        // sized by what's in it, so the title stays on one line
+        Node {
+            flex_direction: FlexDirection::Column,
+            align_items: AlignItems::Stretch,
+            row_gap: texels(1),
+            padding: UiRect::all(texels(4)),
+        }
+        @widget::panel()
+        Pickable::IGNORE
+        Children [
+            Node {
+                justify_content: JustifyContent::SpaceBetween,
+                column_gap: texels(6),
+                margin: UiRect {
+                    bottom: texels(2),
+                },
+            }
+            Pickable::IGNORE
+            Children [
+                #DialogueHealthTitle
+                AilmentTitle
+                Text({ title })
+                @font::text(1)
+                TextColor(HEADER_TEXT)
+                Pickable::IGNORE
+                --
+                AilmentCountdown
+                Text({ hours })
+                @font::text(1)
+                TextColor(LABEL_TEXT)
+                Pickable::IGNORE
+            ]
+            --
+            { health_rows(health, ailment.map(|(ailment, _)| ailment)) }
+        ]
+    }
+}
+
+fn show_ailment(
+    target: Res<DialogueTarget>,
+    visitors: Query<&Ailing>,
+    clock: Single<&Clock>,
+    mut texts: Query<
+        (
+            &mut Text,
+            Has<AilmentTitle>,
+            Has<AilmentCountdown>,
+            Option<&AilmentMark>,
+        ),
+        Or<(
+            With<AilmentTitle>,
+            With<AilmentCountdown>,
+            With<AilmentMark>,
+        )>,
+    >,
+) {
+    let ailing = target.0.and_then(|visitor| visitors.get(visitor).ok());
+    for (mut text, title, counting, marked) in &mut texts {
+        let shown = match (ailing, title, counting, marked) {
+            (Some(ailing), true, ..) => ailing.ailment.name(),
+            (None, true, ..) => "Health".to_string(),
+            (Some(ailing), _, true, _) => countdown(ailing.next - clock.hours),
+            (Some(ailing), .., Some(&AilmentMark(element))) => mark(ailing.ailment, element),
+            _ => String::new(),
+        };
+        if text.0 != shown {
+            text.0 = shown;
+        }
+    }
+}
+
+fn health_rows(health: Health, ailment: Option<Ailment>) -> Vec<Box<dyn Scene>> {
     Element::ALL
         .into_iter()
         .map(|element| -> Box<dyn Scene> {
             let value = health.get(element);
             let width = bar_width(value);
+            let next = ailment
+                .map(|ailment| mark(ailment, element))
+                .unwrap_or_default();
             Box::new(bsn! {
                 Node {
-                    width: percent(100),
                     flex_direction: FlexDirection::Row,
                     align_items: AlignItems::Center,
-                    justify_content: JustifyContent::SpaceBetween,
+                    column_gap: texels(3),
                 }
                 Pickable::IGNORE
                 Children [
-                    Text({ element.name().to_string() })
-                    @font::text(1)
-                    TextColor(LABEL_TEXT)
-                    Pickable::IGNORE
+                    { vec![herbs::element_icon(element)] }
                     --
                     Node {
                         width: texels(64),
                         height: texels(5),
+                        flex_shrink: 0.0,
                     }
                     BackgroundColor(Color::srgba(0.0, 0.0, 0.0, 0.5))
                     Pickable::IGNORE
@@ -69,6 +180,16 @@ pub(super) fn health_rows(health: Health) -> Vec<Box<dyn Scene>> {
                         BackgroundColor(health_bar_color(value))
                         Pickable::IGNORE
                     ]
+                    --
+                    AilmentMark(element)
+                    Text({ next })
+                    @font::text(1)
+                    TextColor(LOSS_TEXT)
+                    Node {
+                        width: texels(16),
+                        flex_shrink: 0.0,
+                    }
+                    Pickable::IGNORE
                 ]
             })
         })
@@ -77,12 +198,12 @@ pub(super) fn health_rows(health: Health) -> Vec<Box<dyn Scene>> {
 
 // shows the visitor health optionally with the currently selected concoction
 fn update_health_bars(
-    npc: Query<&BodyOf, With<InDialogue>>,
+    target: Res<DialogueTarget>,
     visitors: Query<&Health>,
     concoction: Option<Single<&Concoction>>,
     mut fills: Query<(&DialogueHealthFill, &mut Node, &mut BackgroundColor)>,
 ) {
-    let Some(&health) = npc.iter().find_map(|body| visitors.get(body.0).ok()) else {
+    let Some(&health) = target.0.and_then(|visitor| visitors.get(visitor).ok()) else {
         return;
     };
     let health = concoction.map_or(health, |concoction| concoction.preview(health));
@@ -96,12 +217,12 @@ fn update_health_bars(
 
 fn float_health_changes(
     mut commands: Commands,
-    npc: Query<&BodyOf, With<InDialogue>>,
+    target: Res<DialogueTarget>,
     visitors: Query<&Health>,
     mut shown: Single<&mut ShownHealth>,
     fills: Query<(&DialogueHealthFill, &ChildOf)>,
 ) {
-    let Some(&health) = npc.iter().find_map(|body| visitors.get(body.0).ok()) else {
+    let Some(&health) = target.0.and_then(|visitor| visitors.get(visitor).ok()) else {
         return;
     };
     if shown.0 == health {
@@ -147,19 +268,4 @@ fn rise_health_changes(
         node.top = px(-k * RISE_TEXELS * TEXEL);
         color.0.set_alpha(1.0 - k * k);
     }
-}
-
-fn bar_width(value: u8) -> f32 {
-    f32::from(value - MIN_HEALTH) / f32::from(MAX_HEALTH - MIN_HEALTH) * 100.0
-}
-
-// green or red based on distance from balanced
-fn health_bar_color(value: u8) -> Color {
-    let value = value.clamp(MIN_HEALTH, MAX_HEALTH);
-    let t = if value >= BALANCED {
-        f32::from(value - BALANCED) / f32::from(MAX_HEALTH - BALANCED)
-    } else {
-        f32::from(BALANCED - value) / f32::from(BALANCED - MIN_HEALTH)
-    };
-    GAIN_TEXT.mix(&LOSS_TEXT, t)
 }

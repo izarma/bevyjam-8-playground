@@ -129,14 +129,22 @@ fn sweep(
     time: Res<Time<Real>>,
     state: Res<State<GameState>>,
     loading: Query<(), Loading>,
-    screen: Single<(Entity, &MaterialNode<LoadingScreenMaterial>, Option<&Trip>)>,
+    mut screen: Single<
+        (
+            Entity,
+            &MaterialNode<LoadingScreenMaterial>,
+            Option<&Trip>,
+            &mut Visibility,
+        ),
+        Without<LoadingLabel>,
+    >,
     mut label: Single<&mut Visibility, With<LoadingLabel>>,
     window: Single<&Window, With<PrimaryWindow>>,
     mut materials: ResMut<Assets<LoadingScreenMaterial>>,
     mut game: ResMut<NextState<GameState>>,
     mut scene: ResMut<NextState<GameplayScene>>,
 ) {
-    let (entity, screen, trip) = *screen;
+    let (entity, screen, trip, ref mut visibility) = *screen;
     let loading = !loading.is_empty() || *state == GameState::Loading;
     label.set_if_neq(if loading {
         Visibility::Inherited
@@ -161,6 +169,13 @@ fn sweep(
             .remove::<Trip>()
             .insert(Arrived(*travel));
     }
+
+    visibility.set_if_neq(if swept < 1.0 {
+        Visibility::Inherited
+    } else {
+        Visibility::Hidden
+    });
+
     let pixels_per_texel = pixels_per_texel(&window);
     if (material.swept != swept || material.pixels_per_texel != pixels_per_texel)
         && let Some(mut material) = materials.get_mut(&screen.0)

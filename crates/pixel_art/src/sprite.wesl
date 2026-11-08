@@ -12,23 +12,19 @@ import bevy_pbr::render::{
     mesh_view_types::{
         DIRECTIONAL_LIGHT_FLAGS_SHADOWS_ENABLED_BIT,
         POINT_LIGHT_FLAGS_SHADOWS_ENABLED_BIT,
-        POINT_LIGHT_FLAGS_SPOT_LIGHT_Y_NEGATIVE,
     },
-    pbr_ambient,
-    pbr_fragment::pbr_input_from_standard_material,
+    pbr_bindings,
+    pbr_fragment::pbr_input_from_vertex_output,
     pbr_functions,
-    pbr_lighting::getDistanceAttenuation,
     pbr_types::{PbrInput, STANDARD_MATERIAL_FLAGS_UNLIT_BIT},
     shadows,
     view_transformations::position_world_to_clip,
 };
-import bevy_render::maths::{PI, quat_rotate};
-@if(ENVIRONMENT_MAP) import bevy_pbr::render::mesh_view_bindings::{environment_map_sampler, light_probes};
-@if(ENVIRONMENT_MAP && MULTIPLE_LIGHT_PROBES_IN_ARRAY)
-import bevy_pbr::render::mesh_view_bindings::diffuse_environment_maps;
-@if(ENVIRONMENT_MAP && !MULTIPLE_LIGHT_PROBES_IN_ARRAY)
-import bevy_pbr::render::mesh_view_bindings::diffuse_environment_map;
+import bevy_render::maths::PI;
+@if(ENVIRONMENT_MAP) import bevy_pbr::render::mesh_view_bindings::light_probes;
+@if(ENVIRONMENT_MAP) import pixel_art::lighting::sky_irradiance;
 import pixel_art::billboard::{billboard_facing, billboard_point, facing_toward};
+import pixel_art::lighting::{light_arriving, spot_cone};
 import pixel_art::texel::{texel_center, texel_sharp};
 
 @group(constants::MATERIAL_BIND_GROUP) @binding(100) var sprite_texture: texture_2d<f32>;
@@ -117,46 +113,6 @@ fn vertex(packed: Vertex) -> BillboardOutput {
 }
 
 // from bevy_pbr/src/light_probe/environment_map.wesl
-@if(ENVIRONMENT_MAP)
-fn environment_irradiance(direction: vec3<f32>) -> vec3<f32> {
-    var toward = quat_rotate(light_probes.view_rotation, direction);
-    toward.z = -toward.z;
-    @if(MULTIPLE_LIGHT_PROBES_IN_ARRAY) {
-        return textureSampleLevel(
-            diffuse_environment_maps[light_probes.view_cubemap_index],
-            environment_map_sampler,
-            toward,
-            0.0,
-        ).rgb;
-    } @else {
-        return textureSampleLevel(diffuse_environment_map, environment_map_sampler, toward, 0.0).rgb;
-    }
-}
-
-// the color / amount of light at `at` from light `id`
-fn light_arriving(id: u32, at: vec3<f32>) -> vec3<f32> {
-    let light = &clustered_lights.data[id];
-    let to_light = (*light).position_radius.xyz - at;
-    let inverse_range_squared = (*light).color_inverse_square_range.w;
-    return (*light).color_inverse_square_range.rgb
-        * getDistanceAttenuation(dot(to_light, to_light), inverse_range_squared);
-}
-
-// i dont actually understand how bevy reads spotlights and we arent using them
-// this is sorta derived from bevy_pbr/src/render/shadows.wesl
-fn spot_cone(id: u32, at: vec3<f32>) -> f32 {
-    let light = &clustered_lights.data[id];
-    let packed = (*light).light_custom_data;
-    var axis = vec3<f32>(packed.x, 0.0, packed.y);
-    axis.y = sqrt(max(0.0, 1.0 - axis.x * axis.x - axis.z * axis.z));
-    if ((*light).flags & POINT_LIGHT_FLAGS_SPOT_LIGHT_Y_NEGATIVE) != 0u {
-        axis.y = -axis.y;
-    }
-    let toward = normalize((*light).position_radius.xyz - at);
-    let cone = saturate(dot(-axis, toward) * packed.z + packed.w);
-    return cone * cone;
-}
-
 // reads bevys point/spot/direction lights and jackdaws env map
 fn sprite_lighting(in: PbrInput, quad: Quad, local: vec2<f32>) -> vec4<f32> {
     let diffuse = in.material.base_color.rgb;
@@ -210,18 +166,17 @@ fn sprite_lighting(in: PbrInput, quad: Quad, local: vec2<f32>) -> vec4<f32> {
         arriving += light_arriving(id, at) * spot_cone(id, at) * shadow;
     }
 
-    var ambient = pbr_ambient::ambient_light(
-        in.world_position, in.N, in.V, 1.0, diffuse, vec3<f32>(0.0), 1.0, in.diffuse_occlusion);
+    var ambient = diffuse * lights.ambient_color.rgb * in.diffuse_occlusion;
 
     // sampling jackdaw env map to get the ambient light
     @if(ENVIRONMENT_MAP) {
         if light_probes.view_cubemap_index >= 0 {
-            let all_round = (environment_irradiance(vec3<f32>(1.0, 0.0, 0.0))
-                + environment_irradiance(vec3<f32>(-1.0, 0.0, 0.0))
-                + environment_irradiance(vec3<f32>(0.0, 1.0, 0.0))
-                + environment_irradiance(vec3<f32>(0.0, -1.0, 0.0))
-                + environment_irradiance(vec3<f32>(0.0, 0.0, 1.0))
-                + environment_irradiance(vec3<f32>(0.0, 0.0, -1.0))) / 6.0;
+            let all_round = (sky_irradiance(vec3<f32>(1.0, 0.0, 0.0))
+                + sky_irradiance(vec3<f32>(-1.0, 0.0, 0.0))
+                + sky_irradiance(vec3<f32>(0.0, 1.0, 0.0))
+                + sky_irradiance(vec3<f32>(0.0, -1.0, 0.0))
+                + sky_irradiance(vec3<f32>(0.0, 0.0, 1.0))
+                + sky_irradiance(vec3<f32>(0.0, 0.0, -1.0))) / 6.0;
             ambient += diffuse * all_round * light_probes.intensity_for_view * in.diffuse_occlusion;
         }
     }
@@ -231,6 +186,11 @@ fn sprite_lighting(in: PbrInput, quad: Quad, local: vec2<f32>) -> vec4<f32> {
     );
 }
 
+fn dither_rank(texel: vec2<u32>) -> f32 {
+    var bayer = array<u32, 16>(0u, 8u, 2u, 10u, 12u, 4u, 14u, 6u, 3u, 11u, 1u, 9u, 15u, 7u, 13u, 5u);
+    return (f32(bayer[(texel.y % 4u) * 4u + texel.x % 4u]) + 0.5) / 16.0;
+}
+
 @fragment
 fn fragment(in: VertexOutput, quad: Quad, @builtin(front_facing) is_front: bool) -> FragmentOutput {
     let ddx = dpdx(in.uv);
@@ -238,11 +198,18 @@ fn fragment(in: VertexOutput, quad: Quad, @builtin(front_facing) is_front: bool)
     let local_ddx = vec3<f32>(dpdx(quad.local), 0.0);
     let local_ddy = vec3<f32>(dpdy(quad.local), 0.0);
     let color = sprite_color(in.uv, ddx, ddy, quad.frame);
-    var pbr_input = pbr_input_from_standard_material(in, is_front);
+    // the material's alpha is how far it has faded in
+    let tint = pbr_bindings::material.base_color;
+    let texel = vec2<u32>(in.uv * vec2<f32>(textureDimensions(sprite_texture)));
+    if tint.a < dither_rank(texel) {
+        discard;
+    }
+    var pbr_input = pbr_input_from_vertex_output(in, is_front, false);
+    pbr_input.material.flags = pbr_bindings::material.flags;
     pbr_input.material.base_color = pbr_functions::alpha_discard(
-        pbr_input.material.flags,
-        pbr_input.material.alpha_cutoff,
-        color,
+        pbr_bindings::material.flags,
+        pbr_bindings::material.alpha_cutoff,
+        color * vec4<f32>(tint.rgb, 1.0),
     );
 
     // every fragment of a texel should be lit and postprocessed the same
