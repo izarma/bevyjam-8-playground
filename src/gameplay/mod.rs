@@ -29,7 +29,6 @@ pub(super) fn plugin(app: &mut App) {
         base::plugin,
         clock::plugin,
         inventory::plugin,
-        remedy::plugin,
         candles::plugin,
         time_of_day::plugin,
         visitors::plugin,

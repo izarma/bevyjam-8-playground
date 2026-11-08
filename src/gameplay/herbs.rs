@@ -27,6 +27,16 @@ impl Element {
         Element::Water,
     ];
 
+    pub(crate) fn next(self) -> Element {
+        match self {
+            Element::Wood => Element::Fire,
+            Element::Fire => Element::Earth,
+            Element::Earth => Element::Metal,
+            Element::Metal => Element::Water,
+            Element::Water => Element::Wood,
+        }
+    }
+
     pub(crate) fn name(self) -> &'static str {
         match self {
             Element::Wood => "Wood",
@@ -48,23 +58,38 @@ pub(crate) fn name(plant: Plant) -> &'static str {
         Plant::Wolfberry => "Wolfberry",
         Plant::Lotus => "Lotus",
         Plant::Licorice => "Licorice",
-        Plant::BlueHibiscus => "Blue Hibiscus",
+        Plant::RedMushroom => "Red Mushroom",
+        Plant::Grapes => "Grapes",
     }
 }
 
-// placeholder values
-pub(crate) fn yields(plant: Plant) -> &'static [(Element, i8)] {
-    match plant {
-        Plant::Basil => &[(Element::Wood, 2), (Element::Earth, -1)],
-        Plant::Chili => &[(Element::Fire, 2), (Element::Metal, -1)],
-        Plant::Lemongrass => &[(Element::Metal, 1), (Element::Wood, -1)],
-        Plant::Ginseng => &[(Element::Earth, 2), (Element::Water, -1)],
-        Plant::Chrysanthemum => &[(Element::Water, 1), (Element::Fire, -2)],
-        Plant::Wolfberry => &[(Element::Water, 2), (Element::Fire, -1)],
-        Plant::Lotus => &[(Element::Metal, 2), (Element::Earth, -1)],
-        Plant::Licorice => &[(Element::Earth, 1), (Element::Wood, -1)],
-        Plant::BlueHibiscus => &[(Element::Wood, 1), (Element::Metal, -1)],
+// +2 an element and -1 the next (a tonic), or -2 and +1 (a cooling herb)
+#[derive(Clone, Copy)]
+pub(crate) struct Effect {
+    pub(crate) element: Element,
+    pub(crate) by: i8,
+}
+
+impl Effect {
+    pub(crate) fn shifts(self) -> [(Element, i8); 2] {
+        [(self.element, self.by), (self.element.next(), -self.by / 2)]
     }
+}
+
+pub(crate) fn effect(plant: Plant) -> Effect {
+    let (element, by) = match plant {
+        Plant::Basil => (Element::Wood, 2),
+        Plant::Chili => (Element::Fire, 2),
+        Plant::Ginseng => (Element::Earth, 2),
+        Plant::Lotus => (Element::Metal, 2),
+        Plant::Wolfberry => (Element::Water, 2),
+        Plant::Lemongrass => (Element::Wood, -2),
+        Plant::Chrysanthemum => (Element::Fire, -2),
+        Plant::Licorice => (Element::Earth, -2),
+        Plant::RedMushroom => (Element::Metal, -2),
+        Plant::Grapes => (Element::Water, -2),
+    };
+    Effect { element, by }
 }
 
 pub(crate) fn icon_rect(plant: Plant) -> Rect {
@@ -199,9 +224,10 @@ fn set_tooltip(
 
 // never pickable, so it can't block what's under it
 pub(crate) fn card(plant: Plant) -> impl Scene {
-    let rows = yields(plant)
-        .iter()
-        .map(|&(element, amount)| -> Box<dyn Scene> {
+    let rows: Vec<Box<dyn Scene>> = effect(plant)
+        .shifts()
+        .into_iter()
+        .map(|(element, amount)| -> Box<dyn Scene> {
             let color = if amount > 0 { GAIN_TEXT } else { LOSS_TEXT };
             Box::new(bsn! {
                 Node {
@@ -221,7 +247,7 @@ pub(crate) fn card(plant: Plant) -> impl Scene {
                 ]
             })
         })
-        .collect::<Vec<_>>();
+        .collect();
 
     bsn! {
         #HerbCard

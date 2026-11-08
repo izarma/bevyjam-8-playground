@@ -3,7 +3,7 @@ use bevy::prelude::*;
 use pixel_art::PixelSprite;
 use plants::{Growing, Plant};
 
-use super::InReach;
+use super::{super::biomes::Harvested, InReach};
 use crate::{
     GameplayScene, InControl,
     gameplay::herbs,
@@ -35,13 +35,13 @@ fn show_panel(
     in_reach: Option<Single<Entity, With<InReach>>>,
     in_control: Option<Res<State<InControl>>>,
     panels: Query<(Entity, &YieldPanel)>,
-    plants: Query<(&Growing, &GlobalTransform, &PixelSprite)>,
+    plants: Query<(&Growing, &GlobalTransform, &PixelSprite), Without<Harvested>>,
     mut billboards: Billboards,
 ) {
-    // hidden while a menu or minigame is up
+    // hidden while a menu or minigame is up, and over picked plants
     let target = in_reach
         .map(|plant| *plant)
-        .filter(|_| in_control.is_some());
+        .filter(|&plant| in_control.is_some() && plants.contains(plant));
     for (panel, shown) in &panels {
         if Some(shown.plant) != target {
             commands.entity(panel).despawn();

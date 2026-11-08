@@ -2,7 +2,7 @@ use bevy::prelude::*;
 use jackdaw_extension::prelude::*;
 
 // i figure we cram whatever we need this one editor extension
-// today it draws the game's billboard sprites, pixel water and plants in the editor viewport
+// today it draws the game's billboard sprites, pixel water and herb spots in the editor viewport
 #[derive(Default)]
 pub struct BevyjamEditor;
 
@@ -25,9 +25,7 @@ impl JackdawExtension for BevyjamEditor {
         Some(Box::new(|app: &mut App| {
             app.add_plugins((
                 pixel_art::PixelArtPlugin,
-                plants::PlantsPlugin {
-                    pick: plants::Pick::First,
-                },
+                plants::SpotPreviewPlugin,
             ));
         }))
     }

@@ -225,10 +225,12 @@ struct BrewButton;
 fn brew(
     _: On<PointerClick>,
     mut concoction: Single<&mut Concoction>,
-    remedy: Single<&Remedy>,
+    remedies: Query<&Remedy>,
     mut inventory: Single<&mut Inventory>,
 ) {
-    concoction.start_brewing(&remedy, &mut inventory);
+    if let Ok(remedy) = remedies.get(concoction.visitor) {
+        concoction.start_brewing(remedy, &mut inventory);
+    }
 }
 
 fn pose_slots(concoction: Single<&Concoction>, mut slots: Query<(&MixSlot, &mut UiTransform)>) {

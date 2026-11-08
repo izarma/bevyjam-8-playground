@@ -8,7 +8,12 @@ use unicode_segmentation::UnicodeSegmentation;
 use super::{SpeakerChangeEvent, YarnSpinnerDialogueViewSystemSet, concoction::Concoction};
 use crate::{
     GameplayScene,
-    gameplay::{BALANCED, BodyOf, Health, InDialogue, MAX_HEALTH, MIN_HEALTH, herbs::Element},
+    gameplay::{
+        BALANCED, BodyOf, Health, InDialogue, MAX_HEALTH, MIN_HEALTH,
+        clock::Clock,
+        herbs::Element,
+        visitors::{Ailing, Ailment},
+    },
     ui::{
         font,
         input_prompt::{KEY_ESCAPE, KEY_LEFT, prompt},
@@ -36,6 +41,7 @@ pub(super) fn plugin(app: &mut App) {
                 select_option_by_key.run_if(resource_exists::<Typewriter>),
                 update_health_bars.run_if(resource_exists::<Typewriter>),
                 float_health_changes.run_if(resource_exists::<Typewriter>),
+                show_ailment.run_if(resource_exists::<Typewriter>),
                 rise_health_changes,
                 bob_continue.run_if(resource_exists::<Typewriter>),
             )
@@ -153,14 +159,20 @@ fn spawn_dialogue_ui(
     _: On<DialogueStarted>,
     mut commands: Commands,
     npc: Query<&BodyOf, With<InDialogue>>,
-    visitors: Query<&Health>,
+    visitors: Query<(&Health, Option<&Ailing>)>,
+    clock: Single<&Clock>,
 ) {
     commands.init_resource::<Typewriter>();
+
     let health = npc
         .iter()
         .find_map(|body| visitors.get(body.0).ok())
-        .copied()
-        .unwrap_or_default();
+        .map(|(&health, ailing)| -> Box<dyn Scene> {
+            let ailment = ailing.map(|ailing| (ailing.ailment, ailing.next - clock.hours));
+            Box::new(health_panel(health, ailment))
+        })
+        .into_iter()
+        .collect::<Vec<_>>();
     commands.spawn_scene(bsn! {
         #DialogueRoot
         DialogueRoot
@@ -200,31 +212,7 @@ fn spawn_dialogue_ui(
                 DialogueOptionsNode
                 Pickable::IGNORE
                 --
-                #DialogueHealth
-                ShownHealth(health)
-                Node {
-                    flex_direction: FlexDirection::Column,
-                    align_items: AlignItems::FlexStart,
-                    width: percent(30),
-                    row_gap: texels(1),
-                    padding: UiRect::all(texels(4)),
-                }
-                @widget::panel()
-                Pickable::IGNORE
-                Children [
-                    #DialogueHealthTitle
-                    Text("Health")
-                    @font::text(1)
-                    TextColor(HEADER_TEXT)
-                    Node {
-                        margin: UiRect {
-                            bottom: texels(2),
-                        },
-                    }
-                    Pickable::IGNORE
-                    --
-                    { health_rows(health) }
-                ]
+                { health }
             ]
             --
             #DialogueBox
@@ -473,29 +461,136 @@ fn clear_options(commands: &mut Commands, options_node: Entity) {
     commands.remove_resource::<PresentedOptions>();
 }
 
-fn health_rows(health: Health) -> Vec<Box<dyn Scene>> {
+#[derive(Component, Clone, Default)]
+struct AilmentTitle;
+
+#[derive(Component, Clone, Default)]
+struct AilmentCountdown;
+
+#[derive(Component, Clone, Default)]
+struct AilmentMark(Element);
+
+fn countdown(hours: f32) -> String {
+    format!("{}h", hours.ceil().max(0.0))
+}
+
+fn mark(ailment: Ailment, element: Element) -> String {
+    ailment
+        .effects()
+        .into_iter()
+        .find(|&(affected, _)| affected == element)
+        .map(|(_, delta)| format!("{delta:+}"))
+        .unwrap_or_default()
+}
+
+fn health_panel(health: Health, ailment: Option<(Ailment, f32)>) -> impl Scene {
+    let title = ailment.map_or("Health".to_string(), |(ailment, _)| ailment.name());
+    let hours = ailment
+        .map(|(_, hours)| countdown(hours))
+        .unwrap_or_default();
+    bsn! {
+        #DialogueHealth
+        ShownHealth(health)
+        // sized by what's in it, so the title stays on one line
+        Node {
+            flex_direction: FlexDirection::Column,
+            align_items: AlignItems::Stretch,
+            row_gap: texels(1),
+            padding: UiRect::all(texels(4)),
+        }
+        @widget::panel()
+        Pickable::IGNORE
+        Children [
+            Node {
+                justify_content: JustifyContent::SpaceBetween,
+                column_gap: texels(6),
+                margin: UiRect {
+                    bottom: texels(2),
+                },
+            }
+            Pickable::IGNORE
+            Children [
+                #DialogueHealthTitle
+                AilmentTitle
+                Text({ title })
+                @font::text(1)
+                TextColor(HEADER_TEXT)
+                Pickable::IGNORE
+                --
+                AilmentCountdown
+                Text({ hours })
+                @font::text(1)
+                TextColor(LABEL_TEXT)
+                Pickable::IGNORE
+            ]
+            --
+            { health_rows(health, ailment.map(|(ailment, _)| ailment)) }
+        ]
+    }
+}
+
+fn show_ailment(
+    npc: Query<&BodyOf, With<InDialogue>>,
+    visitors: Query<&Ailing>,
+    clock: Single<&Clock>,
+    mut texts: Query<
+        (
+            &mut Text,
+            Has<AilmentTitle>,
+            Has<AilmentCountdown>,
+            Option<&AilmentMark>,
+        ),
+        Or<(
+            With<AilmentTitle>,
+            With<AilmentCountdown>,
+            With<AilmentMark>,
+        )>,
+    >,
+) {
+    let ailing = npc.iter().find_map(|body| visitors.get(body.0).ok());
+    for (mut text, title, counting, marked) in &mut texts {
+        let shown = match (ailing, title, counting, marked) {
+            (Some(ailing), true, ..) => ailing.ailment.name(),
+            (None, true, ..) => "Health".to_string(),
+            (Some(ailing), _, true, _) => countdown(ailing.next - clock.hours),
+            (Some(ailing), .., Some(&AilmentMark(element))) => mark(ailing.ailment, element),
+            _ => String::new(),
+        };
+        if text.0 != shown {
+            text.0 = shown;
+        }
+    }
+}
+
+fn health_rows(health: Health, ailment: Option<Ailment>) -> Vec<Box<dyn Scene>> {
     Element::ALL
         .into_iter()
         .map(|element| -> Box<dyn Scene> {
             let value = health.get(element);
             let width = bar_width(value);
+            let next = ailment
+                .map(|ailment| mark(ailment, element))
+                .unwrap_or_default();
             Box::new(bsn! {
                 Node {
-                    width: percent(100),
                     flex_direction: FlexDirection::Row,
                     align_items: AlignItems::Center,
-                    justify_content: JustifyContent::SpaceBetween,
+                    column_gap: texels(3),
                 }
                 Pickable::IGNORE
                 Children [
                     Text({ element.name().to_string() })
                     @font::text(1)
                     TextColor(LABEL_TEXT)
+                    Node {
+                        flex_grow: 1.0,
+                    }
                     Pickable::IGNORE
                     --
                     Node {
                         width: texels(64),
                         height: texels(5),
+                        flex_shrink: 0.0,
                     }
                     BackgroundColor(Color::srgba(0.0, 0.0, 0.0, 0.5))
                     Pickable::IGNORE
@@ -508,6 +603,16 @@ fn health_rows(health: Health) -> Vec<Box<dyn Scene>> {
                         BackgroundColor(health_bar_color(value))
                         Pickable::IGNORE
                     ]
+                    --
+                    AilmentMark(element)
+                    Text({ next })
+                    @font::text(1)
+                    TextColor(LOSS_TEXT)
+                    Node {
+                        width: texels(16),
+                        flex_shrink: 0.0,
+                    }
+                    Pickable::IGNORE
                 ]
             })
         })

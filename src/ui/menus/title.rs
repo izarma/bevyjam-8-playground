@@ -6,6 +6,7 @@ use crate::{
     GameState,
     gameplay::{Facing, PlayerAnimation, apply_player_animation, tick_player_animation},
     loading::{PLAYER_FRAME, PlayerAssets},
+    ui::{font, palette::HEADER_TEXT, scale::texels},
 };
 
 #[derive(Component, Reflect, Default)]
@@ -14,7 +15,10 @@ pub struct TitlePlayerSpawn;
 
 pub(super) fn plugin(app: &mut App) {
     app.add_observer(spawn_title_player)
-        .add_systems(OnEnter(GameState::Title), spawn_title_scene)
+        .add_systems(
+            OnEnter(GameState::Title),
+            (spawn_title_scene, spawn_game_title),
+        )
         .add_systems(
             Update,
             (tick_player_animation, apply_player_animation)
@@ -28,6 +32,26 @@ fn spawn_title_scene(mut commands: Commands, asset_server: Res<AssetServer>) {
         JackdawSceneRoot(asset_server.load("title.bsn")),
         DespawnOnExit(GameState::Title),
     ));
+}
+
+fn spawn_game_title(mut commands: Commands) {
+    commands.spawn_scene(bsn! {
+        #GameTitle
+        Node {
+            position_type: PositionType::Absolute,
+            top: texels(12),
+            right: texels(12),
+        }
+        GlobalZIndex(2)
+        Pickable::IGNORE
+        DespawnOnExit<GameState>(GameState::Title)
+        Children [
+            Text("Fever")
+            @font::text(4)
+            TextColor(HEADER_TEXT)
+            Pickable::IGNORE
+        ]
+    });
 }
 
 fn spawn_title_player(
