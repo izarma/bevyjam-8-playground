@@ -60,8 +60,8 @@ const PORTRAIT_SLOT_WIDTH: u16 = 72;
 const PORTRAIT_SLOT_HEIGHT: u16 = 104;
 
 // Tab bar.
-const TAB_SIZE: u16 = 16; // the thumbnail inside a tab
-const TAB_PANEL_SIZE: u16 = 24; // the clickable tab square
+pub(crate) const TAB_SIZE: u16 = 16; // the thumbnail inside a tab
+pub(crate) const TAB_PANEL_SIZE: u16 = 24; // the clickable tab square
 
 // Health panel.
 const HEALTH_BAR_WIDTH: u16 = 88;
@@ -161,7 +161,7 @@ fn journal_root(body: Vec<Box<dyn Scene>>) -> impl Scene {
 }
 
 /// for portraits with headroom
-fn centered_crop(frame: UVec2, width: u16, height: u16, top: u32) -> Rect {
+pub(crate) fn centered_crop(frame: UVec2, width: u16, height: u16, top: u32) -> Rect {
     let crop = UVec2::new(width.into(), height.into());
     let min = UVec2::new(
         frame.x.saturating_sub(crop.x) / 2,
@@ -171,7 +171,7 @@ fn centered_crop(frame: UVec2, width: u16, height: u16, top: u32) -> Rect {
 }
 
 /// Orphan and Old Beauty are drawn with extra headroom in their frames.
-fn portrait_top(name: &str) -> u32 {
+pub(crate) fn portrait_top(name: &str) -> u32 {
     match name {
         "Orphan" => 8,
         "Old Beauty" => 6,
@@ -383,7 +383,7 @@ fn tab(
     })
 }
 
-fn tab_icon(image: Handle<Image>, rect: Rect) -> impl Scene {
+pub(crate) fn tab_icon(image: Handle<Image>, rect: Rect) -> impl Scene {
     bsn! {
         Node {
             width: texels(TAB_SIZE),

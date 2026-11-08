@@ -229,7 +229,7 @@ jobs:
           rustup target add wasm32-unknown-unknown
       - name: Build Release
         run: |
-          trunk build --release
+          trunk build --cargo-profile web
       - name: Optimize Wasm
         uses: NiklasEi/wasm-opt-action@v2
         with:

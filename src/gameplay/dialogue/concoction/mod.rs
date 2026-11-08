@@ -99,6 +99,10 @@ impl Concoction {
 
     pub(super) fn available(&self, inventory: &Inventory, plant: Plant) -> u32 {
         let held = inventory.plants.get(&plant).copied().unwrap_or(0);
+        // while mixing, the mix is just a reservation, so discount it from what's shown.
+        if !self.mixing() {
+            return held;
+        }
         let used = self
             .mix
             .iter()

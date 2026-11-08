@@ -6,7 +6,7 @@ mod controls;
 mod credits;
 mod gameover;
 mod inventory;
-mod journal;
+pub(crate) mod journal;
 mod mainmenu;
 mod pause;
 mod settings;
