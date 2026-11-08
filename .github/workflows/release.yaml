@@ -2,6 +2,8 @@ name: release-flow
 
 on:
   push:
+    branches:
+      - main
     tags:
       - "v[0-9]+.[0-9]+.[0-9]+*"
   workflow_dispatch:
@@ -24,13 +26,23 @@ permissions:
 jobs:
   get-version:
     runs-on: ubuntu-latest
-    steps:
-      - name: Get tag
-        id: tag
-        run: echo "tag=${GITHUB_REF#refs/tags/}" >> "$GITHUB_OUTPUT"
     outputs:
-      version: ${{ inputs.version || steps.tag.outputs.tag }}
-      itch_page: ${{ env.itch_page }}
+      version: ${{ steps.version.outputs.version }}
+      itch_page: ${{ steps.version.outputs.itch_page }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Determine version
+        id: version
+        run: |
+          if [ -n '${{ inputs.version }}' ]; then
+            echo "version=${{ inputs.version }}" >> "$GITHUB_OUTPUT"
+          elif [[ "$GITHUB_REF" == refs/tags/* ]]; then
+            echo "version=${GITHUB_REF#refs/tags/}" >> "$GITHUB_OUTPUT"
+          else
+            # `cargo pkgid` can print `path+...#pkg@version` or just `pkg@version` depending on cargo version.
+            echo "version=$(cargo pkgid | sed 's/.*#//;s/.*@//')" >> "$GITHUB_OUTPUT"
+          fi
+          echo "itch_page=${{ env.itch_page }}" >> "$GITHUB_OUTPUT"
 
   build-macOS:
     runs-on: macos-latest
@@ -74,6 +86,7 @@ jobs:
           ln -s /Applications build/macos/src/
           hdiutil create -fs HFS+ -volname "${{ env.GAME_OSX_APP_NAME }}" -srcfolder build/macos/src ${{ env.GAME_EXECUTABLE_NAME }}.dmg
       - name: Upload release
+        if: github.event_name == 'workflow_dispatch' || startsWith(github.ref, 'refs/tags/')
         uses: svenstaro/upload-release-action@v2
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
@@ -114,6 +127,7 @@ jobs:
         run: |
           tar -czf ${{ env.GAME_EXECUTABLE_NAME }}_linux.tar.gz ${{ env.GAME_EXECUTABLE_NAME }} assets credits
       - name: Upload release
+        if: github.event_name == 'workflow_dispatch' || startsWith(github.ref, 'refs/tags/')
         uses: svenstaro/upload-release-action@v2
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
@@ -167,6 +181,7 @@ jobs:
           version="${tag#v}"
           dotnet build -p:Version=$version -c Release build/windows/installer/Installer.wixproj --output installer
       - name: Upload release
+        if: github.event_name == 'workflow_dispatch' || startsWith(github.ref, 'refs/tags/')
         uses: svenstaro/upload-release-action@v2
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
@@ -181,7 +196,7 @@ jobs:
           path: ${{ env.GAME_EXECUTABLE_NAME }}_windows.zip
           retention-days: 1
       - name: Upload installer
-        if: ${{ env.BUILD_INSTALLER == 'true' }}
+        if: (github.event_name == 'workflow_dispatch' || startsWith(github.ref, 'refs/tags/')) && env.BUILD_INSTALLER == 'true'
         uses: svenstaro/upload-release-action@v2
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
@@ -225,6 +240,7 @@ jobs:
           files: dist/
           dest: ${{ env.GAME_EXECUTABLE_NAME }}_web.zip
       - name: Upload release
+        if: github.event_name == 'workflow_dispatch' || startsWith(github.ref, 'refs/tags/')
         uses: svenstaro/upload-release-action@v2
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
@@ -241,6 +257,7 @@ jobs:
           retention-days: 1
 
   build-for-iOS:
+    if: false
     runs-on: macos-latest
     timeout-minutes: 30
     needs: get-version
@@ -270,6 +287,7 @@ jobs:
           overwrite: true
 
   build-for-Android:
+    if: false
     runs-on: ubuntu-latest
     timeout-minutes: 30
     needs: get-version
