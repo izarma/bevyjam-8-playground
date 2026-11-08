@@ -198,7 +198,12 @@ fn sync_pixel_sprites(
                 materials.add(ExtendedMaterial {
                     base: StandardMaterial {
                         base_color_texture: Some(sprite.image.clone()),
-                        alpha_mode: AlphaMode::Mask(0.5),
+                        // unlit sprites are drawn ui, which fades
+                        alpha_mode: if sprite.unlit {
+                            AlphaMode::Blend
+                        } else {
+                            AlphaMode::Mask(0.5)
+                        },
                         unlit: sprite.unlit,
                         ..default()
                     },

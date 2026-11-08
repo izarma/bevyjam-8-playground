@@ -3,4 +3,6 @@
 #tiles_material
 bevy_pbr::pbr_material::StandardMaterial {
     base_color_texture: "textures/r00_c08.png",
+    perceptual_roughness: 1.0,
+    reflectance: 0.0,
 }

@@ -1,8 +1,13 @@
 use crate::{GameState, PausableSystems};
 use bevy::{
-    anti_alias::taa::TemporalAntiAliasing, camera::Hdr, core_pipeline::tonemapping::Tonemapping,
-    light::ShadowFilteringMethod, pbr::ScreenSpaceAmbientOcclusion, post_process::bloom::Bloom,
-    prelude::*, ui::IsDefaultUiCamera,
+    anti_alias::taa::TemporalAntiAliasing,
+    camera::Hdr,
+    core_pipeline::tonemapping::Tonemapping,
+    light::{PointLightShadowMap, ShadowFilteringMethod},
+    pbr::ScreenSpaceAmbientOcclusion,
+    post_process::bloom::Bloom,
+    prelude::*,
+    ui::IsDefaultUiCamera,
 };
 
 #[derive(Component, Clone, Default)]
@@ -40,6 +45,7 @@ impl Default for CameraSensitivity {
 
 pub(super) fn plugin(app: &mut App) {
     app.init_resource::<CameraSensitivity>()
+        .insert_resource(PointLightShadowMap { size: 256 })
         .add_systems(
             OnEnter(GameState::Loading),
             spawn_no_scene_camera(GameState::Loading),

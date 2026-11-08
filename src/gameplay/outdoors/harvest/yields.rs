@@ -8,7 +8,7 @@ use crate::{
     GameplayScene, InControl,
     gameplay::herbs,
     ui::{
-        billboard::Billboards,
+        billboard::{Billboards, Fade},
         input_prompt::{KEY_F, prompt},
         scale::texels,
     },
@@ -31,10 +31,9 @@ struct YieldPanel {
 }
 
 fn show_panel(
-    mut commands: Commands,
     in_reach: Option<Single<Entity, With<InReach>>>,
     in_control: Option<Res<State<InControl>>>,
-    panels: Query<(Entity, &YieldPanel)>,
+    mut panels: Query<(&YieldPanel, &mut Fade)>,
     plants: Query<(&Growing, &GlobalTransform, &PixelSprite), Without<Harvested>>,
     mut billboards: Billboards,
 ) {
@@ -42,15 +41,19 @@ fn show_panel(
     let target = in_reach
         .map(|plant| *plant)
         .filter(|&plant| in_control.is_some() && plants.contains(plant));
-    for (panel, shown) in &panels {
-        if Some(shown.plant) != target {
-            commands.entity(panel).despawn();
+    let mut showing = false;
+    for (shown, mut fade) in &mut panels {
+        if Some(shown.plant) == target {
+            fade.stay();
+            showing = true;
+        } else {
+            fade.leave();
         }
     }
     let Some(plant) = target else {
         return;
     };
-    if panels.iter().any(|(_, shown)| shown.plant == plant) {
+    if showing {
         return;
     }
     let Ok((Growing(kind), at, sprite)) = plants.get(plant) else {

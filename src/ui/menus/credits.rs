@@ -45,6 +45,11 @@ fn created_by() -> impl Scene {
             "Sound Design/Programming",
         ),
         ("izarma", Some("https://izarma.itch.io/"), "Programming"),
+        (
+            "Piefayth",
+            Some("https://piefayth.itch.io/"),
+            "Programming/Tech Art",
+        ),
     ])
 }
 

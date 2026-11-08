@@ -973,9 +973,14 @@ bevy_ecs::hierarchy::Children [
         bands: 4,
         shallow: bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.17000000178813934, green: 0.3400000035762787, blue: 0.3799999952316284, alpha: 0.5637969970703125 }),
         foam_spacing: 0.6700000166893005,
-        foam_amount: -0.14000000059604645,
+        foam_amount: -1.159999966621399,
         lap_depth: 0.20000000298023224,
         lap_speed: 0.25,
+        glint_sharpness: 500.0,
+        glint_wobble: 0.15000000596046448,
+        glint: 0.5,
+        refraction: 2.0,
+        glint_speed: 0.3499999940395355,
     }
     --
     #House
@@ -1514,7 +1519,7 @@ bevy_ecs::hierarchy::Children [
     bevy_light::point_light::PointLight {
         color: bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 1.0, green: 0.6553190350532532, blue: 0.20902681350708008, alpha: 1.0 }),
         range: 10.0,
-        shadow_maps_enabled: true,
+        shadow_maps_enabled: false,
         contact_shadows_enabled: false,
         radius: 0.0,
     }
