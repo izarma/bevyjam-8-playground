@@ -231,14 +231,17 @@ jobs:
         run: |
           trunk build --release
       - name: Optimize Wasm
-        uses: NiklasEi/wasm-opt-action@v2
-        with:
-          file: dist/*.wasm
+        run: |
+          sudo apt-get install -y binaryen
+          for f in dist/*.wasm; do
+            wasm-opt -O "$f" -o "$f.opt"
+            mv "$f.opt" "$f"
+          done
       - name: Zip release
-        uses: vimtor/action-zip@v1.1
-        with:
-          files: dist/
-          dest: ${{ env.GAME_EXECUTABLE_NAME }}_web.zip
+        run: |
+          sudo apt-get install -y zip
+          cd dist
+          zip -r "../${{ env.GAME_EXECUTABLE_NAME }}_web.zip" .
       - name: Upload release
         if: github.event_name == 'workflow_dispatch' || startsWith(github.ref, 'refs/tags/')
         uses: svenstaro/upload-release-action@v2
