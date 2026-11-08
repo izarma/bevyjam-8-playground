@@ -176,9 +176,9 @@ bevy_ecs::hierarchy::Children [
     #multicandles
     bevy_transform::components::transform::Transform {
         translation: glam::Vec3 {
-            x: -21.648181915283203,
-            y: 0.04020845890045166,
-            z: -4.696489334106445,
+            x: -8.845849990844727,
+            y: -0.4472135901451111,
+            z: -2.783938407897949,
         },
     }
     jackdaw_scene_types::node_id::SceneNodeId(3462172136416278439)
@@ -199,9 +199,9 @@ bevy_ecs::hierarchy::Children [
     #Table
     bevy_transform::components::transform::Transform {
         translation: glam::Vec3 {
-            x: -14.442198753356934,
+            x: -8.769940376281738,
             y: 0.0,
-            z: -0.000000007623927267275121,
+            z: -2.8129570484161377,
         },
     }
     jackdaw_scene_types::node_id::SceneNodeId(1781186654033623249)
@@ -215,9 +215,9 @@ bevy_ecs::hierarchy::Children [
     #ChairLeft
     bevy_transform::components::transform::Transform {
         translation: glam::Vec3 {
-            x: -14.994839668273926,
+            x: -9.416285514831543,
             y: -0.010998770594596863,
-            z: -2.099388837814331,
+            z: -4.0047807693481445,
         },
     }
     jackdaw_scene_types::node_id::SceneNodeId(403785031168745946)
@@ -231,9 +231,9 @@ bevy_ecs::hierarchy::Children [
     #ChairRight
     bevy_transform::components::transform::Transform {
         translation: glam::Vec3 {
-            x: -14.037659645080566,
+            x: -8.585504531860352,
             y: 0.0,
-            z: 1.34575355052948,
+            z: -1.8996081352233887,
         },
     }
     jackdaw_scene_types::node_id::SceneNodeId(1262154038117315489)
@@ -248,9 +248,9 @@ bevy_ecs::hierarchy::Children [
     #Picture1
     bevy_transform::components::transform::Transform {
         translation: glam::Vec3 {
-            x: -6.0,
+            x: -15.149415969848633,
             y: 1.7999999523162842,
-            z: -4.912491321563721,
+            z: -4.989999771118164,
         },
     }
     jackdaw_scene_types::node_id::SceneNodeId(7482590078810213076)
@@ -264,9 +264,9 @@ bevy_ecs::hierarchy::Children [
     #Picture2
     bevy_transform::components::transform::Transform {
         translation: glam::Vec3 {
-            x: -4.4,
-            y: 1.8,
-            z: -4.8,
+            x: -6.360137939453125,
+            y: 1.7999999523162842,
+            z: -4.989999771118164,
         },
     }
     jackdaw_scene_types::node_id::SceneNodeId(4670350298114876252)
@@ -280,9 +280,9 @@ bevy_ecs::hierarchy::Children [
     #Picture3
     bevy_transform::components::transform::Transform {
         translation: glam::Vec3 {
-            x: 3.0,
-            y: 1.8,
-            z: -4.8,
+            x: 5.926149368286133,
+            y: 1.7999999523162842,
+            z: -4.989999771118164,
         },
     }
     jackdaw_scene_types::node_id::SceneNodeId(3695899571916576072)
@@ -296,9 +296,9 @@ bevy_ecs::hierarchy::Children [
     #Picture4
     bevy_transform::components::transform::Transform {
         translation: glam::Vec3 {
-            x: 4.6,
-            y: 1.8,
-            z: -4.8,
+            x: 16.562889099121094,
+            y: 1.7999999523162842,
+            z: -4.989999771118164,
         },
     }
     jackdaw_scene_types::node_id::SceneNodeId(279410337148665196)
@@ -312,15 +312,15 @@ bevy_ecs::hierarchy::Children [
     #CandelabraSmallA
     bevy_transform::components::transform::Transform {
         translation: glam::Vec3 {
-            x: -0.4895479679107666,
+            x: -0.652594804763794,
             y: 0.875,
             z: -4.360351085662842,
         },
     }
     jackdaw_scene_types::node_id::SceneNodeId(4495490679548004938)
     pixel_art::sprite::PixelSprite {
-        image: "sprites/lamps_and_candles.png",
-        size: core::option::Option::Some(glam::UVec2 { x: 32, y: 64 }),
+        image: "sprites/candles_small_1.png",
+        size: core::option::Option::Some(glam::UVec2 { x: 13, y: 18 }),
         billboard: false,
     }
     bevy_game::gameplay::candles::Candle {
@@ -334,16 +334,15 @@ bevy_ecs::hierarchy::Children [
     #CandelabraSmallB
     bevy_transform::components::transform::Transform {
         translation: glam::Vec3 {
-            x: -0.760370671749115,
+            x: -0.7653529644012451,
             y: 0.875,
-            z: -1.772844672203064,
+            z: -0.13207614421844482,
         },
     }
     jackdaw_scene_types::node_id::SceneNodeId(3601523817026976948)
     pixel_art::sprite::PixelSprite {
-        image: "sprites/lamps_and_candles.png",
-        size: core::option::Option::Some(glam::UVec2 { x: 32, y: 64 }),
-        cell: 2,
+        image: "sprites/candles_small_3.png",
+        size: core::option::Option::Some(glam::UVec2 { x: 13, y: 18 }),
         billboard: false,
     }
     bevy_game::gameplay::candles::Candle {
@@ -357,16 +356,15 @@ bevy_ecs::hierarchy::Children [
     #CandelabraTall
     bevy_transform::components::transform::Transform {
         translation: glam::Vec3 {
-            x: -6.641793251037598,
-            y: 0.15607687830924988,
-            z: -0.10784649848937988,
+            x: 7.349291801452637,
+            y: -0.010998770594596863,
+            z: -4.231955528259277,
         },
     }
     jackdaw_scene_types::node_id::SceneNodeId(5286144414584352642)
     pixel_art::sprite::PixelSprite {
-        image: "sprites/lamps_and_candles.png",
-        size: core::option::Option::Some(glam::UVec2 { x: 32, y: 64 }),
-        cell: 4,
+        image: "sprites/candelabra.png",
+        size: core::option::Option::Some(glam::UVec2 { x: 24, y: 53 }),
         billboard: false,
     }
     bevy_game::gameplay::candles::Candle {
@@ -380,16 +378,15 @@ bevy_ecs::hierarchy::Children [
     #CandleStick
     bevy_transform::components::transform::Transform {
         translation: glam::Vec3 {
-            x: -11.620331764221191,
+            x: -21.320751190185547,
             y: -0.18126507103443146,
-            z: -0.2962304651737213,
+            z: -4.230000019073486,
         },
     }
     jackdaw_scene_types::node_id::SceneNodeId(8276493634819721792)
     pixel_art::sprite::PixelSprite {
-        image: "sprites/lamps_and_candles.png",
-        size: core::option::Option::Some(glam::UVec2 { x: 32, y: 64 }),
-        cell: 5,
+        image: "sprites/candle_stick.png",
+        size: core::option::Option::Some(glam::UVec2 { x: 6, y: 48 }),
         billboard: false,
     }
     bevy_game::gameplay::candles::Candle {
@@ -405,14 +402,13 @@ bevy_ecs::hierarchy::Children [
         translation: glam::Vec3 {
             x: 14.773408889770508,
             y: 0.0,
-            z: -3.5,
+            z: -4.231955528259277,
         },
     }
     jackdaw_scene_types::node_id::SceneNodeId(3714102212920412865)
     pixel_art::sprite::PixelSprite {
-        image: "sprites/lamps_and_candles.png",
-        size: core::option::Option::Some(glam::UVec2 { x: 32, y: 64 }),
-        cell: 6,
+        image: "sprites/candelabra_tall.png",
+        size: core::option::Option::Some(glam::UVec2 { x: 16, y: 58 }),
         billboard: false,
     }
     bevy_game::gameplay::candles::Candle {
@@ -433,9 +429,20 @@ bevy_ecs::hierarchy::Children [
     avian3d::dynamics::rigid_body::RigidBody::Static
     jackdaw_avian_integration::AvianCollider(avian3d::collision::collider::constructor::ColliderConstructor::TrimeshFromMesh)
     pixel_art::model::PixelModel
+    jackdaw_scene_types::types::MaterialOverrides {
+        materials: map[
+            ("room_walls", "material_wall.bsn")
+        ],
+    }
     --
     #"Lab Front Wall"
-    bevy_transform::components::transform::Transform
+    bevy_transform::components::transform::Transform {
+        translation: glam::Vec3 {
+            x: -1.9942188262939453,
+            y: 0.0,
+            z: 0.9227733612060547,
+        },
+    }
     jackdaw_scene_types::node_id::SceneNodeId(1370859086427422297)
     jackdaw_scene_types::types::GltfSource {
         path: "lab_front_wall.glb",
