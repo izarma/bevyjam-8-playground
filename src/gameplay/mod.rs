@@ -15,6 +15,7 @@ pub(crate) use animation::{
     Facing, PlayerAnimation, PlayerAnimationSystems, apply_player_animation, tick_player_animation,
 };
 pub(crate) use dialogue::{Concoction, DialogueTarget};
+pub(crate) use outdoors::HarvestScratch;
 pub(crate) use remedy::Mark;
 pub(crate) use visitors::{
     BALANCED, Brew, BrewHistory, DAY_END, DAY_START, Health, MAX_HEALTH, MIN_HEALTH, Met, Visitor,

@@ -218,6 +218,8 @@ fn spawn_indoor_player(
             --
             Action::<Touch>::new()
             Bindings [
+                Binding(KeyCode::KeyZ)
+                --
                 Binding(KeyCode::KeyF)
                 --
                 Binding(GamepadButton::West)

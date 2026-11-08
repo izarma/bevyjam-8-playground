@@ -1,4 +1,5 @@
 use bevy::{prelude::*, ui::InteractionDisabled};
+use bevy_kira_audio::prelude::{Audio, AudioControl};
 use plants::Plant;
 
 use super::{Concoction, DROP, LIFT, SETTLE, SHAKE, STAMP_AT};
@@ -9,10 +10,14 @@ use crate::{
         inventory::Inventory,
         remedy::{Mark, Remedy, SLOTS},
     },
+    loading::ConcoctionAssets,
     ui::{
         font,
         interaction::InteractionPalette,
-        palette::{BUTTON_DISABLED_TINT, CAUTION, GAIN_TEXT, HEADER_TEXT, LOSS_TEXT},
+        palette::{
+            BUTTON_DISABLED_TINT, BUTTON_HOVERED_TINT, BUTTON_PRESSED_TINT, CAUTION, GAIN_TEXT,
+            HEADER_TEXT, LOSS_TEXT,
+        },
         scale::{TEXEL, texels},
         widget,
     },
@@ -109,6 +114,11 @@ fn mix_slot(index: usize) -> impl Scene {
         }
         @widget::panel()
         MixSlot(index)
+        InteractionPalette {
+            none: Color::WHITE,
+            hovered: BUTTON_HOVERED_TINT,
+            pressed: BUTTON_PRESSED_TINT,
+        }
         @on(drop_herb)
         @on(clear_slot)
         Children [
@@ -131,6 +141,11 @@ fn ingredient(plant: Plant, count: u32) -> Box<dyn Scene> {
     Box::new(bsn! {
         @herbs::slot(plant, count)
         Ingredient(plant)
+        InteractionPalette {
+            none: Color::WHITE,
+            hovered: BUTTON_HOVERED_TINT,
+            pressed: BUTTON_PRESSED_TINT,
+        }
         @on(start_drag)
         @on(drag)
         @on(end_drag)
@@ -201,11 +216,19 @@ fn drop_herb(
     ingredients: Query<&Ingredient>,
     mut concoction: Single<&mut Concoction>,
     inventory: Single<&Inventory>,
+    assets: Res<ConcoctionAssets>,
+    audio: Res<Audio>,
+    mut next_drop: Local<usize>,
 ) {
     if let (Ok(&MixSlot(slot)), Ok(&Ingredient(plant))) =
         (slots.get(drop.entity), ingredients.get(drop.dropped))
+        && concoction.put(slot, plant, &inventory)
     {
-        concoction.put(slot, plant, &inventory);
+        let drops = &assets.herb_drops;
+        if !drops.is_empty() {
+            audio.play(drops[*next_drop % drops.len()].clone());
+            *next_drop = (*next_drop + 1) % drops.len();
+        }
     }
 }
 

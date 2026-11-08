@@ -75,7 +75,7 @@ fn play_sound_effect_on_click(
     interaction_entities: Query<Entity, (With<InteractionPalette>, Without<InteractionDisabled>)>,
 ) {
     if interaction_entities.contains(on.event_target()) {
-        audio.play(ui_asset.button_click.clone());
+        audio.play(ui_asset.button_click.clone()).with_volume(3.0);
     }
 }
 
@@ -86,6 +86,6 @@ fn play_sound_effect_on_over(
     interaction_entities: Query<Entity, (With<InteractionPalette>, Without<InteractionDisabled>)>,
 ) {
     if interaction_entities.contains(on.event_target()) {
-        audio.play(ui_asset.button_hover.clone());
+        audio.play(ui_asset.button_hover.clone()).with_volume(3.0);
     }
 }

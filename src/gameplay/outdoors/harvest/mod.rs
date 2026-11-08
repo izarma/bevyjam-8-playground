@@ -1,5 +1,6 @@
 use bevy::prelude::*;
 use bevy_enhanced_input::prelude::*;
+use bevy_kira_audio::prelude::*;
 use jackdaw_scene_types::node_id::SceneNodeId;
 use pixel_art::PixelSprite;
 use plants::Growing;
@@ -11,6 +12,7 @@ use super::{
 use crate::{
     GameplayScene, Harvesting,
     gameplay::{Player, clock::Clock, inventory::Inventory},
+    loading::HarvestingAssets,
     ui::billboard::Billboards,
 };
 
@@ -48,6 +50,9 @@ struct InReach;
 struct Won {
     entity: Entity,
 }
+
+#[derive(Event)]
+pub(crate) struct HarvestScratch;
 
 #[derive(Component)]
 struct Fades(Color);
@@ -148,6 +153,8 @@ fn collect(
     clock: Single<&Clock>,
     mut inventory: Single<&mut Inventory>,
     mut billboards: Billboards,
+    assets: Res<HarvestingAssets>,
+    audio: Res<Audio>,
 ) {
     commands.set_state(Harvesting(false));
     let Ok(overlay) = overlays.get(won.entity) else {
@@ -167,6 +174,7 @@ fn collect(
     commands.entity(overlay.plant).insert(Harvested);
     let count = inventory.plants.entry(plant).or_default();
     *count += 1;
+    audio.play(assets.pickup.clone()).with_volume(6.0);
     info!("harvested {plant:?}, carrying {count}");
 }
 

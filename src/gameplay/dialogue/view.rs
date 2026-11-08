@@ -1,7 +1,12 @@
+mod health;
+mod interaction;
+
+use health::health_panel;
+
 use bevy::{platform::time::Instant, prelude::*};
 use bevy_yarnspinner::{
-    events::{DialogueCompleted, DialogueStarted, PresentLine, PresentOptions},
-    prelude::{DialogueOption, DialogueRunner, LocalizedLine, OptionId},
+    events::{DialogueCompleted, DialogueStarted, PresentLine},
+    prelude::{DialogueOption, LocalizedLine},
 };
 use unicode_segmentation::UnicodeSegmentation;
 
@@ -10,42 +15,25 @@ use super::{
 };
 use crate::{
     GameplayScene,
-    gameplay::{
-        Health,
-        clock::Clock,
-        herbs::{self, Element},
-        visitors::{Ailing, Ailment},
-    },
+    gameplay::{Health, clock::Clock, visitors::Ailing},
     ui::{
         font,
-        health::{bar_width, health_bar_color},
         input_prompt::{KEY_ESCAPE, KEY_LEFT, prompt},
-        interaction::InteractionPalette,
-        palette::{
-            BUTTON_HOVERED_TINT, BUTTON_PRESSED_TINT, BUTTON_TEXT, HEADER_TEXT, LABEL_TEXT,
-            LOSS_TEXT,
-        },
-        scale::{TEXEL, texels},
+        palette::{HEADER_TEXT, LABEL_TEXT},
+        scale::texels,
         widget,
     },
 };
 
 pub(super) fn plugin(app: &mut App) {
-    app.add_observer(spawn_dialogue_ui)
+    app.add_plugins((health::plugin, interaction::plugin))
+        .add_observer(spawn_dialogue_ui)
         .add_observer(despawn_dialogue_ui)
         .add_observer(present_line)
-        .add_observer(present_options)
-        .add_observer(select_option_clicked)
         .add_systems(
             Update,
             (
                 write_text.run_if(resource_exists::<Typewriter>),
-                continue_dialogue.run_if(resource_exists::<Typewriter>),
-                select_option_by_key.run_if(resource_exists::<Typewriter>),
-                update_health_bars.run_if(resource_exists::<Typewriter>),
-                float_health_changes.run_if(resource_exists::<Typewriter>),
-                show_ailment.run_if(resource_exists::<Typewriter>),
-                rise_health_changes,
                 bob_continue.run_if(resource_exists::<Typewriter>),
             )
                 .in_set(YarnSpinnerDialogueViewSystemSet),
@@ -67,31 +55,9 @@ pub(super) struct DialogueOptionsNode;
 #[derive(Component, Clone, Default)]
 struct DialogueContinueNode;
 
-#[derive(Component, Clone, Copy, Default)]
-struct DialogueHealthFill(Element);
-
 #[derive(Component, Clone, Default)]
 struct ShownHealth(Health);
 
-// the scrolling text indicating the impact a herb had
-#[derive(Component, Clone, Default)]
-struct RisingChange {
-    age: f32,
-}
-
-const RISE_SECONDS: f32 = 1.0;
-const RISE_TEXELS: f32 = 14.0;
-
-#[derive(Component, Clone)]
-struct OptionButton(OptionId);
-
-impl Default for OptionButton {
-    fn default() -> Self {
-        Self(OptionId(0))
-    }
-}
-
-/// Options currently on screen, used to map number keys to [`OptionId`]s.
 #[derive(Resource, Default)]
 pub(super) struct PresentedOptions(Vec<DialogueOption>);
 
@@ -337,385 +303,4 @@ fn bob_continue(
     }
     let pixels = (time.elapsed_secs() * 3.0).sin().powi(2) * 5.0;
     style.bottom = Val::Px(pixels);
-}
-
-fn present_options(
-    event: On<PresentOptions>,
-    mut commands: Commands,
-    options_node: Single<Entity, With<DialogueOptionsNode>>,
-    mut indicator: Single<&mut Visibility, With<DialogueContinueNode>>,
-) {
-    let options_node = *options_node;
-    clear_options(&mut commands, options_node);
-
-    let options: Vec<DialogueOption> = event
-        .options
-        .iter()
-        .filter(|option| option.is_available)
-        .cloned()
-        .collect();
-    commands.insert_resource(PresentedOptions(options.clone()));
-
-    for (index, option) in options.iter().enumerate() {
-        let text = option.line.text_without_character_name();
-        let id = option.id;
-        commands.spawn_scene(bsn! {
-            #DialogueOptionButton
-            ChildOf(options_node)
-            OptionButton(id)
-            Node {
-                padding: UiRect::new(texels(6), texels(6), texels(2), texels(2)),
-                align_items: AlignItems::Center,
-                justify_content: JustifyContent::Center,
-            }
-            @widget::panel()
-            InteractionPalette {
-                none: Color::WHITE,
-                hovered: BUTTON_HOVERED_TINT,
-                pressed: BUTTON_PRESSED_TINT,
-            }
-            @on(select_option_clicked)
-            Children [
-                #DialogueOptionText
-                Text({ format!("{}. {}", index + 1, text) })
-                @font::text(1)
-                TextColor(BUTTON_TEXT)
-                Pickable::IGNORE
-            ]
-        });
-    }
-
-    **indicator = Visibility::Hidden;
-}
-
-fn select_option_clicked(
-    click: On<PointerClick>,
-    buttons: Query<&OptionButton>,
-    mut runners: Query<&mut DialogueRunner>,
-    mut commands: Commands,
-    options_node: Single<Entity, With<DialogueOptionsNode>>,
-) {
-    let Ok(button) = buttons.get(click.entity) else {
-        return;
-    };
-    let id = button.0;
-    if let Ok(mut runner) = runners.single_mut() {
-        let _ = runner.select_option(id);
-    }
-    clear_options(&mut commands, *options_node);
-}
-
-fn continue_dialogue(
-    keys: Res<ButtonInput<KeyCode>>,
-    mouse: Res<ButtonInput<MouseButton>>,
-    touches: Res<Touches>,
-    mut runners: Query<&mut DialogueRunner>,
-    mut typewriter: ResMut<Typewriter>,
-    presented_options: Option<Res<PresentedOptions>>,
-) {
-    let advance = keys.just_pressed(KeyCode::Space)
-        || keys.just_pressed(KeyCode::Enter)
-        || mouse.just_pressed(MouseButton::Left)
-        || touches.any_just_pressed();
-    if advance && !typewriter.is_finished() {
-        typewriter.fast_forward();
-        return;
-    }
-    let auto_advance =
-        typewriter.last_before_options && typewriter.is_finished() && presented_options.is_none();
-    if !advance && !auto_advance {
-        return;
-    }
-    for mut runner in &mut runners {
-        if runner.is_running() && !runner.is_waiting_for_option_selection() {
-            runner.continue_in_next_update();
-        }
-    }
-}
-
-fn select_option_by_key(
-    keys: Res<ButtonInput<KeyCode>>,
-    presented: Option<Res<PresentedOptions>>,
-    mut runners: Query<&mut DialogueRunner>,
-    mut commands: Commands,
-    options_node: Option<Single<Entity, With<DialogueOptionsNode>>>,
-) {
-    let Some(options_node) = options_node else {
-        return;
-    };
-    let Some(presented) = presented else {
-        return;
-    };
-    let Some(index) = number_key_pressed(&keys) else {
-        return;
-    };
-    let Some(option) = presented.0.get(index) else {
-        return;
-    };
-    let id = option.id;
-    if let Ok(mut runner) = runners.single_mut() {
-        let _ = runner.select_option(id);
-    }
-    clear_options(&mut commands, *options_node);
-}
-
-fn clear_options(commands: &mut Commands, options_node: Entity) {
-    commands.entity(options_node).despawn_related::<Children>();
-    commands.remove_resource::<PresentedOptions>();
-}
-
-#[derive(Component, Clone, Default)]
-struct AilmentTitle;
-
-#[derive(Component, Clone, Default)]
-struct AilmentCountdown;
-
-#[derive(Component, Clone, Default)]
-struct AilmentMark(Element);
-
-fn countdown(hours: f32) -> String {
-    format!("{}h", hours.ceil().max(0.0))
-}
-
-fn mark(ailment: Ailment, element: Element) -> String {
-    ailment
-        .effects()
-        .into_iter()
-        .find(|&(affected, _)| affected == element)
-        .map(|(_, delta)| format!("{delta:+}"))
-        .unwrap_or_default()
-}
-
-fn health_panel(health: Health, ailment: Option<(Ailment, f32)>) -> impl Scene {
-    let title = ailment.map_or("Health".to_string(), |(ailment, _)| ailment.name());
-    let hours = ailment
-        .map(|(_, hours)| countdown(hours))
-        .unwrap_or_default();
-    bsn! {
-        #DialogueHealth
-        ShownHealth(health)
-        // sized by what's in it, so the title stays on one line
-        Node {
-            flex_direction: FlexDirection::Column,
-            align_items: AlignItems::Stretch,
-            row_gap: texels(1),
-            padding: UiRect::all(texels(4)),
-        }
-        @widget::panel()
-        Pickable::IGNORE
-        Children [
-            Node {
-                justify_content: JustifyContent::SpaceBetween,
-                column_gap: texels(6),
-                margin: UiRect {
-                    bottom: texels(2),
-                },
-            }
-            Pickable::IGNORE
-            Children [
-                #DialogueHealthTitle
-                AilmentTitle
-                Text({ title })
-                @font::text(1)
-                TextColor(HEADER_TEXT)
-                Pickable::IGNORE
-                --
-                AilmentCountdown
-                Text({ hours })
-                @font::text(1)
-                TextColor(LABEL_TEXT)
-                Pickable::IGNORE
-            ]
-            --
-            { health_rows(health, ailment.map(|(ailment, _)| ailment)) }
-        ]
-    }
-}
-
-fn show_ailment(
-    target: Res<DialogueTarget>,
-    visitors: Query<&Ailing>,
-    clock: Single<&Clock>,
-    mut texts: Query<
-        (
-            &mut Text,
-            Has<AilmentTitle>,
-            Has<AilmentCountdown>,
-            Option<&AilmentMark>,
-        ),
-        Or<(
-            With<AilmentTitle>,
-            With<AilmentCountdown>,
-            With<AilmentMark>,
-        )>,
-    >,
-) {
-    let ailing = target.0.and_then(|visitor| visitors.get(visitor).ok());
-    for (mut text, title, counting, marked) in &mut texts {
-        let shown = match (ailing, title, counting, marked) {
-            (Some(ailing), true, ..) => ailing.ailment.name(),
-            (None, true, ..) => "Health".to_string(),
-            (Some(ailing), _, true, _) => countdown(ailing.next - clock.hours),
-            (Some(ailing), .., Some(&AilmentMark(element))) => mark(ailing.ailment, element),
-            _ => String::new(),
-        };
-        if text.0 != shown {
-            text.0 = shown;
-        }
-    }
-}
-
-fn health_rows(health: Health, ailment: Option<Ailment>) -> Vec<Box<dyn Scene>> {
-    Element::ALL
-        .into_iter()
-        .map(|element| -> Box<dyn Scene> {
-            let value = health.get(element);
-            let width = bar_width(value);
-            let next = ailment
-                .map(|ailment| mark(ailment, element))
-                .unwrap_or_default();
-            Box::new(bsn! {
-                Node {
-                    flex_direction: FlexDirection::Row,
-                    align_items: AlignItems::Center,
-                    column_gap: texels(3),
-                }
-                Pickable::IGNORE
-                Children [
-                    { vec![herbs::element_icon(element)] }
-                    --
-                    Node {
-                        width: texels(64),
-                        height: texels(5),
-                        flex_shrink: 0.0,
-                    }
-                    BackgroundColor(Color::srgba(0.0, 0.0, 0.0, 0.5))
-                    Pickable::IGNORE
-                    Children [
-                        Node {
-                            width: percent(width),
-                            height: percent(100),
-                        }
-                        DialogueHealthFill(element)
-                        BackgroundColor(health_bar_color(value))
-                        Pickable::IGNORE
-                    ]
-                    --
-                    AilmentMark(element)
-                    Text({ next })
-                    @font::text(1)
-                    TextColor(LOSS_TEXT)
-                    Node {
-                        width: texels(16),
-                        flex_shrink: 0.0,
-                    }
-                    Pickable::IGNORE
-                ]
-            })
-        })
-        .collect()
-}
-
-// shows the visitor health optionally with the currently selected concoction
-fn update_health_bars(
-    target: Res<DialogueTarget>,
-    visitors: Query<&Health>,
-    concoction: Option<Single<&Concoction>>,
-    mut fills: Query<(&DialogueHealthFill, &mut Node, &mut BackgroundColor)>,
-) {
-    let Some(&health) = target.0.and_then(|visitor| visitors.get(visitor).ok()) else {
-        return;
-    };
-    let health = concoction.map_or(health, |concoction| concoction.preview(health));
-    for (fill, mut node, mut background) in &mut fills {
-        let value = health.get(fill.0);
-        let width = bar_width(value);
-        node.width = percent(width);
-        *background = BackgroundColor(health_bar_color(value));
-    }
-}
-
-fn float_health_changes(
-    mut commands: Commands,
-    target: Res<DialogueTarget>,
-    visitors: Query<&Health>,
-    mut shown: Single<&mut ShownHealth>,
-    fills: Query<(&DialogueHealthFill, &ChildOf)>,
-) {
-    let Some(&health) = target.0.and_then(|visitor| visitors.get(visitor).ok()) else {
-        return;
-    };
-    if shown.0 == health {
-        return;
-    }
-    for (&DialogueHealthFill(element), bar) in &fills {
-        let (now, before) = (health.get(element), shown.0.get(element));
-        if now == before {
-            continue;
-        }
-        let change = i16::from(now) - i16::from(before);
-        let bar = bar.parent();
-        commands.spawn_scene(bsn! {
-            #RisingChange
-            ChildOf(bar)
-            RisingChange
-            Text({ format!("{change:+}") })
-            @font::text(1)
-            TextColor(health_bar_color(now))
-            Node {
-                position_type: PositionType::Absolute,
-                left: percent(45),
-                top: px(0),
-            }
-            Pickable::IGNORE
-        });
-    }
-    shown.0 = health;
-}
-
-fn rise_health_changes(
-    mut commands: Commands,
-    time: Res<Time>,
-    mut changes: Query<(Entity, &mut RisingChange, &mut Node, &mut TextColor)>,
-) {
-    for (entity, mut change, mut node, mut color) in &mut changes {
-        change.age += time.delta_secs();
-        let k = change.age / RISE_SECONDS;
-        if k >= 1.0 {
-            commands.entity(entity).despawn();
-            continue;
-        }
-        node.top = px(-k * RISE_TEXELS * TEXEL);
-        color.0.set_alpha(1.0 - k * k);
-    }
-}
-
-fn number_key_pressed(keys: &ButtonInput<KeyCode>) -> Option<usize> {
-    const NUMBER_KEYS: [KeyCode; 9] = [
-        KeyCode::Digit1,
-        KeyCode::Digit2,
-        KeyCode::Digit3,
-        KeyCode::Digit4,
-        KeyCode::Digit5,
-        KeyCode::Digit6,
-        KeyCode::Digit7,
-        KeyCode::Digit8,
-        KeyCode::Digit9,
-    ];
-    const NUMPAD_KEYS: [KeyCode; 9] = [
-        KeyCode::Numpad1,
-        KeyCode::Numpad2,
-        KeyCode::Numpad3,
-        KeyCode::Numpad4,
-        KeyCode::Numpad5,
-        KeyCode::Numpad6,
-        KeyCode::Numpad7,
-        KeyCode::Numpad8,
-        KeyCode::Numpad9,
-    ];
-    NUMBER_KEYS
-        .iter()
-        .chain(NUMPAD_KEYS.iter())
-        .position(|key| keys.just_pressed(*key))
-        .map(|index| index % 9)
 }

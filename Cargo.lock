@@ -1136,6 +1136,7 @@ dependencies = [
  "jackdaw_runtime",
  "jackdaw_scene_types",
  "jackdaw_surface",
+ "jackdaw_terrain",
  "log",
  "pixel_art",
  "plants",
