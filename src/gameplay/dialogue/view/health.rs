@@ -12,7 +12,7 @@ use crate::{
     },
     ui::{
         font,
-        health::{bar_width, health_bar_color},
+        health::{ailment_countdown, ailment_mark, bar_width, health_bar_color},
         palette::{HEADER_TEXT, LABEL_TEXT, LOSS_TEXT},
         scale::{TEXEL, texels},
         widget,
@@ -53,23 +53,10 @@ struct AilmentCountdown;
 #[derive(Component, Clone, Default)]
 struct AilmentMark(Element);
 
-fn countdown(hours: f32) -> String {
-    format!("{}h", hours.ceil().max(0.0))
-}
-
-fn mark(ailment: Ailment, element: Element) -> String {
-    ailment
-        .effects()
-        .into_iter()
-        .find(|&(affected, _)| affected == element)
-        .map(|(_, delta)| format!("{delta:+}"))
-        .unwrap_or_default()
-}
-
 pub(super) fn health_panel(health: Health, ailment: Option<(Ailment, f32)>) -> impl Scene {
     let title = ailment.map_or("Health".to_string(), |(ailment, _)| ailment.name());
     let hours = ailment
-        .map(|(_, hours)| countdown(hours))
+        .map(|(_, hours)| ailment_countdown(hours))
         .unwrap_or_default();
     bsn! {
         #DialogueHealth
@@ -135,8 +122,8 @@ fn show_ailment(
         let shown = match (ailing, title, counting, marked) {
             (Some(ailing), true, ..) => ailing.ailment.name(),
             (None, true, ..) => "Health".to_string(),
-            (Some(ailing), _, true, _) => countdown(ailing.next - clock.hours),
-            (Some(ailing), .., Some(&AilmentMark(element))) => mark(ailing.ailment, element),
+            (Some(ailing), _, true, _) => ailment_countdown(ailing.next - clock.hours),
+            (Some(ailing), .., Some(&AilmentMark(element))) => ailment_mark(ailing.ailment, element),
             _ => String::new(),
         };
         if text.0 != shown {
@@ -152,7 +139,7 @@ fn health_rows(health: Health, ailment: Option<Ailment>) -> Vec<Box<dyn Scene>> 
             let value = health.get(element);
             let width = bar_width(value);
             let next = ailment
-                .map(|ailment| mark(ailment, element))
+                .map(|ailment| ailment_mark(ailment, element))
                 .unwrap_or_default();
             Box::new(bsn! {
                 Node {

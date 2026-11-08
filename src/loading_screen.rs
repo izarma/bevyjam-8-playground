@@ -29,6 +29,7 @@ pub(super) fn plugin(app: &mut App) {
 pub(crate) enum Travel {
     Title,
     Base,
+    #[cfg(debug_assertions)]
     Outdoors,
     GameOver,
     // through the house door, arriving at the lab's entrance
@@ -43,9 +44,9 @@ impl Travel {
             Self::Title => (GameState::Title, None),
             Self::GameOver => (GameState::GameOver, None),
             Self::Base | Self::EnterHouse => (GameState::Gameplay, Some(GameplayScene::Base)),
-            Self::Outdoors | Self::LeaveHouse => {
-                (GameState::Gameplay, Some(GameplayScene::Outdoors))
-            }
+            Self::LeaveHouse => (GameState::Gameplay, Some(GameplayScene::Outdoors)),
+            #[cfg(debug_assertions)]
+            Self::Outdoors => (GameState::Gameplay, Some(GameplayScene::Outdoors)),
         };
         game.set_if_different(state);
         if let Some(gameplay_scene) = gameplay_scene {

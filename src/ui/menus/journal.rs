@@ -3,14 +3,16 @@
 //! ```text
 //! ui_root("Journal")                     // fills window, centers, column
 //! └─ panel (column, padded)             // the single visible card
-//!    ├─ "Journal" title text
+//!    ├─ heading (row)
+//!    │  ├─ "Journal" title text          // as wide as the tabs and portrait
+//!    │  └─ ailment (row)                 // over the health panel: name, time to its next worsening
 //!    └─ content_row (row)
 //!       ├─ tab_bar (column)
 //!       │  └─ tab × N (one per met visitor)
 //!       └─ portrait_view (column)
 //!          ├─ top row (row)
 //!          │  ├─ portrait_slot (panel → portrait image)
-//!          │  ├─ health_panel (panel → "Health" + 5 element bars)
+//!          │  ├─ health_panel (panel → 5 element bars, each with what the ailment will do to it)
 //!          │  └─ history_panel (panel → "Brews" + brew entries)
 //!          └─ description_panel (panel → name + text, spans the top row)
 //! ```
@@ -23,13 +25,14 @@ use plants::Plant;
 
 use crate::{
     gameplay::{
-        Brew, BrewHistory, Health, Mark, Met, Visitor,
+        Ailing, Ailment, Brew, BrewHistory, Died, Health, Mark, Met, Visitor,
+        clock::Clock,
         herbs::{self, Element},
     },
     loading::NPCAssets,
     ui::{
         font,
-        health::{bar_width, health_bar_color},
+        health::{ailment_countdown, ailment_mark, bar_width, health_bar_color},
         interaction::InteractionPalette,
         menus::Menu,
         palette::{
@@ -63,10 +66,14 @@ const PORTRAIT_SLOT_HEIGHT: u16 = 104;
 pub(crate) const TAB_SIZE: u16 = 16; // the thumbnail inside a tab
 pub(crate) const TAB_PANEL_SIZE: u16 = 24; // the clickable tab square
 
-// Health panel.
-const HEALTH_BAR_WIDTH: u16 = 88;
+// Health panel: an element icon, its bar, and what the ailment will do to it.
+const HEALTH_BAR_WIDTH: u16 = 72;
 const HEALTH_BAR_HEIGHT: u16 = 6;
+const AILMENT_MARK_WIDTH: u16 = 16;
 const HEALTH_PANEL_WIDTH: u16 = 128;
+
+const CONTENT_GAP: u16 = 4;
+const AILMENT_INDENT: u16 = TAB_PANEL_SIZE + CONTENT_GAP + PORTRAIT_SLOT_WIDTH + COLUMN_GAP;
 
 // Profile description panel: spans the whole top row below it.
 const COLUMN_GAP: u16 = 4;
@@ -90,15 +97,20 @@ const DESCRIPTION_PANEL_HEIGHT: u16 = CONTENT_HEIGHT - PORTRAIT_SLOT_HEIGHT - 2;
 fn spawn_journal_menu(
     mut commands: Commands,
     assets: Res<NPCAssets>,
-    met: Query<(&Visitor, &Health, &BrewHistory), With<Met>>,
+    clock: Single<&Clock>,
+    met: Query<(&Visitor, &Health, &BrewHistory, Option<&Ailing>, Has<Died>), With<Met>>,
 ) {
     let mut met = met.iter().collect::<Vec<_>>();
-    met.sort_by_key(|(visitor, _, _)| visitor.0);
+    met.sort_by_key(|(visitor, ..)| visitor.0);
 
     // Build one tab per met visitor; the first becomes the initially shown portrait.
     let mut tabs = Vec::new();
     let mut first = None;
-    for (index, (visitor, &health, history)) in met.into_iter().enumerate() {
+    for (index, (visitor, &health, history, ailing, died)) in met.into_iter().enumerate() {
+        // the ailment, and the hours until it next worsens; the dead have none
+        let ailment = ailing
+            .filter(|_| !died)
+            .map(|ailing| (ailing.ailment, ailing.next - clock.hours));
         let (image, frame) = assets.sprite(visitor.name());
         let top = portrait_top(visitor.name());
         let icon = centered_crop(frame, TAB_SIZE, TAB_SIZE, top);
@@ -108,6 +120,7 @@ fn spawn_journal_menu(
                 image.clone(),
                 portrait,
                 health,
+                ailment,
                 visitor.name(),
                 visitor.description(),
                 history,
@@ -118,6 +131,7 @@ fn spawn_journal_menu(
             icon,
             portrait,
             health,
+            ailment,
             visitor.name(),
             visitor.description(),
             history,
@@ -126,20 +140,79 @@ fn spawn_journal_menu(
     }
 
     // Everything inside the single card below the root.
-    let mut body: Vec<Box<dyn Scene>> = vec![Box::new(bsn! {
-        Text("Journal")
-        @font::text(1)
-        TextColor(HEADER_TEXT)
-    })];
-    if let Some((image, portrait, health, name, description, history)) = first {
-        let content: Vec<Box<dyn Scene>> = vec![
-            Box::new(tab_bar(tabs)),
-            portrait_view(image, portrait, health, name, description, history),
-        ];
-        body.push(Box::new(content_row(content)));
+    let mut body: Vec<Box<dyn Scene>> = Vec::new();
+    match first {
+        Some((image, portrait, health, ailment, name, description, history)) => {
+            body.push(Box::new(heading(Some(ailment))));
+            let content: Vec<Box<dyn Scene>> = vec![
+                Box::new(tab_bar(tabs)),
+                portrait_view(image, portrait, health, ailment, name, description, history),
+            ];
+            body.push(Box::new(content_row(content)));
+        }
+        None => body.push(Box::new(heading(None))),
     }
 
     commands.spawn_scene(journal_root(body));
+}
+
+/// "Journal", then, over the health panel, the shown visitor's ailment and the
+/// hours until it next worsens. `None` where no visitor is shown at all.
+fn heading(ailment: Option<Option<(Ailment, f32)>>) -> impl Scene {
+    let ailment_row: Vec<Box<dyn Scene>> = ailment
+        .map(|ailment| -> Box<dyn Scene> {
+            let (name, hours) = ailment_texts(ailment);
+            Box::new(bsn! {
+                Node {
+                    width: texels(HEALTH_PANEL_WIDTH),
+                    justify_content: JustifyContent::SpaceBetween,
+                }
+                Pickable::IGNORE
+                Children [
+                    Text({ name })
+                    @font::text(1)
+                    TextColor(HEADER_TEXT)
+                    JournalAilmentName
+                    Pickable::IGNORE
+                    --
+                    Text({ hours })
+                    @font::text(1)
+                    TextColor(LABEL_TEXT)
+                    JournalAilmentCountdown
+                    Pickable::IGNORE
+                ]
+            })
+        })
+        .into_iter()
+        .collect();
+    bsn! {
+        Node {
+            align_items: AlignItems::Center,
+        }
+        Pickable::IGNORE
+        Children [
+            Node {
+                width: texels(AILMENT_INDENT),
+                flex_shrink: 0.0,
+            }
+            Pickable::IGNORE
+            Children [
+                Text("Journal")
+                @font::text(1)
+                TextColor(HEADER_TEXT)
+                Pickable::IGNORE
+            ]
+            --
+            { ailment_row }
+        ]
+    }
+}
+
+/// The ailment's name and the hours until it next worsens, or blanks.
+fn ailment_texts(ailment: Option<(Ailment, f32)>) -> (String, String) {
+    ailment.map_or_else(Default::default, |(ailment, hours)| {
+        (ailment.name(), ailment_countdown(hours))
+    })
 }
 
 fn journal_root(body: Vec<Box<dyn Scene>>) -> impl Scene {
@@ -192,6 +265,20 @@ struct JournalTab {
 #[derive(Component, Clone, Default)]
 struct JournalHealth(Health);
 
+/// The ailment and the hours until it next worsens, as the journal opened.
+#[derive(Component, Clone, Default)]
+struct JournalAilment(Option<(Ailment, f32)>);
+
+#[derive(Component, Clone, Default)]
+struct JournalAilmentName;
+
+#[derive(Component, Clone, Default)]
+struct JournalAilmentCountdown;
+
+/// What the ailment will do to one element, beside its bar.
+#[derive(Component, Clone, Copy, Default)]
+struct JournalAilmentMark(Element);
+
 #[derive(Component, Clone, Default)]
 struct JournalHistory(BrewHistory);
 
@@ -221,11 +308,15 @@ fn select_journal_tab(
     mut commands: Commands,
     tabs: Query<&JournalTab>,
     healths: Query<&JournalHealth>,
+    ailments: Query<&JournalAilment>,
     histories: Query<&JournalHistory>,
     mut portraits: Query<&mut ImageNode, With<JournalPortrait>>,
-    mut names: ParamSet<(
+    mut texts: ParamSet<(
         Query<&mut Text, With<JournalName>>,
         Query<&mut Text, With<JournalDescription>>,
+        Query<&mut Text, With<JournalAilmentName>>,
+        Query<&mut Text, With<JournalAilmentCountdown>>,
+        Query<(&mut Text, &JournalAilmentMark)>,
     )>,
     roots: Query<Entity, With<JournalHistoryRoot>>,
     mut scrolls: Query<&mut ScrollPosition, With<JournalHistoryRoot>>,
@@ -244,13 +335,29 @@ fn select_journal_tab(
     image.rect = Some(tab.portrait);
 
     // Swap the visitor name.
-    if let Ok(mut name) = names.p0().single_mut() {
+    if let Ok(mut name) = texts.p0().single_mut() {
         name.0 = tab.name.to_string();
     }
 
     // Swap the profile text.
-    if let Ok(mut description) = names.p1().single_mut() {
+    if let Ok(mut description) = texts.p1().single_mut() {
         description.0 = tab.description.to_string();
+    }
+
+    // Swap the ailment, its countdown, and what it will do to each element.
+    if let Ok(&JournalAilment(ailment)) = ailments.get(click.entity) {
+        let (name, hours) = ailment_texts(ailment);
+        if let Ok(mut text) = texts.p2().single_mut() {
+            text.0 = name;
+        }
+        if let Ok(mut text) = texts.p3().single_mut() {
+            text.0 = hours;
+        }
+        for (mut text, &JournalAilmentMark(element)) in &mut texts.p4() {
+            text.0 = ailment
+                .map(|(ailment, _)| ailment_mark(ailment, element))
+                .unwrap_or_default();
+        }
     }
 
     // Refresh the element bars.
@@ -316,7 +423,7 @@ fn update_history_scrollbar(
 fn content_row(children: Vec<Box<dyn Scene>>) -> impl Scene {
     bsn! {
         Node {
-            column_gap: texels(4),
+            column_gap: texels(CONTENT_GAP),
             align_items: AlignItems::FlexStart,
         }
         Pickable::IGNORE
@@ -339,6 +446,7 @@ fn tab(
     icon: Rect,
     portrait: Rect,
     health: Health,
+    ailment: Option<(Ailment, f32)>,
     name: &'static str,
     description: &'static str,
     history: &BrewHistory,
@@ -371,6 +479,7 @@ fn tab(
             description: { description },
         }
         JournalHealth(health)
+        JournalAilment({ ailment })
         JournalHistory({ history.clone() })
         @on(select_journal_tab)
         Children [
@@ -402,6 +511,7 @@ fn portrait_view(
     image: Handle<Image>,
     rect: Rect,
     health: Health,
+    ailment: Option<(Ailment, f32)>,
     name: &'static str,
     description: &'static str,
     history: &BrewHistory,
@@ -423,7 +533,7 @@ fn portrait_view(
             Children [
                 @portrait_slot(image, rect)
                 --
-                @health_panel(health)
+                @health_panel(health, ailment.map(|(ailment, _)| ailment))
                 --
                 @history_panel(history)
             ]
@@ -612,7 +722,7 @@ fn mark_color(mark: Mark) -> Color {
     }
 }
 
-fn health_panel(health: Health) -> impl Scene {
+fn health_panel(health: Health, ailment: Option<Ailment>) -> impl Scene {
     bsn! {
         Node {
             width: texels(HEALTH_PANEL_WIDTH),
@@ -625,19 +735,24 @@ fn health_panel(health: Health) -> impl Scene {
         @widget::panel()
         Pickable::IGNORE
         Children [
-            { health_rows(health) }
+            { health_rows(health, ailment) }
         ]
     }
 }
 
-fn health_rows(health: Health) -> Vec<Box<dyn Scene>> {
+fn health_rows(health: Health, ailment: Option<Ailment>) -> Vec<Box<dyn Scene>> {
     Element::ALL
         .into_iter()
-        .map(|element| health_row(element, health.get(element)))
+        .map(|element| {
+            let mark = ailment
+                .map(|ailment| ailment_mark(ailment, element))
+                .unwrap_or_default();
+            health_row(element, health.get(element), mark)
+        })
         .collect()
 }
 
-fn health_row(element: Element, value: u8) -> Box<dyn Scene> {
+fn health_row(element: Element, value: u8, mark: String) -> Box<dyn Scene> {
     let width = bar_width(value);
     Box::new(bsn! {
         Node {
@@ -666,6 +781,16 @@ fn health_row(element: Element, value: u8) -> Box<dyn Scene> {
                 BackgroundColor(health_bar_color(value))
                 Pickable::IGNORE
             ]
+            --
+            Text({ mark })
+            @font::text(1)
+            TextColor(LOSS_TEXT)
+            Node {
+                width: texels(AILMENT_MARK_WIDTH),
+                flex_shrink: 0.0,
+            }
+            JournalAilmentMark(element)
+            Pickable::IGNORE
         ]
     })
 }

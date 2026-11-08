@@ -2,7 +2,7 @@
 // so the sky's texels stay put as the camera turns, like the ground's do. banded
 // colour from zenith to horizon, a hard sun or moon in rings of glow, and stars
 
-import bevy_pbr::render::mesh_view_bindings::{view, lights, globals};
+import bevy_pbr::render::mesh_view_bindings::{view, globals};
 import bevy_pbr::render::utils::coords_to_viewport_uv;
 import bevy_render::maths::PI;
 @if(TONEMAP_IN_SHADER) import bevy_core_pipeline::tonemapping::tone_mapping;
@@ -16,6 +16,8 @@ struct PixelSkySettings {
     moon_color: vec4<f32>,
     glow_color: vec4<f32>,
     sunset_color: vec4<f32>,
+    // toward the sun
+    sun: vec4<f32>,
     texels_per_degree: f32,
     bands: f32,
     dither: f32,
@@ -129,8 +131,8 @@ fn fragment(in: VertexOutput) -> @location(0) vec4<f32> {
     }
 
     // the sun, or the moon opposite it once it has set
-    if lights.n_directional_lights > 0u {
-        let sun = lights.directional_lights[0].direction_to_light;
+    {
+        let sun = sky.sun.xyz;
 
         // the low sky on the sun's side warms while the sun is low, in four steps
         if sky.sunset > 0.0 {
@@ -142,6 +144,7 @@ fn fragment(in: VertexOutput) -> @location(0) vec4<f32> {
             color = mix(color, sky.sunset_color.rgb, steps);
         }
 
+        // time_of_day.rs swaps the scene's light to the moon at the same height
         let moon = sun.y < -0.04;
         let toward = select(sun, -sun, moon);
         let angle = degrees(acos(clamp(dot(direction, toward), -1.0, 1.0)));

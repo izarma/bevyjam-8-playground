@@ -15,20 +15,34 @@ pub(super) fn plugin(app: &mut App) {
     app.add_systems(PostUpdate, light_from_sky);
 }
 
+#[derive(Component, PartialEq)]
+struct LitFrom {
+    gradient: [Color; 4],
+    horizon_reach: f32,
+    exposure: f32,
+}
+
 fn light_from_sky(
-    camera: Single<Ref<Exposure>, SceneCamera>,
-    mut skies: Query<(Ref<PixelSky>, &mut Environment)>,
+    mut commands: Commands,
+    camera: Single<&Exposure, SceneCamera>,
+    mut skies: Query<(Entity, &PixelSky, &mut Environment, Option<&LitFrom>)>,
 ) {
-    for (sky, mut environment) in &mut skies {
-        if !sky.is_changed() && !camera.is_changed() {
+    for (entity, sky, mut environment, lit) in &mut skies {
+        let from = LitFrom {
+            gradient: [sky.zenith, sky.middle, sky.horizon, sky.ground],
+            horizon_reach: sky.horizon_reach,
+            exposure: camera.exposure(),
+        };
+        if lit == Some(&from) {
             continue;
         }
         let ambient = &mut environment.ambient;
         ambient.mode = AmbientMode::Trilight;
-        ambient.brightness = 1.0 / camera.exposure();
-        ambient.sky = facing(&sky, Vec3::Y).into();
-        ambient.equator = facing(&sky, Vec3::X).into();
-        ambient.ground = facing(&sky, Vec3::NEG_Y).into();
+        ambient.brightness = 1.0 / from.exposure;
+        ambient.sky = facing(sky, Vec3::Y).into();
+        ambient.equator = facing(sky, Vec3::X).into();
+        ambient.ground = facing(sky, Vec3::NEG_Y).into();
+        commands.entity(entity).insert(from);
     }
 }
 

@@ -14,6 +14,9 @@ const LOW_SUN_BRIGHTNESS: f32 = 0.6;
 const DAWN_FOG: Color = Color::srgb(0.35, 0.28, 0.3);
 const DUSK_FOG: Color = Color::srgb(0.3, 0.22, 0.2);
 const NIGHT_FOG: Color = Color::srgb(0.02, 0.03, 0.06);
+const MOONLIGHT: Color = Color::srgb(0.55, 0.65, 0.9);
+const MOON_BRIGHTNESS: f32 = 0.3;
+const MOON_RISES: f32 = -0.04;
 
 struct SkyTint {
     zenith: Color,
@@ -132,6 +135,11 @@ pub struct Daylit {
     pub intensity: f32,
 }
 
+#[derive(Component)]
+pub(crate) struct Nightlit {
+    pub(crate) intensity: f32,
+}
+
 #[derive(Component, Reflect, Default)]
 #[reflect(Component, Default)]
 pub struct DaylitAmbient {
@@ -167,13 +175,15 @@ fn follow_clock(
     mut environments: Query<(&DayEnvironment, &mut Environment, Option<&DaylitAmbient>)>,
     mut skies: Query<(&DaySky, &mut PixelSky)>,
     mut spots: Query<(&Daylit, &mut SpotLight)>,
-    mut points: Query<(&Daylit, &mut PointLight)>,
+    mut points: Query<(&Daylit, &mut PointLight), Without<Nightlit>>,
+    mut lanterns: Query<(&Nightlit, &mut PointLight), Without<Daylit>>,
 ) {
     let moment = Moment::at(clock.hours);
     let daylight = moment.blend(daylight, f32::lerp);
     let mix = |from: LinearRgba, to: LinearRgba, t| from.mix(&to, t);
 
-    let mut sun_color = None;
+    let mut shining = None;
+    let mut sun = None;
     // the scene's sun is where it stands at noon. it crosses the sky on the circle
     // through there that meets the horizon at 06:00 and 18:00, square to its heading
     let turn = (clock.hours % 24.0 - 12.0) / 12.0 * PI;
@@ -182,14 +192,24 @@ fn follow_clock(
         let heading = Vec3::new(noon.x, 0.0, noon.z).normalize_or(Vec3::Z);
         let across = Vec3::Y.cross(heading);
         let toward = noon * turn.cos() + across * turn.sin();
-        transform.look_to(-toward, Vec3::Y);
-        light.color = moment.blend(|look| sun_color_of(look, day), mix).into();
-        light.illuminance = day.illuminance * daylight;
-        sun_color = Some(light.color);
+        let (from, color, brightness) = if toward.y < MOON_RISES {
+            (-toward, MOONLIGHT, MOON_BRIGHTNESS)
+        } else {
+            (toward, moment.blend(|look| sun_color_of(look, day), mix).into(), daylight)
+        };
+        transform.look_to(-from, Vec3::Y);
+        light.color = color;
+        light.illuminance = day.illuminance * brightness;
+        shining = Some((color, brightness));
+        sun = Some(toward);
     }
 
     for (day, mut sky) in &mut skies {
-        sky.set_if_neq(moment.blend(|look| sky_at(look, &day.0), mix_skies));
+        let mut now = moment.blend(|look| sky_at(look, &day.0), mix_skies);
+        if let Some(sun) = sun {
+            now.sun = sun;
+        }
+        sky.set_if_neq(now);
     }
 
     for (day, mut environment, ambient) in &mut environments {
@@ -203,16 +223,20 @@ fn follow_clock(
         }
     }
 
-    let Some(sun_color) = sun_color else {
+    for (lantern, mut light) in &mut lanterns {
+        light.intensity = lantern.intensity * (1.0 - daylight);
+    }
+
+    let Some((color, brightness)) = shining else {
         return;
     };
     for (lit, mut light) in &mut spots {
-        light.intensity = lit.intensity * daylight;
-        light.color = sun_color;
+        light.intensity = lit.intensity * brightness;
+        light.color = color;
     }
     for (lit, mut light) in &mut points {
-        light.intensity = lit.intensity * daylight;
-        light.color = sun_color;
+        light.intensity = lit.intensity * brightness;
+        light.color = color;
     }
 }
 

@@ -8,7 +8,6 @@ import bevy_pbr::render::{
         POINT_LIGHT_FLAGS_SHADOWS_ENABLED_BIT,
         POINT_LIGHT_FLAGS_SPOT_LIGHT_Y_NEGATIVE,
     },
-    pbr_lighting::getDistanceAttenuation,
     pbr_types::PbrInput,
     shadows,
 };
@@ -35,13 +34,21 @@ fn sky_irradiance(direction: vec3<f32>) -> vec3<f32> {
     }
 }
 
+fn source_attenuation(distance_squared: f32, inverse_range_squared: f32, radius: f32) -> f32 {
+    let factor = distance_squared * inverse_range_squared;
+    let window = saturate(1.0 - factor * factor);
+    return window * window / max(distance_squared + radius * radius, 0.0001);
+}
+
 // the color / amount of light at `at` from point or spot light `id`
 fn light_arriving(id: u32, at: vec3<f32>) -> vec3<f32> {
     let light = &clustered_lights.data[id];
     let to_light = (*light).position_radius.xyz - at;
-    let inverse_range_squared = (*light).color_inverse_square_range.w;
-    return (*light).color_inverse_square_range.rgb
-        * getDistanceAttenuation(dot(to_light, to_light), inverse_range_squared);
+    return (*light).color_inverse_square_range.rgb * source_attenuation(
+        dot(to_light, to_light),
+        (*light).color_inverse_square_range.w,
+        (*light).position_radius.w,
+    );
 }
 
 // how much of a spot light's cone `at` is in; derived from bevy_pbr's spot light
