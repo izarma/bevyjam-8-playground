@@ -10,7 +10,7 @@ use super::{
     YarnSpinnerDialogueViewSystemSet,
 };
 use crate::{
-    loading::NPCAssets,
+    loading::{NPCAssets, UIAssets},
     ui::{
         font,
         interaction::InteractionPalette,
@@ -115,7 +115,7 @@ fn continue_dialogue(
     mut runners: Query<&mut DialogueRunner>,
     mut typewriter: ResMut<Typewriter>,
     presented_options: Option<Res<PresentedOptions>>,
-    npc_assets: Res<NPCAssets>,
+    assets: Res<NPCAssets>,
     audio: Res<Audio>,
 ) {
     let advance = keys.just_pressed(KeyCode::Space)
@@ -124,6 +124,11 @@ fn continue_dialogue(
         || touches.any_just_pressed();
     if advance && !typewriter.is_finished() {
         typewriter.fast_forward();
+        if keys.just_pressed(KeyCode::Space) {
+            audio
+                .play(assets.dialogue_continue.clone())
+                .with_volume(3.0);
+        }
         return;
     }
     let auto_advance =
@@ -134,8 +139,10 @@ fn continue_dialogue(
     for mut runner in &mut runners {
         if runner.is_running() && !runner.is_waiting_for_option_selection() {
             runner.continue_in_next_update();
-            if advance {
-                audio.play(npc_assets.dialogue_open.clone());
+            if keys.just_pressed(KeyCode::Space) {
+                audio
+                    .play(assets.dialogue_continue.clone())
+                    .with_volume(3.0);
             }
         }
     }
@@ -147,6 +154,8 @@ fn select_option_by_key(
     mut runners: Query<&mut DialogueRunner>,
     mut commands: Commands,
     options_node: Option<Single<Entity, With<DialogueOptionsNode>>>,
+    assets: Res<UIAssets>,
+    audio: Res<Audio>,
 ) {
     let Some(options_node) = options_node else {
         return;
@@ -161,8 +170,10 @@ fn select_option_by_key(
         return;
     };
     let id = option.id;
-    if let Ok(mut runner) = runners.single_mut() {
-        let _ = runner.select_option(id);
+    if let Ok(mut runner) = runners.single_mut()
+        && runner.select_option(id).is_ok()
+    {
+        audio.play(assets.button_click.clone()).with_volume(3.0);
     }
     clear_options(&mut commands, *options_node);
 }

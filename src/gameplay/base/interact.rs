@@ -1,5 +1,6 @@
 use bevy::prelude::*;
 use bevy_enhanced_input::prelude::*;
+use bevy_kira_audio::prelude::{Audio, AudioControl};
 use bevy_yarnspinner::prelude::DialogueRunner;
 
 use super::{
@@ -11,6 +12,7 @@ use super::{
 use crate::{
     GameplayScene, InControl, PausableSystems,
     gameplay::{DialogueTarget, Met, Player, PlayerAnimation, PlayerAnimationSystems, Visitor},
+    loading::UIAssets,
     ui::{
         billboard::Billboards,
         font,
@@ -23,48 +25,53 @@ use crate::{
 const REACH: f32 = 2.0;
 
 pub(super) fn plugin(app: &mut App) {
-    app.add_systems(
-        Update,
-        find_npc_in_reach
-            .in_set(PausableSystems)
-            .run_if(in_state(GameplayScene::Base)),
-    )
-    .add_systems(
-        Update,
-        show_talk_prompt
-            .after(find_npc_in_reach)
-            .run_if(in_state(GameplayScene::Base)),
-    )
-    .add_systems(
-        Update,
-        face_in_reach
-            .before(PlayerAnimationSystems::UpdateState)
-            .in_set(PausableSystems)
-            .run_if(in_state(GameplayScene::Base)),
-    )
-    .add_observer(start_interaction)
-    .add_observer(face_npc);
+    app.register_type::<Gong>()
+        .add_systems(
+            Update,
+            find_interactable_in_reach
+                .in_set(PausableSystems)
+                .run_if(in_state(GameplayScene::Base)),
+        )
+        .add_systems(
+            Update,
+            show_interaction_prompt
+                .after(find_interactable_in_reach)
+                .run_if(in_state(GameplayScene::Base)),
+        )
+        .add_systems(
+            Update,
+            face_in_reach
+                .before(PlayerAnimationSystems::UpdateState)
+                .in_set(PausableSystems)
+                .run_if(in_state(GameplayScene::Base)),
+        )
+        .add_observer(start_interaction)
+        .add_observer(face_npc);
 }
 
-/// The nearest NPC the player can currently interact with.
+#[derive(Component, Reflect, Default)]
+#[reflect(Component, Default)]
+pub struct Gong;
+
 #[derive(Component)]
 pub(super) struct InReach;
 
-fn find_npc_in_reach(
+fn find_interactable_in_reach(
     mut commands: Commands,
     player: Option<Single<&GlobalTransform, With<Player>>>,
-    npcs: Query<(Entity, &GlobalTransform, Has<InReach>), With<BodyOf>>,
+    targets: Query<(Entity, &GlobalTransform, Has<InReach>), Or<(With<BodyOf>, With<Gong>)>>,
 ) {
     let ground = |at: &GlobalTransform| Vec2::new(at.translation().x, at.translation().z);
     let nearest = player.and_then(|player| {
         let player = ground(&player);
-        npcs.iter()
+        targets
+            .iter()
             .map(|(npc, at, _)| (npc, ground(at).distance(player)))
             .filter(|(_, distance)| *distance <= REACH)
             .min_by(|a, b| a.1.total_cmp(&b.1))
             .map(|(npc, _)| npc)
     });
-    for (npc, _, in_reach) in &npcs {
+    for (npc, _, in_reach) in &targets {
         if in_reach && Some(npc) != nearest {
             commands.entity(npc).remove::<InReach>();
         } else if !in_reach && Some(npc) == nearest {
@@ -73,21 +80,20 @@ fn find_npc_in_reach(
     }
 }
 
-/// World-space "Talk" prompt floating over the nearest interactable NPC.
 #[derive(Component)]
-struct TalkPrompt {
-    npc: Entity,
+struct InteractionPrompt {
+    target: Entity,
 }
 
-const TALK_CANVAS: UVec2 = UVec2::new(64, 26);
+const INTERACTION_CANVAS: UVec2 = UVec2::new(64, 26);
 
-fn show_talk_prompt(
+fn show_interaction_prompt(
     mut commands: Commands,
     in_reach: Option<Single<Entity, With<InReach>>>,
     in_control: Option<Res<State<InControl>>>,
     runners: Query<&DialogueRunner>,
-    prompts: Query<(Entity, &TalkPrompt)>,
-    npcs: Query<&GlobalTransform, With<BodyOf>>,
+    prompts: Query<(Entity, &InteractionPrompt)>,
+    targets: Query<(&GlobalTransform, Has<Gong>), Or<(With<BodyOf>, With<Gong>)>>,
     mut billboards: Billboards,
 ) {
     // hidden while a menu is up or a dialogue is running
@@ -96,26 +102,35 @@ fn show_talk_prompt(
         .map(|npc| *npc)
         .filter(|_| in_control.is_some() && !talking);
     for (prompt, shown) in &prompts {
-        if Some(shown.npc) != target {
+        if Some(shown.target) != target {
             commands.entity(prompt).despawn();
         }
     }
     let Some(npc) = target else {
         return;
     };
-    if prompts.iter().any(|(_, shown)| shown.npc == npc) {
+    if prompts.iter().any(|(_, shown)| shown.target == npc) {
         return;
     }
-    let Ok(at) = npcs.get(npc) else {
+    let Ok((at, gong)) = targets.get(npc) else {
         return;
     };
-    let above = at.translation() + Vec3::Y * (BODY_HEIGHT / 2.5);
+    let height = if gong { 2.2 } else { BODY_HEIGHT / 2.5 };
+    let above = at.translation() + Vec3::Y * height;
     billboards
-        .spawn(TALK_CANVAS, above, talk_panel(), GameplayScene::Base)
-        .insert((Name::new("Talk Prompt"), TalkPrompt { npc }));
+        .spawn(
+            INTERACTION_CANVAS,
+            above,
+            interaction_panel(if gong { "Ring" } else { "Talk" }),
+            GameplayScene::Base,
+        )
+        .insert((
+            Name::new("Interaction Prompt"),
+            InteractionPrompt { target: npc },
+        ));
 }
 
-fn talk_panel() -> impl Scene {
+fn interaction_panel(label: &'static str) -> impl Scene {
     bsn! {
         #TalkCanvas
         Node {
@@ -129,7 +144,7 @@ fn talk_panel() -> impl Scene {
                 align_items: AlignItems::Center,
             }
             Children [
-                Text("Talk")
+                Text(label)
                 @font::text(1)
                 TextColor(LABEL_TEXT)
                 Pickable::IGNORE
@@ -147,24 +162,29 @@ fn talk_panel() -> impl Scene {
     }
 }
 
-/// Starts the Yarn node for the in-reach NPC when the player interacts.
 fn start_interaction(
     _: On<Start<Touch>>,
-    npcs: Query<Entity, With<InReach>>,
+    targets: Query<(Entity, Has<Gong>), With<InReach>>,
     in_dialogue: Query<Entity, With<InDialogue>>,
     bodies: Query<&BodyOf>,
     visitors: Query<&Visitor>,
     mut runner: Query<&mut DialogueRunner>,
     mut target: ResMut<DialogueTarget>,
     mut commands: Commands,
+    assets: Res<UIAssets>,
+    audio: Res<Audio>,
 ) {
-    let Some(npc) = npcs.iter().next() else {
+    let Some((npc, gong)) = targets.iter().next() else {
         return;
     };
     let Ok(mut runner) = runner.single_mut() else {
         return;
     };
     if runner.is_running() {
+        return;
+    }
+    if gong {
+        audio.play(assets.gong.clone());
         return;
     }
     let Some(body) = bodies.get(npc).ok() else {
