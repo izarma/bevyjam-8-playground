@@ -26,10 +26,10 @@ pub(super) fn plugin(app: &mut App) {
 
 #[derive(AssetCollection, Resource)]
 pub struct AmbienceAssets {
-    #[asset(path = "audio/ambience/menus.ogg")]
-    pub menus: Handle<AudioSource>,
     #[asset(path = "audio/ambience/outside.ogg")]
     pub outdoors: Handle<AudioSource>,
+    #[asset(path = "audio/music/explore.ogg")]
+    pub outdoor_music: Handle<AudioSource>,
 }
 
 #[derive(AssetCollection, Resource)]
@@ -126,10 +126,6 @@ pub struct HarvestingAssets {
             "audio/sfx/harvesting/harvesting_2.ogg",
             "audio/sfx/harvesting/harvesting_3.ogg",
             "audio/sfx/harvesting/harvesting_4.ogg",
-            "audio/sfx/harvesting/harvesting_5.ogg",
-            "audio/sfx/harvesting/harvesting_6.ogg",
-            "audio/sfx/harvesting/harvesting_7.ogg",
-            "audio/sfx/harvesting/harvesting_8.ogg",
         ),
         collection(typed)
     )]
@@ -143,11 +139,6 @@ pub struct ConcoctionAssets {
             "audio/sfx/herb_drop/herb_drop_1.ogg",
             "audio/sfx/herb_drop/herb_drop_2.ogg",
             "audio/sfx/herb_drop/herb_drop_3.ogg",
-            "audio/sfx/herb_drop/herb_drop_4.ogg",
-            "audio/sfx/herb_drop/herb_drop_5.ogg",
-            "audio/sfx/herb_drop/herb_drop_6.ogg",
-            "audio/sfx/herb_drop/herb_drop_7.ogg",
-            "audio/sfx/herb_drop/herb_drop_8.ogg",
         ),
         collection(typed)
     )]
@@ -157,17 +148,15 @@ pub struct ConcoctionAssets {
             "audio/sfx/herb_anticipation/herb_anticipation_1.ogg",
             "audio/sfx/herb_anticipation/herb_anticipation_2.ogg",
             "audio/sfx/herb_anticipation/herb_anticipation_3.ogg",
-            "audio/sfx/herb_anticipation/herb_anticipation_4.ogg",
         ),
         collection(typed)
     )]
     pub herb_anticipation: Vec<Handle<AudioSource>>,
     #[asset(
         paths(
-            "audio/sfx/herb_heal/herb_heal_1.ogg",
-            "audio/sfx/herb_heal/herb_heal_2.ogg",
-            "audio/sfx/herb_heal/herb_heal_3.ogg",
-            "audio/sfx/herb_heal/herb_heal_4.ogg",
+            "audio/sfx/herb_good/herb_good_1.ogg",
+            "audio/sfx/herb_good/herb_good_2.ogg",
+            "audio/sfx/herb_good/herb_good_3.ogg",
         ),
         collection(typed)
     )]
@@ -177,7 +166,6 @@ pub struct ConcoctionAssets {
             "audio/sfx/herb_neutral/herb_neutral_1.ogg",
             "audio/sfx/herb_neutral/herb_neutral_2.ogg",
             "audio/sfx/herb_neutral/herb_neutral_3.ogg",
-            "audio/sfx/herb_neutral/herb_neutral_4.ogg",
         ),
         collection(typed)
     )]
@@ -187,7 +175,6 @@ pub struct ConcoctionAssets {
             "audio/sfx/herb_bad/herb_bad_1.ogg",
             "audio/sfx/herb_bad/herb_bad_2.ogg",
             "audio/sfx/herb_bad/herb_bad_3.ogg",
-            "audio/sfx/herb_bad/herb_bad_4.ogg",
         ),
         collection(typed)
     )]
