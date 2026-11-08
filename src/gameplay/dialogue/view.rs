@@ -5,11 +5,13 @@ use bevy_yarnspinner::{
 };
 use unicode_segmentation::UnicodeSegmentation;
 
-use super::{SpeakerChangeEvent, YarnSpinnerDialogueViewSystemSet, concoction::Concoction};
+use super::{
+    DialogueTarget, SpeakerChangeEvent, YarnSpinnerDialogueViewSystemSet, concoction::Concoction,
+};
 use crate::{
     GameplayScene,
     gameplay::{
-        BodyOf, Health, InDialogue,
+        Health,
         clock::Clock,
         herbs::{self, Element},
         visitors::{Ailing, Ailment},
@@ -159,15 +161,15 @@ impl Typewriter {
 fn spawn_dialogue_ui(
     _: On<DialogueStarted>,
     mut commands: Commands,
-    npc: Query<&BodyOf, With<InDialogue>>,
+    target: Res<DialogueTarget>,
     visitors: Query<(&Health, Option<&Ailing>)>,
     clock: Single<&Clock>,
 ) {
     commands.init_resource::<Typewriter>();
 
-    let health = npc
-        .iter()
-        .find_map(|body| visitors.get(body.0).ok())
+    let health = target
+        .0
+        .and_then(|visitor| visitors.get(visitor).ok())
         .map(|(&health, ailing)| -> Box<dyn Scene> {
             let ailment = ailing.map(|ailing| (ailing.ailment, ailing.next - clock.hours));
             Box::new(health_panel(health, ailment))
@@ -531,7 +533,7 @@ fn health_panel(health: Health, ailment: Option<(Ailment, f32)>) -> impl Scene {
 }
 
 fn show_ailment(
-    npc: Query<&BodyOf, With<InDialogue>>,
+    target: Res<DialogueTarget>,
     visitors: Query<&Ailing>,
     clock: Single<&Clock>,
     mut texts: Query<
@@ -548,7 +550,9 @@ fn show_ailment(
         )>,
     >,
 ) {
-    let ailing = npc.iter().find_map(|body| visitors.get(body.0).ok());
+    let ailing = target
+        .0
+        .and_then(|visitor| visitors.get(visitor).ok());
     for (mut text, title, counting, marked) in &mut texts {
         let shown = match (ailing, title, counting, marked) {
             (Some(ailing), true, ..) => ailing.ailment.name(),
@@ -616,12 +620,15 @@ fn health_rows(health: Health, ailment: Option<Ailment>) -> Vec<Box<dyn Scene>> 
 
 // shows the visitor health optionally with the currently selected concoction
 fn update_health_bars(
-    npc: Query<&BodyOf, With<InDialogue>>,
+    target: Res<DialogueTarget>,
     visitors: Query<&Health>,
     concoction: Option<Single<&Concoction>>,
     mut fills: Query<(&DialogueHealthFill, &mut Node, &mut BackgroundColor)>,
 ) {
-    let Some(&health) = npc.iter().find_map(|body| visitors.get(body.0).ok()) else {
+    let Some(&health) = target
+        .0
+        .and_then(|visitor| visitors.get(visitor).ok())
+    else {
         return;
     };
     let health = concoction.map_or(health, |concoction| concoction.preview(health));
@@ -635,12 +642,15 @@ fn update_health_bars(
 
 fn float_health_changes(
     mut commands: Commands,
-    npc: Query<&BodyOf, With<InDialogue>>,
+    target: Res<DialogueTarget>,
     visitors: Query<&Health>,
     mut shown: Single<&mut ShownHealth>,
     fills: Query<(&DialogueHealthFill, &ChildOf)>,
 ) {
-    let Some(&health) = npc.iter().find_map(|body| visitors.get(body.0).ok()) else {
+    let Some(&health) = target
+        .0
+        .and_then(|visitor| visitors.get(visitor).ok())
+    else {
         return;
     };
     if shown.0 == health {

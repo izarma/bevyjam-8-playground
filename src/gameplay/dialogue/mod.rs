@@ -33,6 +33,7 @@ pub(super) fn plugin(app: &mut App) {
         speaker::plugin,
         concoction::plugin,
     ))
+    .init_resource::<DialogueTarget>()
     .add_message::<SpeakerChangeEvent>()
     .configure_sets(
         Update,
@@ -56,6 +57,9 @@ pub(super) fn plugin(app: &mut App) {
 /// Is run after the [`YarnSpinnerSystemSet`](bevy_yarnspinner::prelude::YarnSpinnerSystemSet).
 #[derive(Debug, Default, Clone, Copy, SystemSet, Eq, PartialEq, Hash)]
 pub struct YarnSpinnerDialogueViewSystemSet;
+
+#[derive(Resource, Default)]
+pub(crate) struct DialogueTarget(pub(crate) Option<Entity>);
 
 /// Spawns the single [`DialogueRunner`] the game uses once the Yarn project has
 /// finished compiling. The runner is left idle until an interaction starts it.
@@ -102,18 +106,28 @@ fn give_guardian_herbs(gift: Single<&Gift>, mut inventory: Single<&mut Inventory
     }
 }
 
-fn stop_dialogue_runner(mut commands: Commands, mut runners: Query<&mut DialogueRunner>) {
+fn stop_dialogue_runner(
+    mut commands: Commands,
+    mut runners: Query<&mut DialogueRunner>,
+    mut target: ResMut<DialogueTarget>,
+) {
     for mut runner in &mut runners {
         if runner.is_running() {
             runner.stop();
         }
     }
+    target.0 = None;
     commands.remove_resource::<view::PresentedOptions>();
     commands.remove_resource::<view::Typewriter>();
 }
 
-fn despawn_dialogue_runner(mut commands: Commands, runners: Query<Entity, With<DialogueRunner>>) {
+fn despawn_dialogue_runner(
+    mut commands: Commands,
+    runners: Query<Entity, With<DialogueRunner>>,
+    mut target: ResMut<DialogueTarget>,
+) {
     for runner in &runners {
         commands.entity(runner).despawn();
     }
+    target.0 = None;
 }

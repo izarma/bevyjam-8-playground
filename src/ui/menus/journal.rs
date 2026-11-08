@@ -7,13 +7,12 @@
 //!    └─ content_row (row)
 //!       ├─ tab_bar (column)
 //!       │  └─ tab × N (one per met visitor)
-//!       └─ portrait_view (row)
-//!          ├─ left column (column)
-//!          │  ├─ top row (row)
-//!          │  │  ├─ portrait_slot (panel → portrait image)
-//!          │  │  └─ health_panel (panel → "Health" + 5 element bars)
-//!          │  └─ description_panel (panel → "Profile" + text)
-//!          └─ history_panel (panel → "Brews" + brew entries)
+//!       └─ portrait_view (column)
+//!          ├─ top row (row)
+//!          │  ├─ portrait_slot (panel → portrait image)
+//!          │  ├─ health_panel (panel → "Health" + 5 element bars)
+//!          │  └─ history_panel (panel → "Brews" + brew entries)
+//!          └─ description_panel (panel → name + text, spans the top row)
 //! ```
 //!
 
@@ -60,17 +59,25 @@ const TAB_PANEL_SIZE: u16 = 24; // the clickable tab square
 
 // Health panel.
 const HEALTH_BAR_WIDTH: u16 = 88;
-const HEALTH_BAR_HEIGHT: u16 = 8;
+const HEALTH_BAR_HEIGHT: u16 = 6;
 const HEALTH_PANEL_WIDTH: u16 = 128;
 
-// Profile description panel: spans the portrait + health top row.
-const PORTRAIT_HEALTH_GAP: u16 = 4;
-const DESCRIPTION_PANEL_WIDTH: u16 = PORTRAIT_SLOT_WIDTH + PORTRAIT_HEALTH_GAP + HEALTH_PANEL_WIDTH;
+// Profile description panel: spans the whole top row below it.
+const COLUMN_GAP: u16 = 4;
+const TOP_ROW_WIDTH: u16 =
+    PORTRAIT_SLOT_WIDTH + COLUMN_GAP + HEALTH_PANEL_WIDTH + COLUMN_GAP + HISTORY_PANEL_WIDTH;
+const DESCRIPTION_PANEL_WIDTH: u16 = TOP_ROW_WIDTH;
 
 // Brew history panel.
 const HISTORY_PANEL_WIDTH: u16 = 128;
 const BREW_SLOT_SIZE: u16 = 24;
 const BREW_SLOT_GAP: u16 = 2;
+
+const LINE_HEIGHT: u16 = 16;
+
+const CONTENT_HEIGHT: u16 = 192 - 2 * 5 - LINE_HEIGHT - 4;
+
+const DESCRIPTION_PANEL_HEIGHT: u16 = CONTENT_HEIGHT - PORTRAIT_SLOT_HEIGHT - 2;
 
 fn spawn_journal_menu(
     mut commands: Commands,
@@ -347,7 +354,7 @@ fn tab_icon(image: Handle<Image>, rect: Rect) -> impl Scene {
     }
 }
 
-/// portrait + health
+/// top row: portrait, health, and brew history
 fn portrait_view(
     image: Handle<Image>,
     rect: Rect,
@@ -358,36 +365,27 @@ fn portrait_view(
 ) -> Box<dyn Scene> {
     Box::new(bsn! {
         Node {
-            column_gap: texels(4),
+            flex_direction: FlexDirection::Column,
+            row_gap: texels(2),
             align_items: AlignItems::FlexStart,
         }
         Pickable::IGNORE
         Children [
-            // Left column.
             Node {
-                flex_direction: FlexDirection::Column,
-                row_gap: texels(2),
+                flex_direction: FlexDirection::Row,
+                column_gap: texels(COLUMN_GAP),
                 align_items: AlignItems::FlexStart,
             }
             Pickable::IGNORE
             Children [
-                // Top row: portrait beside health.
-                Node {
-                    flex_direction: FlexDirection::Row,
-                    column_gap: texels(PORTRAIT_HEALTH_GAP),
-                    align_items: AlignItems::FlexStart,
-                }
-                Pickable::IGNORE
-                Children [
-                    @portrait_slot(image, rect)
-                    --
-                    @health_panel(health)
-                ]
+                @portrait_slot(image, rect)
                 --
-                @description_panel(name, description)
+                @health_panel(health)
+                --
+                @history_panel(history)
             ]
             --
-            @history_panel(history)
+            @description_panel(name, description)
         ]
     })
 }
@@ -422,10 +420,12 @@ fn description_panel(name: &'static str, text: &'static str) -> impl Scene {
     bsn! {
         Node {
             width: texels(DESCRIPTION_PANEL_WIDTH),
+            height: texels(DESCRIPTION_PANEL_HEIGHT),
             flex_direction: FlexDirection::Column,
             align_items: AlignItems::Stretch,
             row_gap: texels(1),
-            padding: UiRect::all(texels(4)),
+            padding: UiRect::new(texels(4), texels(4), texels(3), texels(3)),
+            overflow: Overflow::clip(),
         }
         @widget::panel()
         Pickable::IGNORE
@@ -453,10 +453,12 @@ fn history_panel(history: &BrewHistory) -> impl Scene {
     bsn! {
         Node {
             width: texels(HISTORY_PANEL_WIDTH),
+            height: texels(PORTRAIT_SLOT_HEIGHT),
             flex_direction: FlexDirection::Column,
             align_items: AlignItems::Stretch,
             row_gap: texels(1),
             padding: UiRect::all(texels(4)),
+            overflow: Overflow::clip(),
         }
         @widget::panel()
         Pickable::IGNORE
