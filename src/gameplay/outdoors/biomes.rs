@@ -75,13 +75,17 @@ fn sow(
             continue;
         };
         let herbs = biome.deal(ids.len());
-        fields.0.extend(ids.into_iter().zip(herbs).map(|(id, herb)| (
-            id,
-            Field {
-                herb,
-                ready: START_HOUR,
-            },
-        )));
+        fields
+            .0
+            .extend(ids.into_iter().zip(herbs).map(|(id, herb)| {
+                (
+                    id,
+                    Field {
+                        herb,
+                        ready: START_HOUR,
+                    },
+                )
+            }));
     }
 
     for (spot, id, _) in &spots {

@@ -6,8 +6,7 @@ pub(crate) use concoction::Concoction;
 
 use bevy::prelude::*;
 use bevy_yarnspinner::prelude::{
-    DialogueRunner, YarnFileSource, YarnProject, YarnSpinnerPlugin, YarnSpinnerSystemSet,
-    YarnValue,
+    DialogueRunner, YarnFileSource, YarnProject, YarnSpinnerPlugin, YarnSpinnerSystemSet, YarnValue,
 };
 
 use crate::{
@@ -78,7 +77,7 @@ fn spawn_dialogue_runner(
         .commands_mut()
         .add_command("offer_concoction", offer_concoction)
         .add_command("give_guardian_herbs", give_guardian_herbs);
-    
+
     let gifts = gift.0.into_iter().enumerate().map(|(index, herb)| {
         (
             format!("$gift_{}", index + 1),

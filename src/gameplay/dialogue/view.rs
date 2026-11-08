@@ -485,7 +485,9 @@ fn mark(ailment: Ailment, element: Element) -> String {
 
 fn health_panel(health: Health, ailment: Option<(Ailment, f32)>) -> impl Scene {
     let title = ailment.map_or("Health".to_string(), |(ailment, _)| ailment.name());
-    let hours = ailment.map(|(_, hours)| countdown(hours)).unwrap_or_default();
+    let hours = ailment
+        .map(|(_, hours)| countdown(hours))
+        .unwrap_or_default();
     bsn! {
         #DialogueHealth
         ShownHealth(health)
@@ -538,7 +540,11 @@ fn show_ailment(
             Has<AilmentCountdown>,
             Option<&AilmentMark>,
         ),
-        Or<(With<AilmentTitle>, With<AilmentCountdown>, With<AilmentMark>)>,
+        Or<(
+            With<AilmentTitle>,
+            With<AilmentCountdown>,
+            With<AilmentMark>,
+        )>,
     >,
 ) {
     let ailing = npc.iter().find_map(|body| visitors.get(body.0).ok());
@@ -562,7 +568,9 @@ fn health_rows(health: Health, ailment: Option<Ailment>) -> Vec<Box<dyn Scene>> 
         .map(|element| -> Box<dyn Scene> {
             let value = health.get(element);
             let width = bar_width(value);
-            let next = ailment.map(|ailment| mark(ailment, element)).unwrap_or_default();
+            let next = ailment
+                .map(|ailment| mark(ailment, element))
+                .unwrap_or_default();
             Box::new(bsn! {
                 Node {
                     flex_direction: FlexDirection::Row,

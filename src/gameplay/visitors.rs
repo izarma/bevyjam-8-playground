@@ -157,11 +157,7 @@ impl Gift {
             }
             !after.dead() && after.imbalance() < sick.imbalance()
         };
-        let (cure, other) = pairs
-            .iter()
-            .copied()
-            .find(helps)
-            .unwrap_or(pairs[0]);
+        let (cure, other) = pairs.iter().copied().find(helps).unwrap_or(pairs[0]);
         let mut herbs = [signature, cure, other];
         herbs.shuffle(rng);
         Gift(herbs)
@@ -174,7 +170,6 @@ pub(crate) struct Died;
 // drank their remedy
 #[derive(Component)]
 pub(crate) struct Cured;
-
 
 #[derive(Clone, Copy)]
 pub(crate) enum Ailment {
@@ -350,4 +345,3 @@ fn end_game(
     });
     commands.trigger(Travel::GameOver);
 }
-

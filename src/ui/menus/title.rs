@@ -15,7 +15,10 @@ pub struct TitlePlayerSpawn;
 
 pub(super) fn plugin(app: &mut App) {
     app.add_observer(spawn_title_player)
-        .add_systems(OnEnter(GameState::Title), (spawn_title_scene, spawn_game_title))
+        .add_systems(
+            OnEnter(GameState::Title),
+            (spawn_title_scene, spawn_game_title),
+        )
         .add_systems(
             Update,
             (tick_player_animation, apply_player_animation)

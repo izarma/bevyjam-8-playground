@@ -135,7 +135,10 @@ fn preview_spots(
         if dealt.get(&biome) == Some(&now) {
             continue;
         }
-        let deal = Biome { herbs: now.1.clone() }.deal(now.0.len());
+        let deal = Biome {
+            herbs: now.1.clone(),
+        }
+        .deal(now.0.len());
         for (&spot, herb) in now.0.iter().zip(deal) {
             commands.spawn((
                 Name::new("Herb Preview"),

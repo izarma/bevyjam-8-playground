@@ -67,7 +67,6 @@ pub(super) struct LineupShown;
 #[derive(Component)]
 struct NpcTarget(Vec2);
 
-
 fn sync_lineup(
     mut commands: Commands,
     lab: Single<(Entity, Has<LineupShown>), With<LabScene>>,

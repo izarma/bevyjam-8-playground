@@ -175,7 +175,7 @@ fn sweep(
     } else {
         Visibility::Hidden
     });
-    
+
     let pixels_per_texel = pixels_per_texel(&window);
     if (material.swept != swept || material.pixels_per_texel != pixels_per_texel)
         && let Some(mut material) = materials.get_mut(&screen.0)
