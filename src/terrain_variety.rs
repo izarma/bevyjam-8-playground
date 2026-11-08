@@ -41,7 +41,13 @@ pub(super) fn plugin(app: &mut App) {
                     weight,
                 })
                 .collect();
-            (material.into(), TileVariety { variants, turn: true })
+            (
+                material.into(),
+                TileVariety {
+                    variants,
+                    turn: true,
+                },
+            )
         })
         .collect(),
     ));

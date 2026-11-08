@@ -48,8 +48,6 @@ pub struct PixelSky {
     pub stars: f32,
 }
 
-// the sandbox's "soft pixel": a smooth gradient dithered only near the horizon.
-// its "chunky smooth" is texels_per_degree 1.5, dither 0, glow_rings 0. smaller sun
 impl Default for PixelSky {
     fn default() -> Self {
         Self {
