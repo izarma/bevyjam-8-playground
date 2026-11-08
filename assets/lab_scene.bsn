@@ -336,7 +336,7 @@ bevy_ecs::hierarchy::Children [
         translation: glam::Vec3 {
             x: -0.7653529644012451,
             y: 0.875,
-            z: -0.13207614421844482,
+            z: 0.24808120727539063,
         },
     }
     jackdaw_scene_types::node_id::SceneNodeId(3601523817026976948)
@@ -415,6 +415,192 @@ bevy_ecs::hierarchy::Children [
         flame: glam::Vec3 {
             x: 0.1146,
             y: 3.4896,
+            z: 0.05,
+        },
+    }
+    --
+    #Banner1
+    bevy_transform::components::transform::Transform {
+        translation: glam::Vec3 {
+            x: -10.829654693603516,
+            y: 1.5,
+            z: -4.900000095367432,
+        },
+    }
+    jackdaw_scene_types::node_id::SceneNodeId(9111000000000000001)
+    pixel_art::sprite::PixelSprite {
+        image: "sprites/banner_1.png",
+        size: core::option::Option::Some(glam::UVec2 { x: 11, y: 39 }),
+        billboard: false,
+    }
+    --
+    #Banner1copy
+    bevy_transform::components::transform::Transform {
+        translation: glam::Vec3 {
+            x: 11.173736572265625,
+            y: 1.5,
+            z: -4.900000095367432,
+        },
+    }
+    jackdaw_scene_types::node_id::SceneNodeId(560507654700494397)
+    pixel_art::sprite::PixelSprite {
+        image: "sprites/banner_1.png",
+        size: core::option::Option::Some(glam::UVec2 { x: 11, y: 39 }),
+        billboard: false,
+    }
+    --
+    #Banner2
+    bevy_transform::components::transform::Transform {
+        translation: glam::Vec3 {
+            x: -13.205038070678711,
+            y: 1.5,
+            z: -4.900000095367432,
+        },
+    }
+    jackdaw_scene_types::node_id::SceneNodeId(9111000000000000002)
+    pixel_art::sprite::PixelSprite {
+        image: "sprites/banner_2.png",
+        size: core::option::Option::Some(glam::UVec2 { x: 12, y: 38 }),
+        billboard: false,
+    }
+    --
+    #Banner2copy
+    bevy_transform::components::transform::Transform {
+        translation: glam::Vec3 {
+            x: -1.8959012031555176,
+            y: 1.5,
+            z: -4.900000095367432,
+        },
+    }
+    jackdaw_scene_types::node_id::SceneNodeId(560507654700494398)
+    pixel_art::sprite::PixelSprite {
+        image: "sprites/banner_2.png",
+        size: core::option::Option::Some(glam::UVec2 { x: 12, y: 38 }),
+        billboard: false,
+    }
+    --
+    #Banner3
+    bevy_transform::components::transform::Transform {
+        translation: glam::Vec3 {
+            x: 8.789566993713379,
+            y: 1.6124999523162842,
+            z: -4.900000095367432,
+        },
+    }
+    jackdaw_scene_types::node_id::SceneNodeId(9111000000000000003)
+    pixel_art::sprite::PixelSprite {
+        image: "sprites/banner_3.png",
+        size: core::option::Option::Some(glam::UVec2 { x: 13, y: 35 }),
+        billboard: false,
+    }
+    --
+    #Banner3copy
+    bevy_transform::components::transform::Transform {
+        translation: glam::Vec3 {
+            x: 0.5687098503112793,
+            y: 1.6124999523162842,
+            z: -4.900000095367432,
+        },
+    }
+    jackdaw_scene_types::node_id::SceneNodeId(560507654700494399)
+    pixel_art::sprite::PixelSprite {
+        image: "sprites/banner_3.png",
+        size: core::option::Option::Some(glam::UVec2 { x: 13, y: 35 }),
+        billboard: false,
+    }
+    --
+    #Cauldron
+    bevy_transform::components::transform::Transform {
+        translation: glam::Vec3 {
+            x: -3.3321309089660645,
+            y: 0.0,
+            z: -1.48011314868927,
+        },
+    }
+    jackdaw_scene_types::node_id::SceneNodeId(9111000000000000004)
+    pixel_art::sprite::PixelSprite {
+        image: "sprites/cauldron.png",
+        size: core::option::Option::Some(glam::UVec2 { x: 20, y: 23 }),
+        billboard: false,
+    }
+    --
+    #Gong
+    bevy_transform::components::transform::Transform {
+        translation: glam::Vec3 {
+            x: -17.114543914794922,
+            y: 0.012385815382003784,
+            z: -2.5057764053344727,
+        },
+    }
+    jackdaw_scene_types::node_id::SceneNodeId(9111000000000000005)
+    pixel_art::sprite::PixelSprite {
+        image: "sprites/gong.png",
+        size: core::option::Option::Some(glam::UVec2 { x: 34, y: 38 }),
+        billboard: false,
+    }
+    --
+    #CandlePedestal
+    bevy_transform::components::transform::Transform {
+        translation: glam::Vec3 {
+            x: 4.0,
+            y: 0.0,
+            z: -4.3,
+        },
+    }
+    jackdaw_scene_types::node_id::SceneNodeId(9111000000000000006)
+    pixel_art::sprite::PixelSprite {
+        image: "sprites/candle_pedestal.png",
+        size: core::option::Option::Some(glam::UVec2 { x: 9, y: 23 }),
+        billboard: false,
+    }
+    bevy_game::gameplay::candles::Candle {
+        flame: glam::Vec3 {
+            x: 0.0,
+            y: 1.25,
+            z: 0.05,
+        },
+    }
+    --
+    #CandlesSmall2
+    bevy_transform::components::transform::Transform {
+        translation: glam::Vec3 {
+            x: 6.324573516845703,
+            y: 0.8506507873535156,
+            z: 2.5720040798187256,
+        },
+    }
+    jackdaw_scene_types::node_id::SceneNodeId(9111000000000000007)
+    pixel_art::sprite::PixelSprite {
+        image: "sprites/candles_small_2.png",
+        size: core::option::Option::Some(glam::UVec2 { x: 13, y: 18 }),
+        billboard: false,
+    }
+    bevy_game::gameplay::candles::Candle {
+        flame: glam::Vec3 {
+            x: -0.02,
+            y: 0.94,
+            z: 0.05,
+        },
+    }
+    --
+    #CandlesSmall4
+    bevy_transform::components::transform::Transform {
+        translation: glam::Vec3 {
+            x: -12.25473403930664,
+            y: 0.8094204664230347,
+            z: 2.507390260696411,
+        },
+    }
+    jackdaw_scene_types::node_id::SceneNodeId(9111000000000000008)
+    pixel_art::sprite::PixelSprite {
+        image: "sprites/candles_small_4.png",
+        size: core::option::Option::Some(glam::UVec2 { x: 13, y: 15 }),
+        billboard: false,
+    }
+    bevy_game::gameplay::candles::Candle {
+        flame: glam::Vec3 {
+            x: -0.02,
+            y: 0.78,
             z: 0.05,
         },
     }
@@ -1605,5 +1791,52 @@ bevy_ecs::hierarchy::Children [
     }
     bevy_game::gameplay::time_of_day::Daylit {
         intensity: 20000000.0,
+    }
+    --
+    #Table2
+    bevy_transform::components::transform::Transform {
+        translation: glam::Vec3 {
+            x: 5.4906768798828125,
+            y: 0.0,
+            z: 2.507390260696411,
+        },
+    }
+    jackdaw_scene_types::node_id::SceneNodeId(560507654700494400)
+    pixel_art::sprite::PixelSprite {
+        image: "sprites/interior_props.png",
+        size: core::option::Option::Some(glam::UVec2 { x: 48, y: 32 }),
+        cell: 2,
+        billboard: false,
+    }
+    --
+    #Table3
+    bevy_transform::components::transform::Transform {
+        translation: glam::Vec3 {
+            x: -11.777015686035156,
+            y: 0.0,
+            z: 2.507390260696411,
+        },
+    }
+    pixel_art::sprite::PixelSprite {
+        image: "sprites/interior_props.png",
+        size: core::option::Option::Some(glam::UVec2 { x: 48, y: 32 }),
+        cell: 2,
+        billboard: false,
+    }
+    jackdaw_scene_types::node_id::SceneNodeId(560507654700494401)
+    --
+    #Gong2
+    bevy_transform::components::transform::Transform {
+        translation: glam::Vec3 {
+            x: 12.75527572631836,
+            y: 0.012385815382003784,
+            z: -2.5057764053344727,
+        },
+    }
+    jackdaw_scene_types::node_id::SceneNodeId(560507654700494402)
+    pixel_art::sprite::PixelSprite {
+        image: "sprites/gong.png",
+        size: core::option::Option::Some(glam::UVec2 { x: 34, y: 38 }),
+        billboard: false,
     }
 ]
