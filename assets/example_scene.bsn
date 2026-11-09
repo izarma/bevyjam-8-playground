@@ -23,9 +23,9 @@ bevy_ecs::hierarchy::Children [
     #Terrain
     bevy_transform::components::transform::Transform {
         translation: glam::Vec3 {
-            x: -32.547630310058594,
+            x: -32.56523132324219,
             y: 0.0,
-            z: -31.455642700195313,
+            z: -31.63095474243164,
         },
         scale: glam::Vec3 {
             x: 1.0,

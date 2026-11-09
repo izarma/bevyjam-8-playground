@@ -46,10 +46,6 @@ pub(super) fn plugin(app: &mut App) {
             OnEnter(GameState::Loading),
             spawn_no_scene_camera(GameState::Loading),
         )
-        .add_systems(
-            OnEnter(GameState::GameOver),
-            spawn_no_scene_camera(GameState::GameOver),
-        )
         .add_systems(Update, (set_up_scene_cameras, fit_sun_cascades));
 }
 

@@ -7,7 +7,7 @@ use rand::{
 };
 
 use crate::{
-    GameResult, GameState,
+    GameState, Survivors,
     gameplay::{
         Intro,
         clock::{Clock, START_HOUR},
@@ -145,6 +145,8 @@ impl Default for Health {
         }
     }
 }
+
+pub(crate) const VISITORS: usize = NAMES.len();
 
 const NAMES: [&str; 6] = [
     "Guardian",
@@ -478,16 +480,16 @@ fn cure(cured: On<Add<Cured>>, mut commands: Commands, mut health: Query<&mut He
 fn end_game(
     mut commands: Commands,
     settled: Query<(), Or<(Added<Died>, Added<Cured>)>>,
-    visitors: Query<(Has<Died>, Has<Cured>), With<Visitor>>,
+    visitors: Query<(&Visitor, Has<Died>, Has<Cured>)>,
 ) {
-    if settled.is_empty() || !visitors.iter().all(|(died, cured)| died || cured) {
+    if settled.is_empty() || !visitors.iter().all(|(_, died, cured)| died || cured) {
         return;
     }
-    let saved = visitors.iter().any(|(_, cured)| cured);
-    commands.insert_resource(if saved {
-        GameResult::Won
-    } else {
-        GameResult::Lost
-    });
+    let saved = visitors
+        .iter()
+        .filter(|(.., cured)| *cured)
+        .map(|(visitor, ..)| visitor.name())
+        .collect();
+    commands.insert_resource(Survivors(saved));
     commands.trigger(Travel::GameOver);
 }

@@ -63,6 +63,7 @@ title: GuardianFirstBrew
 <<offer_concoction>>
 <<if $treated_guardian>>
     Guardian: That helps. But it's no cure.
+    Guardian: Mind the balance, Aruna. Push any element too far, too low or too high, and you could kill someone.
     Guardian: Outdoors to the right are some more herbs. Can you find something to {$guardian_wants}?
 <<else>>
     Guardian: Please, Aruna. I won't last long like this.
@@ -72,12 +73,13 @@ title: GuardianFirstBrew
 title: GuardianChat
 ---
 Guardian: We must find the cause of this vile illness.
+Guardian: Remember to keep an eye on their elements, Aruna. You cannot cure a corpse.
 <<jump VisitOptions>>
 ===
 
 title: GuardianCured
 ---
-Guardian: Ah. I can feel the plague losing its grasp from me.
+Guardian: Ah. I can feel the plague losing its grip on me.
 <<jump CureReward>>
 ===
 
@@ -131,7 +133,7 @@ title: Bride
 <<set $npc_cured to "BrideCured">>
 <<set $npc_dying to "BrideDying">>
 <<if not $met>>
-    Bride: Aannyeong haseyo Unni.
+    Bride: Annyeong haseyo, Unni.
     <<mark_met>>
 <<else>>
     Bride: I am more unwell today. Can you help ease my suffering?
@@ -223,7 +225,7 @@ Old Beauty: Ah. The world looks a little brighter.
 
 title: OldBeautyDying
 ---
-Old Beauty: I can feel the Yama's cold embrace reaching for me.
+Old Beauty: I can feel Yama's cold embrace reaching for me.
 ===
 
 title: Orphan
@@ -234,7 +236,7 @@ title: Orphan
 <<set $npc_dying to "OrphanDying">>
 <<if not $met>>
     Orphan: Big Sis, I miss you.
-    Aruna: I missed you too Little rice ball.
+    Aruna: I missed you too, little rice ball.
     <<mark_met>>
 <<else>>
     Orphan: Big Sis, my stomach hurts today. *sniff*
@@ -282,7 +284,7 @@ Aruna: I have just the thing.
 <<offer_concoction>>
 <<refresh_visitor>>
 <<if $visitor_dead>>
-    Aruna: No—wait. Breathe. Please.
+    Aruna: No, wait. Breathe. Please.
     <<jump {$npc_dying}>>
 <<elseif $visitor_cured>>
     <<jump {$npc_cured}>>
