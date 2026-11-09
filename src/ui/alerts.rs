@@ -2,7 +2,7 @@ use bevy::prelude::*;
 
 use crate::{
     GameState, GameplayScene,
-    gameplay::{InLineup, Met, Returning, ShopClosed, ShopOpened, Visitor},
+    gameplay::{DialogueTarget, Died, InLineup, Met, Returning, ShopClosed, ShopOpened, Visitor},
     loading::NPCAssets,
     ui::{
         font,
@@ -27,7 +27,8 @@ pub(super) fn plugin(app: &mut App) {
         .add_systems(Update, show_notice.run_if(in_state(GameState::Gameplay)))
         .add_observer(announce_opening)
         .add_observer(announce_closing)
-        .add_observer(announce_message);
+        .add_observer(announce_message)
+        .add_observer(announce_death);
 }
 
 /// Root of the row of arrival icons shown while outdoors.
@@ -139,6 +140,23 @@ pub(crate) struct Announce(pub(crate) String);
 
 fn announce_message(message: On<Announce>, mut notices: Query<(&mut Notice, &mut Text)>) {
     announce(&mut notices, message.0.clone());
+}
+
+fn announce_death(
+    died: On<Add<Died>>,
+    visitors: Query<&Visitor>,
+    target: Res<DialogueTarget>,
+    mut notices: Query<(&mut Notice, &mut Text)>,
+) {
+    if target.0 == Some(died.entity) {
+        return;
+    }
+    if let Ok(visitor) = visitors.get(died.entity) {
+        announce(
+            &mut notices,
+            format!("The {} has passed away.", visitor.name()),
+        );
+    }
 }
 
 fn announce_opening(_: On<ShopOpened>, mut notices: Query<(&mut Notice, &mut Text)>) {

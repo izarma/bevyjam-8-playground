@@ -9,6 +9,7 @@ use rand::{
 use crate::{
     GameState, Survivors,
     gameplay::{
+        Intro,
         clock::{Clock, START_HOUR},
         herbs::{self, Element},
         remedy::{Mark, Remedy, SLOTS},
@@ -392,9 +393,11 @@ pub(crate) struct ShopClosed;
 fn update_lineup(
     mut commands: Commands,
     clock: Single<&Clock>,
+    intro: Res<Intro>,
     visitors: Query<
         (
             Entity,
+            &Visitor,
             &Health,
             Has<Died>,
             Has<Cured>,
@@ -411,8 +414,12 @@ fn update_lineup(
         .iter()
         .filter_map(|(.., spot)| spot.map(|spot| spot.0))
         .collect::<Vec<_>>();
-    for (visitor, health, died, cured, returning, spot) in &visitors {
-        let here = daytime && !died && !cured && (returning || health.unwell());
+    for (visitor, who, health, died, cured, returning, spot) in &visitors {
+        let here = daytime
+            && !died
+            && !cured
+            && (returning || health.unwell())
+            && !(who.guardian() && !intro.guardian_may_enter());
         match (here, spot) {
             (true, None) => {
                 let free = (0..).find(|spot| !taken.contains(spot)).unwrap_or_default();

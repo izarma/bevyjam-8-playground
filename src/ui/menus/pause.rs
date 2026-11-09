@@ -2,13 +2,19 @@ use bevy::prelude::*;
 
 use crate::{
     GameState, Pause,
-    ui::{menus::Menu, widget},
+    gameplay::upgrades::Rewards,
+    ui::{
+        input_prompt::{KEY_I, KEY_J, KEY_R, prompt},
+        menus::Menu,
+        scale::texels,
+        widget,
+    },
 };
 
 use super::{close_menu, open_settings_menu, quit_to_title};
 
 pub(super) fn plugin(app: &mut App) {
-    app.add_systems(OnEnter(Menu::Pause), spawn_pause_menu.spawn());
+    app.add_systems(OnEnter(Menu::Pause), spawn_pause_menu);
     app.add_systems(OnExit(GameState::Gameplay), close_menu);
     app.add_systems(
         OnEnter(Menu::None),
@@ -35,7 +41,19 @@ pub(super) fn open_pause_menu(commands: &mut Commands) {
     });
 }
 
-fn spawn_pause_menu() -> impl Scene {
+fn spawn_pause_menu(mut commands: Commands, rewards: Option<Res<Rewards>>) {
+    let radar = rewards.is_some_and(|rewards| rewards.radar());
+    commands.spawn_scene(pause_menu(radar));
+}
+
+fn pause_menu(radar: bool) -> impl Scene {
+    let mut hints: Vec<Box<dyn Scene>> = vec![
+        Box::new(control_hint(KEY_I, "Inventory")),
+        Box::new(control_hint(KEY_J, "Journal")),
+    ];
+    if radar {
+        hints.push(Box::new(control_hint(KEY_R, "Radar")));
+    }
     bsn! {
         @widget::ui_root("Pause Menu")
         GlobalZIndex(2)
@@ -48,6 +66,37 @@ fn spawn_pause_menu() -> impl Scene {
             @widget::button("Settings", open_settings_menu)
             --
             @widget::button("Quit to title", quit_to_title)
+            --
+            #Controls
+            Node {
+                flex_direction: FlexDirection::Column,
+                align_items: AlignItems::Center,
+                row_gap: texels(3),
+                margin: UiRect::top(texels(2)),
+            }
+            Children [
+                @widget::label("Controls")
+                --
+                Node {
+                    align_items: AlignItems::Center,
+                    column_gap: texels(6),
+                }
+                Children [ { hints } ]
+            ]
+        ]
+    }
+}
+
+fn control_hint(key: u32, action: &'static str) -> impl Scene {
+    bsn! {
+        Node {
+            align_items: AlignItems::Center,
+            column_gap: texels(2),
+        }
+        Children [
+            @prompt(key)
+            --
+            @widget::label(action)
         ]
     }
 }

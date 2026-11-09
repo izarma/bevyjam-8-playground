@@ -8,7 +8,9 @@ pub(crate) const KEY_F: u32 = 123;
 pub(crate) const KEY_LEFT: u32 = 169;
 pub(crate) const MOUSE: u32 = 76;
 pub(crate) const MOUSE_LEFT: u32 = 77;
-// pub(crate) const KEY_I: u32 = 92;
+pub(crate) const KEY_I: u32 = 92;
+pub(crate) const KEY_J: u32 = 126;
+pub(crate) const KEY_R: u32 = 88;
 
 const TILE: u32 = 16;
 const COLUMNS: u32 = 34;

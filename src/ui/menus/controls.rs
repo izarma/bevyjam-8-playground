@@ -4,7 +4,10 @@ use bevy_enhanced_input::prelude::*;
 use bevy_yarnspinner::prelude::DialogueRunner;
 
 use crate::{
-    GameState, Harvesting, Pause, gameplay::Concoction, loading_screen::Travel, ui::menus::Menu,
+    GameState, Harvesting, Pause,
+    gameplay::{Concoction, Intro},
+    loading_screen::Travel,
+    ui::menus::Menu,
 };
 
 use super::pause::open_pause_menu;
@@ -61,6 +64,7 @@ fn back(
     menu: Res<State<Menu>>,
     screen: Res<State<GameState>>,
     harvesting: Option<Res<State<Harvesting>>>,
+    intro: Res<Intro>,
     mut runners: Query<&mut DialogueRunner>,
     mut concoctions: Query<&mut Concoction>,
 ) {
@@ -82,7 +86,7 @@ fn back(
                 runner.stop();
             }
         }
-        Menu::None if in_game => open_pause_menu(&mut commands),
+        Menu::None if in_game && !intro.playing() => open_pause_menu(&mut commands),
         Menu::Pause | Menu::Inventory | Menu::Journal => commands.set_state(Menu::None),
         Menu::Settings if in_game => commands.set_state(Menu::Pause),
         Menu::Settings => commands.set_state(Menu::Main),
@@ -96,8 +100,9 @@ fn toggle_pause(
     mut commands: Commands,
     menu: Res<State<Menu>>,
     screen: Res<State<GameState>>,
+    intro: Res<Intro>,
 ) {
-    if *screen.get() != GameState::Gameplay {
+    if *screen.get() != GameState::Gameplay || intro.playing() {
         return;
     }
     match menu.get() {
@@ -112,10 +117,11 @@ fn toggle_inventory(
     menu: Res<State<Menu>>,
     screen: Res<State<GameState>>,
     harvesting: Option<Res<State<Harvesting>>>,
+    intro: Res<Intro>,
 ) {
     let harvesting = harvesting.is_some_and(|harvesting| harvesting.0);
     match menu.get() {
-        Menu::None if *screen.get() == GameState::Gameplay && !harvesting => {
+        Menu::None if *screen.get() == GameState::Gameplay && !harvesting && !intro.playing() => {
             commands.set_state(Pause(true));
             commands.set_state(Menu::Inventory);
         }
@@ -130,10 +136,11 @@ fn toggle_journal(
     menu: Res<State<Menu>>,
     screen: Res<State<GameState>>,
     harvesting: Option<Res<State<Harvesting>>>,
+    intro: Res<Intro>,
 ) {
     let harvesting = harvesting.is_some_and(|harvesting| harvesting.0);
     match menu.get() {
-        Menu::None if *screen.get() == GameState::Gameplay && !harvesting => {
+        Menu::None if *screen.get() == GameState::Gameplay && !harvesting && !intro.playing() => {
             commands.set_state(Pause(true));
             commands.set_state(Menu::Journal);
         }
