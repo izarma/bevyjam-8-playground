@@ -180,7 +180,8 @@ fn spawn_indoor_player(
 ) {
     let spawn = feet.translation() + Vec3::Y * BODY_HEIGHT / 2.0;
 
-    let animation = PlayerAnimation::default();
+    let mut animation = PlayerAnimation::default();
+    animation.face_towards(feet.forward().xz().normalize_or(Vec2::NEG_Y));
     let sprite = PixelSprite {
         image: player_assets.player_sheet.clone(),
         size: Some(PLAYER_FRAME),

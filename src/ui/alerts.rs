@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 
 use crate::{
-    GameplayScene,
+    GameState, GameplayScene,
     gameplay::{InLineup, Met, Returning, ShopClosed, ShopOpened, Visitor},
     loading::NPCAssets,
     ui::{
@@ -19,10 +19,12 @@ const SHAKE_TEXELS: f32 = 1.5;
 
 pub(super) fn plugin(app: &mut App) {
     app.add_systems(OnEnter(GameplayScene::Outdoors), spawn_arrival_list)
+        .add_systems(OnEnter(GameState::Gameplay), spawn_notice)
         .add_systems(
             Update,
-            (sync_arrivals, show_notice, shake_arrivals).run_if(in_state(GameplayScene::Outdoors)),
+            (sync_arrivals, shake_arrivals).run_if(in_state(GameplayScene::Outdoors)),
         )
+        .add_systems(Update, show_notice.run_if(in_state(GameState::Gameplay)))
         .add_observer(announce_opening)
         .add_observer(announce_closing);
 }
@@ -67,6 +69,20 @@ fn arrival_list() -> impl Scene {
         }
         Pickable::IGNORE
         DespawnOnExit::<GameplayScene>(GameplayScene::Outdoors)
+    }
+}
+
+fn spawn_notice(mut commands: Commands) {
+    commands.spawn_scene(bsn! {
+        Name::new("Notice")
+        Node {
+            position_type: PositionType::Absolute,
+            width: percent(100),
+            bottom: texels(4),
+            justify_content: JustifyContent::Center,
+        }
+        Pickable::IGNORE
+        DespawnOnExit::<GameState>(GameState::Gameplay)
         Children [
             Notice
             Text("")
@@ -81,7 +97,7 @@ fn arrival_list() -> impl Scene {
             }
             Pickable::IGNORE
         ]
-    }
+    });
 }
 
 fn sync_arrivals(
