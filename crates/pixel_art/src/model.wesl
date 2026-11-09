@@ -51,7 +51,11 @@ fn fragment(in: VertexOutput, @builtin(front_facing) is_front: bool) -> Fragment
             let size = vec2<f32>(textureDimensions(pbr_bindings::base_color_texture));
             let center = texel_center(in.uv, size, in.world_position.xyz, ddx, ddy, world_ddx, world_ddy);
             pbr_input.world_position = vec4<f32>(center, 1.0);
-            fogged_at = stepped_fog_position(center, vec2<i32>(floor(in.uv * size)));
+            fogged_at = stepped_fog_position(
+                center,
+                vec2<i32>(floor(in.uv * size)),
+                max(length(ddx * size), length(ddy * size)),
+            );
         }
     }
     pbr_input.material.base_color = pbr_functions::alpha_discard(

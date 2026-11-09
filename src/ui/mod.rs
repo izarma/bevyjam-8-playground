@@ -2,6 +2,7 @@ use bevy::prelude::*;
 
 pub(crate) mod alerts;
 pub(crate) mod billboard;
+pub(crate) mod brews;
 pub(crate) mod font;
 pub(crate) mod health;
 pub(crate) mod input_prompt;
@@ -16,6 +17,7 @@ pub(super) fn plugin(app: &mut App) {
     app.add_plugins((
         alerts::plugin,
         billboard::plugin,
+        brews::plugin,
         font::plugin,
         interaction::plugin,
         menus::plugin,

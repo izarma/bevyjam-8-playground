@@ -23,9 +23,9 @@ bevy_ecs::hierarchy::Children [
     #Terrain
     bevy_transform::components::transform::Transform {
         translation: glam::Vec3 {
-            x: -32.57659149169922,
+            x: -32.547630310058594,
             y: 0.0,
-            z: -31.614242553710938,
+            z: -31.455642700195313,
         },
         scale: glam::Vec3 {
             x: 1.0,
@@ -956,14 +956,14 @@ bevy_ecs::hierarchy::Children [
     }
     bevy_transform::components::transform::Transform {
         translation: glam::Vec3 {
-            x: 0.0028934478759765625,
+            x: -0.2135486602783203,
             y: -0.05999952182173729,
-            z: -0.5661582946777344,
+            z: -1.6818428039550781,
         },
         scale: glam::Vec3 {
-            x: 60.0,
+            x: 196.0,
             y: 3.0,
-            z: 64.10868072509766,
+            z: 196.0,
         },
     }
     jackdaw_scene_types::node_id::SceneNodeId(7177024000003245663)
@@ -1771,15 +1771,21 @@ bevy_ecs::hierarchy::Children [
     ]
     --
     #"ForestPath Deco"
-    bevy_transform::components::transform::Transform
+    bevy_transform::components::transform::Transform {
+        translation: glam::Vec3 {
+            x: 0.75,
+            y: 0.0,
+            z: -3.25,
+        },
+    }
     jackdaw_scene_types::node_id::SceneNodeId(7716034292863313063)
     bevy_ecs::hierarchy::Children [
         #Tree8
         bevy_transform::components::transform::Transform {
             translation: glam::Vec3 {
-                x: -23.19058609008789,
-                y: 0.5,
-                z: 26.608304977416992,
+                x: -20.004642486572266,
+                y: 0.36751365661621094,
+                z: 24.95496368408203,
             },
         }
         pixel_art::sprite::PixelSprite {
@@ -1801,6 +1807,244 @@ bevy_ecs::hierarchy::Children [
             size: core::option::Option::Some(glam::UVec2 { x: 32, y: 80 }),
         }
         jackdaw_scene_types::node_id::SceneNodeId(7716034292863313064)
+        --
+        #Tree19
+        bevy_transform::components::transform::Transform {
+            translation: glam::Vec3 {
+                x: -24.820533752441406,
+                y: 0.5,
+                z: 26.45310401916504,
+            },
+        }
+        pixel_art::sprite::PixelSprite {
+            image: "sprites/tree_2.png",
+            size: core::option::Option::Some(glam::UVec2 { x: 32, y: 80 }),
+        }
+        jackdaw_scene_types::node_id::SceneNodeId(2505322331397115193)
+        --
+        #Tree20
+        bevy_transform::components::transform::Transform {
+            translation: glam::Vec3 {
+                x: -24.820533752441406,
+                y: 0.44834232330322266,
+                z: 32.3093376159668,
+            },
+        }
+        pixel_art::sprite::PixelSprite {
+            image: "sprites/tree_2.png",
+            size: core::option::Option::Some(glam::UVec2 { x: 32, y: 80 }),
+        }
+        jackdaw_scene_types::node_id::SceneNodeId(2505322331397115194)
+        --
+        #Tree21
+        bevy_transform::components::transform::Transform {
+            translation: glam::Vec3 {
+                x: -21.582746505737305,
+                y: 0.5,
+                z: 33.82299041748047,
+            },
+        }
+        pixel_art::sprite::PixelSprite {
+            image: "sprites/tree_2.png",
+            size: core::option::Option::Some(glam::UVec2 { x: 32, y: 80 }),
+        }
+        jackdaw_scene_types::node_id::SceneNodeId(2505322331397115195)
+        --
+        #Tree44
+        bevy_transform::components::transform::Transform {
+            translation: glam::Vec3 {
+                x: -11.457590103149414,
+                y: 0.5,
+                z: 25.287479400634766,
+            },
+        }
+        pixel_art::sprite::PixelSprite {
+            image: "sprites/tree_2.png",
+            size: core::option::Option::Some(glam::UVec2 { x: 32, y: 80 }),
+        }
+        jackdaw_scene_types::node_id::SceneNodeId(2505322331397115218)
+        --
+        #Tree45
+        bevy_transform::components::transform::Transform {
+            translation: glam::Vec3 {
+                x: -13.457590103149414,
+                y: 0.5,
+                z: 28.649919509887695,
+            },
+        }
+        pixel_art::sprite::PixelSprite {
+            image: "sprites/tree_2.png",
+            size: core::option::Option::Some(glam::UVec2 { x: 32, y: 80 }),
+        }
+        jackdaw_scene_types::node_id::SceneNodeId(2505322331397115219)
+        --
+        #Tree46
+        bevy_transform::components::transform::Transform {
+            translation: glam::Vec3 {
+                x: -21.51581382751465,
+                y: 0.5,
+                z: 26.917016983032227,
+            },
+        }
+        pixel_art::sprite::PixelSprite {
+            image: "sprites/tree_2.png",
+            size: core::option::Option::Some(glam::UVec2 { x: 32, y: 80 }),
+        }
+        jackdaw_scene_types::node_id::SceneNodeId(2505322331397115220)
+        --
+        #Tree22
+        bevy_transform::components::transform::Transform {
+            translation: glam::Vec3 {
+                x: -18.185699462890625,
+                y: 0.5,
+                z: 33.40235137939453,
+            },
+        }
+        pixel_art::sprite::PixelSprite {
+            image: "sprites/tree_2.png",
+            size: core::option::Option::Some(glam::UVec2 { x: 32, y: 80 }),
+        }
+        jackdaw_scene_types::node_id::SceneNodeId(2505322331397115196)
+        --
+        #Tree23
+        bevy_transform::components::transform::Transform {
+            translation: glam::Vec3 {
+                x: -19.690380096435547,
+                y: 0.5,
+                z: 29.820335388183594,
+            },
+        }
+        pixel_art::sprite::PixelSprite {
+            image: "sprites/tree_2.png",
+            size: core::option::Option::Some(glam::UVec2 { x: 32, y: 80 }),
+        }
+        jackdaw_scene_types::node_id::SceneNodeId(2505322331397115197)
+        --
+        #Tree24
+        bevy_transform::components::transform::Transform {
+            translation: glam::Vec3 {
+                x: -23.05030632019043,
+                y: 0.5,
+                z: 28.649919509887695,
+            },
+        }
+        pixel_art::sprite::PixelSprite {
+            image: "sprites/tree_2.png",
+            size: core::option::Option::Some(glam::UVec2 { x: 32, y: 80 }),
+        }
+        jackdaw_scene_types::node_id::SceneNodeId(2505322331397115198)
+        --
+        #Tree25
+        bevy_transform::components::transform::Transform {
+            translation: glam::Vec3 {
+                x: -15.891519546508789,
+                y: 0.5,
+                z: 25.651575088500977,
+            },
+        }
+        pixel_art::sprite::PixelSprite {
+            image: "sprites/tree_2.png",
+            size: core::option::Option::Some(glam::UVec2 { x: 32, y: 80 }),
+        }
+        jackdaw_scene_types::node_id::SceneNodeId(2505322331397115199)
+        --
+        #Tree26
+        bevy_transform::components::transform::Transform {
+            translation: glam::Vec3 {
+                x: -17.032730102539063,
+                y: 0.5,
+                z: 29.388395309448242,
+            },
+        }
+        pixel_art::sprite::PixelSprite {
+            image: "sprites/tree_2.png",
+            size: core::option::Option::Some(glam::UVec2 { x: 32, y: 80 }),
+        }
+        jackdaw_scene_types::node_id::SceneNodeId(2505322331397115200)
+        --
+        #Tree27
+        bevy_transform::components::transform::Transform {
+            translation: glam::Vec3 {
+                x: -18.712207794189453,
+                y: 0.5,
+                z: 28.649919509887695,
+            },
+        }
+        pixel_art::sprite::PixelSprite {
+            image: "sprites/tree_2.png",
+            size: core::option::Option::Some(glam::UVec2 { x: 32, y: 80 }),
+        }
+        jackdaw_scene_types::node_id::SceneNodeId(2505322331397115201)
+        --
+        #Tree49
+        bevy_transform::components::transform::Transform {
+            translation: glam::Vec3 {
+                x: -14.870433807373047,
+                y: 0.5,
+                z: 27.142780303955078,
+            },
+        }
+        pixel_art::sprite::PixelSprite {
+            image: "sprites/tree_2.png",
+            size: core::option::Option::Some(glam::UVec2 { x: 32, y: 80 }),
+        }
+        jackdaw_scene_types::node_id::SceneNodeId(2505322331397115223)
+        --
+        #Tree50
+        bevy_transform::components::transform::Transform {
+            translation: glam::Vec3 {
+                x: -13.891519546508789,
+                y: 0.5,
+                z: 24.559070587158203,
+            },
+        }
+        pixel_art::sprite::PixelSprite {
+            image: "sprites/tree_2.png",
+            size: core::option::Option::Some(glam::UVec2 { x: 32, y: 80 }),
+        }
+        jackdaw_scene_types::node_id::SceneNodeId(2505322331397115224)
+        --
+        #Tree51
+        bevy_transform::components::transform::Transform {
+            translation: glam::Vec3 {
+                x: -18.712207794189453,
+                y: 0.5,
+                z: 30.734018325805664,
+            },
+        }
+        pixel_art::sprite::PixelSprite {
+            image: "sprites/tree_2.png",
+            size: core::option::Option::Some(glam::UVec2 { x: 32, y: 80 }),
+        }
+        jackdaw_scene_types::node_id::SceneNodeId(2505322331397115225)
+        --
+        #Tree52
+        bevy_transform::components::transform::Transform {
+            translation: glam::Vec3 {
+                x: -26.305830001831055,
+                y: 0.5,
+                z: 30.896894454956055,
+            },
+        }
+        pixel_art::sprite::PixelSprite {
+            image: "sprites/tree_2.png",
+            size: core::option::Option::Some(glam::UVec2 { x: 32, y: 80 }),
+        }
+        jackdaw_scene_types::node_id::SceneNodeId(2505322331397115226)
+        --
+        #Tree28
+        bevy_transform::components::transform::Transform {
+            translation: glam::Vec3 {
+                x: -17.563060760498047,
+                y: 0.5,
+                z: 26.06873321533203,
+            },
+        }
+        pixel_art::sprite::PixelSprite {
+            image: "sprites/tree_2.png",
+            size: core::option::Option::Some(glam::UVec2 { x: 32, y: 80 }),
+        }
+        jackdaw_scene_types::node_id::SceneNodeId(2505322331397115202)
         --
         #Tree10
         bevy_transform::components::transform::Transform {
@@ -1927,10 +2171,254 @@ bevy_ecs::hierarchy::Children [
             size: core::option::Option::Some(glam::UVec2 { x: 32, y: 80 }),
         }
         jackdaw_scene_types::node_id::SceneNodeId(7716034292863313073)
+        --
+        #Tree47
+        bevy_transform::components::transform::Transform {
+            translation: glam::Vec3 {
+                x: -16.72228240966797,
+                y: 0.5,
+                z: 24.157257080078125,
+            },
+        }
+        pixel_art::sprite::PixelSprite {
+            image: "sprites/tree_6.png",
+            size: core::option::Option::Some(glam::UVec2 { x: 32, y: 80 }),
+        }
+        jackdaw_scene_types::node_id::SceneNodeId(2505322331397115221)
+        --
+        #Tree48
+        bevy_transform::components::transform::Transform {
+            translation: glam::Vec3 {
+                x: -12.870433807373047,
+                y: 0.5,
+                z: 26.45310401916504,
+            },
+        }
+        pixel_art::sprite::PixelSprite {
+            image: "sprites/tree_6.png",
+            size: core::option::Option::Some(glam::UVec2 { x: 32, y: 80 }),
+        }
+        jackdaw_scene_types::node_id::SceneNodeId(2505322331397115222)
+        --
+        #Tree29
+        bevy_transform::components::transform::Transform {
+            translation: glam::Vec3 {
+                x: -19.690380096435547,
+                y: 0.5,
+                z: 27.294260025024414,
+            },
+        }
+        pixel_art::sprite::PixelSprite {
+            image: "sprites/tree_6.png",
+            size: core::option::Option::Some(glam::UVec2 { x: 32, y: 80 }),
+        }
+        jackdaw_scene_types::node_id::SceneNodeId(2505322331397115203)
+        --
+        #Tree30
+        bevy_transform::components::transform::Transform {
+            translation: glam::Vec3 {
+                x: -17.89151954650879,
+                y: 0.5,
+                z: 24.157257080078125,
+            },
+        }
+        pixel_art::sprite::PixelSprite {
+            image: "sprites/tree_6.png",
+            size: core::option::Option::Some(glam::UVec2 { x: 32, y: 80 }),
+        }
+        jackdaw_scene_types::node_id::SceneNodeId(2505322331397115204)
+        --
+        #Tree31
+        bevy_transform::components::transform::Transform {
+            translation: glam::Vec3 {
+                x: -16.032730102539063,
+                y: 0.5,
+                z: 27.595870971679688,
+            },
+        }
+        pixel_art::sprite::PixelSprite {
+            image: "sprites/tree_6.png",
+            size: core::option::Option::Some(glam::UVec2 { x: 32, y: 80 }),
+        }
+        jackdaw_scene_types::node_id::SceneNodeId(2505322331397115205)
+        --
+        #Tree33
+        bevy_transform::components::transform::Transform {
+            translation: glam::Vec3 {
+                x: -14.870433807373047,
+                y: 0.5,
+                z: 23.2517147064209,
+            },
+        }
+        pixel_art::sprite::PixelSprite {
+            image: "sprites/tree_6.png",
+            size: core::option::Option::Some(glam::UVec2 { x: 32, y: 80 }),
+        }
+        jackdaw_scene_types::node_id::SceneNodeId(2505322331397115207)
+        --
+        #Tree34
+        bevy_transform::components::transform::Transform {
+            translation: glam::Vec3 {
+                x: -28.217493057250977,
+                y: 0.5,
+                z: 27.595870971679688,
+            },
+        }
+        pixel_art::sprite::PixelSprite {
+            image: "sprites/tree_6.png",
+            size: core::option::Option::Some(glam::UVec2 { x: 32, y: 80 }),
+        }
+        jackdaw_scene_types::node_id::SceneNodeId(2505322331397115208)
+        --
+        #Tree35
+        bevy_transform::components::transform::Transform {
+            translation: glam::Vec3 {
+                x: -20.004642486572266,
+                y: 0.5,
+                z: 33.40235137939453,
+            },
+        }
+        pixel_art::sprite::PixelSprite {
+            image: "sprites/tree_6.png",
+            size: core::option::Option::Some(glam::UVec2 { x: 32, y: 80 }),
+        }
+        jackdaw_scene_types::node_id::SceneNodeId(2505322331397115209)
+        --
+        #Tree36
+        bevy_transform::components::transform::Transform {
+            translation: glam::Vec3 {
+                x: -16.032730102539063,
+                y: 0.5,
+                z: 33.62570571899414,
+            },
+        }
+        pixel_art::sprite::PixelSprite {
+            image: "sprites/tree_6.png",
+            size: core::option::Option::Some(glam::UVec2 { x: 32, y: 80 }),
+        }
+        jackdaw_scene_types::node_id::SceneNodeId(2505322331397115210)
+        --
+        #Tree32
+        bevy_transform::components::transform::Transform {
+            translation: glam::Vec3 {
+                x: -26.60212516784668,
+                y: 0.5,
+                z: 24.157257080078125,
+            },
+        }
+        pixel_art::sprite::PixelSprite {
+            image: "sprites/tree_6.png",
+            size: core::option::Option::Some(glam::UVec2 { x: 32, y: 80 }),
+        }
+        jackdaw_scene_types::node_id::SceneNodeId(2505322331397115206)
+        --
+        #Tree37
+        bevy_transform::components::transform::Transform {
+            translation: glam::Vec3 {
+                x: -26.739280700683594,
+                y: 0.5414341688156128,
+                z: 29.19137954711914,
+            },
+        }
+        pixel_art::sprite::PixelSprite {
+            image: "sprites/tree_1.png",
+            size: core::option::Option::Some(glam::UVec2 { x: 32, y: 80 }),
+        }
+        jackdaw_scene_types::node_id::SceneNodeId(2505322331397115211)
+        --
+        #Tree38
+        bevy_transform::components::transform::Transform {
+            translation: glam::Vec3 {
+                x: -15.250322341918945,
+                y: 0.5414341688156128,
+                z: 29.1351318359375,
+            },
+        }
+        pixel_art::sprite::PixelSprite {
+            image: "sprites/tree_1.png",
+            size: core::option::Option::Some(glam::UVec2 { x: 32, y: 80 }),
+        }
+        jackdaw_scene_types::node_id::SceneNodeId(2505322331397115212)
+        --
+        #Tree39
+        bevy_transform::components::transform::Transform {
+            translation: glam::Vec3 {
+                x: -22.690380096435547,
+                y: 0.5414341688156128,
+                z: 32.3093376159668,
+            },
+        }
+        pixel_art::sprite::PixelSprite {
+            image: "sprites/tree_1.png",
+            size: core::option::Option::Some(glam::UVec2 { x: 32, y: 80 }),
+        }
+        jackdaw_scene_types::node_id::SceneNodeId(2505322331397115213)
+        --
+        #Tree40
+        bevy_transform::components::transform::Transform {
+            translation: glam::Vec3 {
+                x: -22.820533752441406,
+                y: 0.5414341688156128,
+                z: 23.15399169921875,
+            },
+        }
+        pixel_art::sprite::PixelSprite {
+            image: "sprites/tree_1.png",
+            size: core::option::Option::Some(glam::UVec2 { x: 32, y: 80 }),
+        }
+        jackdaw_scene_types::node_id::SceneNodeId(2505322331397115214)
+        --
+        #Tree41
+        bevy_transform::components::transform::Transform {
+            translation: glam::Vec3 {
+                x: -20.185699462890625,
+                y: 0.5414341688156128,
+                z: 21.326038360595703,
+            },
+        }
+        pixel_art::sprite::PixelSprite {
+            image: "sprites/tree_1.png",
+            size: core::option::Option::Some(glam::UVec2 { x: 32, y: 80 }),
+        }
+        jackdaw_scene_types::node_id::SceneNodeId(2505322331397115215)
+        --
+        #Tree42
+        bevy_transform::components::transform::Transform {
+            translation: glam::Vec3 {
+                x: -25.754112243652344,
+                y: 0.5414341688156128,
+                z: 25.287479400634766,
+            },
+        }
+        pixel_art::sprite::PixelSprite {
+            image: "sprites/tree_1.png",
+            size: core::option::Option::Some(glam::UVec2 { x: 32, y: 80 }),
+        }
+        jackdaw_scene_types::node_id::SceneNodeId(2505322331397115216)
+        --
+        #Tree43
+        bevy_transform::components::transform::Transform {
+            translation: glam::Vec3 {
+                x: -26.739280700683594,
+                y: 0.5414341688156128,
+                z: 29.19137954711914,
+            },
+        }
+        pixel_art::sprite::PixelSprite {
+            image: "sprites/tree_1.png",
+            size: core::option::Option::Some(glam::UVec2 { x: 32, y: 80 }),
+        }
+        jackdaw_scene_types::node_id::SceneNodeId(2505322331397115217)
     ]
     --
     #"Demo Trees"
-    bevy_transform::components::transform::Transform
+    bevy_transform::components::transform::Transform {
+        translation: glam::Vec3 {
+            x: 47.0,
+            y: 0.0,
+            z: 75.85685729980469,
+        },
+    }
     jackdaw_scene_types::node_id::SceneNodeId(7716034292863313074)
     bevy_ecs::hierarchy::Children [
         #Tree2
@@ -2039,6 +2527,17 @@ bevy_ecs::hierarchy::Children [
         plants::HerbSpot
         jackdaw_scene_types::node_id::SceneNodeId(3766148771669846517)
         --
+        #"Plant Spot15"
+        bevy_transform::components::transform::Transform {
+            translation: glam::Vec3 {
+                x: -27.239280700683594,
+                y: 0.34426915645599365,
+                z: 7.374005317687988,
+            },
+        }
+        plants::HerbSpot
+        jackdaw_scene_types::node_id::SceneNodeId(4749435113120778682)
+        --
         #"Plant Spot3"
         bevy_transform::components::transform::Transform {
             translation: glam::Vec3 {
@@ -2052,7 +2551,13 @@ bevy_ecs::hierarchy::Children [
     ]
     --
     #"Sand Biome"
-    bevy_transform::components::transform::Transform
+    bevy_transform::components::transform::Transform {
+        translation: glam::Vec3 {
+            x: 1.25,
+            y: 0.0,
+            z: -2.75,
+        },
+    }
     plants::Biome {
         herbs: [
             plants::Plant::Ginseng,
@@ -2064,24 +2569,57 @@ bevy_ecs::hierarchy::Children [
         #"Plant Spot4"
         bevy_transform::components::transform::Transform {
             translation: glam::Vec3 {
-                x: 0.9148125648498535,
-                y: 0.34426915645599365,
+                x: 31.81909942626953,
+                y: 0.18126504123210907,
                 z: -11.920698165893555,
             },
         }
         plants::HerbSpot
         jackdaw_scene_types::node_id::SceneNodeId(2264158951523910915)
         --
+        #"Plant Spot13"
+        bevy_transform::components::transform::Transform {
+            translation: glam::Vec3 {
+                x: 31.81909942626953,
+                y: 0.36751365661621094,
+                z: 13.532983779907227,
+            },
+        }
+        plants::HerbSpot
+        jackdaw_scene_types::node_id::SceneNodeId(4749435113120778680)
+        --
         #"Plant Spot5"
         bevy_transform::components::transform::Transform {
             translation: glam::Vec3 {
-                x: 5.788114547729492,
-                y: 0.4159344434738159,
-                z: -11.789350509643555,
+                x: 44.12047576904297,
+                y: 0.18880176544189453,
+                z: 4.54271125793457,
             },
         }
         plants::HerbSpot
         jackdaw_scene_types::node_id::SceneNodeId(2264158951523910914)
+        --
+        #"Plant Spot12"
+        bevy_transform::components::transform::Transform {
+            translation: glam::Vec3 {
+                x: 54.46223068237305,
+                y: 1.0,
+                z: -14.719013214111328,
+            },
+        }
+        plants::HerbSpot
+        jackdaw_scene_types::node_id::SceneNodeId(4749435113120778679)
+        --
+        #"Plant Spot14"
+        bevy_transform::components::transform::Transform {
+            translation: glam::Vec3 {
+                x: 26.979475021362305,
+                y: 0.18880176544189453,
+                z: -0.3955106735229492,
+            },
+        }
+        plants::HerbSpot
+        jackdaw_scene_types::node_id::SceneNodeId(4749435113120778681)
     ]
     --
     #"Sea Biome"
@@ -2097,20 +2635,42 @@ bevy_ecs::hierarchy::Children [
         #"Plant Spot6"
         bevy_transform::components::transform::Transform {
             translation: glam::Vec3 {
-                x: 0.9148125648498535,
-                y: -0.6931455135345459,
-                z: -21.086807250976563,
+                x: -12.024099349975586,
+                y: 0.4472135901451111,
+                z: -16.490758895874023,
             },
         }
         plants::HerbSpot
         jackdaw_scene_types::node_id::SceneNodeId(2264158951523910918)
         --
+        #"Plant Spot21"
+        bevy_transform::components::transform::Transform {
+            translation: glam::Vec3 {
+                x: -22.440380096435547,
+                y: -0.550000011920929,
+                z: -20.52195930480957,
+            },
+        }
+        plants::HerbSpot
+        jackdaw_scene_types::node_id::SceneNodeId(4749435113120778688)
+        --
+        #"Plant Spot20"
+        bevy_transform::components::transform::Transform {
+            translation: glam::Vec3 {
+                x: 14.452985763549805,
+                y: -0.010998770594596863,
+                z: -17.512699127197266,
+            },
+        }
+        plants::HerbSpot
+        jackdaw_scene_types::node_id::SceneNodeId(4749435113120778687)
+        --
         #"Plant Spot7"
         bevy_transform::components::transform::Transform {
             translation: glam::Vec3 {
-                x: 17.97840118408203,
-                y: -1.0109987258911133,
-                z: -22.76387596130371,
+                x: -37.69928741455078,
+                y: 0.4789341688156128,
+                z: -44.277427673339844,
             },
         }
         plants::HerbSpot
@@ -2130,9 +2690,9 @@ bevy_ecs::hierarchy::Children [
         #"Plant Spot8"
         bevy_transform::components::transform::Transform {
             translation: glam::Vec3 {
-                x: 14.452985763549805,
-                y: 0.35863763093948364,
-                z: 21.951221466064453,
+                x: 11.19003677368164,
+                y: 2.5728211402893066,
+                z: 24.822463989257813,
             },
         }
         plants::HerbSpot
@@ -2141,13 +2701,46 @@ bevy_ecs::hierarchy::Children [
         #"Plant Spot9"
         bevy_transform::components::transform::Transform {
             translation: glam::Vec3 {
-                x: 11.941661834716797,
-                y: 0.7094167470932007,
-                z: 27.782190322875977,
+                x: 9.6152925491333,
+                y: 2.5728211402893066,
+                z: 37.4144287109375,
             },
         }
         plants::HerbSpot
         jackdaw_scene_types::node_id::SceneNodeId(2264158951523910920)
+        --
+        #"Plant Spot22"
+        bevy_transform::components::transform::Transform {
+            translation: glam::Vec3 {
+                x: 1.665407657623291,
+                y: 2.5728211402893066,
+                z: 46.67127990722656,
+            },
+        }
+        plants::HerbSpot
+        jackdaw_scene_types::node_id::SceneNodeId(6708388106063440486)
+        --
+        #"Plant Spot23"
+        bevy_transform::components::transform::Transform {
+            translation: glam::Vec3 {
+                x: -15.935698509216309,
+                y: 2.5728211402893066,
+                z: 50.057064056396484,
+            },
+        }
+        plants::HerbSpot
+        jackdaw_scene_types::node_id::SceneNodeId(6708388106063440487)
+        --
+        #"Plant Spot24"
+        bevy_transform::components::transform::Transform {
+            translation: glam::Vec3 {
+                x: -28.740306854248047,
+                y: 2.5728211402893066,
+                z: 37.4144287109375,
+            },
+        }
+        plants::HerbSpot
+        jackdaw_scene_types::node_id::SceneNodeId(6708388106063440488)
     ]
     --
     #"Forest Biome"
@@ -2163,9 +2756,9 @@ bevy_ecs::hierarchy::Children [
         #"Plant Spot10"
         bevy_transform::components::transform::Transform {
             translation: glam::Vec3 {
-                x: -20.576156616210938,
+                x: -20.01581382751465,
                 y: 0.35863763093948364,
-                z: 23.749176025390625,
+                z: 26.45310401916504,
             },
         }
         plants::HerbSpot
@@ -2174,12 +2767,697 @@ bevy_ecs::hierarchy::Children [
         #"Plant Spot11"
         bevy_transform::components::transform::Transform {
             translation: glam::Vec3 {
-                x: -23.69058609008789,
+                x: -21.440380096435547,
                 y: 0.42121559381484985,
-                z: 22.84733772277832,
+                z: 30.025211334228516,
             },
         }
         plants::HerbSpot
         jackdaw_scene_types::node_id::SceneNodeId(2264158951523910923)
+        --
+        #"Plant Spot16"
+        bevy_transform::components::transform::Transform {
+            translation: glam::Vec3 {
+                x: -14.095779418945313,
+                y: 0.42121559381484985,
+                z: 30.57299041748047,
+            },
+        }
+        plants::HerbSpot
+        jackdaw_scene_types::node_id::SceneNodeId(4749435113120778683)
+        --
+        #"Plant Spot17"
+        bevy_transform::components::transform::Transform {
+            translation: glam::Vec3 {
+                x: -14.095779418945313,
+                y: 0.42121559381484985,
+                z: 23.041013717651367,
+            },
+        }
+        plants::HerbSpot
+        jackdaw_scene_types::node_id::SceneNodeId(4749435113120778684)
+        --
+        #"Plant Spot18"
+        bevy_transform::components::transform::Transform {
+            translation: glam::Vec3 {
+                x: -24.504112243652344,
+                y: 0.42121559381484985,
+                z: 21.309070587158203,
+            },
+        }
+        plants::HerbSpot
+        jackdaw_scene_types::node_id::SceneNodeId(4749435113120778685)
+        --
+        #"Plant Spot19"
+        bevy_transform::components::transform::Transform {
+            translation: glam::Vec3 {
+                x: -27.055830001831055,
+                y: 0.42121559381484985,
+                z: 25.563762664794922,
+            },
+        }
+        plants::HerbSpot
+        jackdaw_scene_types::node_id::SceneNodeId(4749435113120778686)
+    ]
+    --
+    #"ForestPath Deco2"
+    bevy_transform::components::transform::Transform {
+        translation: glam::Vec3 {
+            x: 55.95627212524414,
+            y: 8.12169075012207,
+            z: 42.96055221557617,
+        },
+    }
+    jackdaw_scene_types::node_id::SceneNodeId(2505322331397115227)
+    bevy_ecs::hierarchy::Children [
+        #Tree53
+        bevy_transform::components::transform::Transform {
+            translation: glam::Vec3 {
+                x: -27.71944316225016,
+                y: 0.5220144327413596,
+                z: 20.880393584808147,
+            },
+        }
+        pixel_art::sprite::PixelSprite {
+            image: "sprites/tree_2.png",
+            size: core::option::Option::Some(glam::UVec2 { x: 32, y: 80 }),
+        }
+        jackdaw_scene_types::node_id::SceneNodeId(2505322331397115272)
+        --
+        #Tree54
+        bevy_transform::components::transform::Transform {
+            translation: glam::Vec3 {
+                x: -23.56197734398708,
+                y: 0.3866386369751904,
+                z: 39.02794803449005,
+            },
+        }
+        pixel_art::sprite::PixelSprite {
+            image: "sprites/tree_2.png",
+            size: core::option::Option::Some(glam::UVec2 { x: 32, y: 80 }),
+        }
+        jackdaw_scene_types::node_id::SceneNodeId(2505322331397115271)
+        --
+        #Tree55
+        bevy_transform::components::transform::Transform {
+            translation: glam::Vec3 {
+                x: -23.727347165072814,
+                y: 0.19493036216634962,
+                z: 44.57961182466636,
+            },
+        }
+        pixel_art::sprite::PixelSprite {
+            image: "sprites/tree_2.png",
+            size: core::option::Option::Some(glam::UVec2 { x: 32, y: 80 }),
+        }
+        jackdaw_scene_types::node_id::SceneNodeId(2505322331397115270)
+        --
+        #Tree56
+        bevy_transform::components::transform::Transform {
+            translation: glam::Vec3 {
+                x: -28.99447892099228,
+                y: 0.39322046821398793,
+                z: 38.537530414166824,
+            },
+        }
+        pixel_art::sprite::PixelSprite {
+            image: "sprites/tree_2.png",
+            size: core::option::Option::Some(glam::UVec2 { x: 32, y: 80 }),
+        }
+        jackdaw_scene_types::node_id::SceneNodeId(2505322331397115269)
+        --
+        #Tree57
+        bevy_transform::components::transform::Transform {
+            translation: glam::Vec3 {
+                x: -23.8849805902382,
+                y: 0.4761803809900478,
+                z: 29.998932837165256,
+            },
+        }
+        pixel_art::sprite::PixelSprite {
+            image: "sprites/tree_2.png",
+            size: core::option::Option::Some(glam::UVec2 { x: 32, y: 80 }),
+        }
+        jackdaw_scene_types::node_id::SceneNodeId(2505322331397115268)
+        --
+        #Tree58
+        bevy_transform::components::transform::Transform {
+            translation: glam::Vec3 {
+                x: -25.029912805026754,
+                y: 0.5937876344479296,
+                z: 10.103616059497455,
+            },
+        }
+        pixel_art::sprite::PixelSprite {
+            image: "sprites/tree_2.png",
+            size: core::option::Option::Some(glam::UVec2 { x: 32, y: 80 }),
+        }
+        jackdaw_scene_types::node_id::SceneNodeId(2505322331397115267)
+        --
+        #Tree59
+        bevy_transform::components::transform::Transform {
+            translation: glam::Vec3 {
+                x: -24.05389914913465,
+                y: 0.5088497418922326,
+                z: 22.48313872938259,
+            },
+        }
+        pixel_art::sprite::PixelSprite {
+            image: "sprites/tree_2.png",
+            size: core::option::Option::Some(glam::UVec2 { x: 32, y: 80 }),
+        }
+        jackdaw_scene_types::node_id::SceneNodeId(2505322331397115266)
+        --
+        #Tree60
+        bevy_transform::components::transform::Transform {
+            translation: glam::Vec3 {
+                x: -20.853681745788123,
+                y: 0.5315596854632254,
+                z: 20.194211255178146,
+            },
+        }
+        pixel_art::sprite::PixelSprite {
+            image: "sprites/tree_2.png",
+            size: core::option::Option::Some(glam::UVec2 { x: 32, y: 80 }),
+        }
+        jackdaw_scene_types::node_id::SceneNodeId(2505322331397115265)
+        --
+        #Tree61
+        bevy_transform::components::transform::Transform {
+            translation: glam::Vec3 {
+                x: -26.260103913265,
+                y: 0.6320696342150764,
+                z: 1.84856490906094,
+            },
+        }
+        pixel_art::sprite::PixelSprite {
+            image: "sprites/tree_2.png",
+            size: core::option::Option::Some(glam::UVec2 { x: 32, y: 80 }),
+        }
+        jackdaw_scene_types::node_id::SceneNodeId(2505322331397115264)
+        --
+        #Tree62
+        bevy_transform::components::transform::Transform {
+            translation: glam::Vec3 {
+                x: -24.6371699668575,
+                y: 0.5276244297252024,
+                z: 19.24104260361169,
+            },
+        }
+        pixel_art::sprite::PixelSprite {
+            image: "sprites/tree_2.png",
+            size: core::option::Option::Some(glam::UVec2 { x: 32, y: 80 }),
+        }
+        jackdaw_scene_types::node_id::SceneNodeId(2505322331397115263)
+        --
+        #Tree63
+        bevy_transform::components::transform::Transform {
+            translation: glam::Vec3 {
+                x: -20.419760932981347,
+                y: 0.638410760277857,
+                z: -0.1202982051427881,
+            },
+        }
+        pixel_art::sprite::PixelSprite {
+            image: "sprites/tree_2.png",
+            size: core::option::Option::Some(glam::UVec2 { x: 32, y: 80 }),
+        }
+        jackdaw_scene_types::node_id::SceneNodeId(2505322331397115262)
+        --
+        #Tree64
+        bevy_transform::components::transform::Transform {
+            translation: glam::Vec3 {
+                x: -25.798222589828555,
+                y: 0.6393563660473571,
+                z: -2.0002732441359115,
+            },
+        }
+        pixel_art::sprite::PixelSprite {
+            image: "sprites/tree_2.png",
+            size: core::option::Option::Some(glam::UVec2 { x: 32, y: 80 }),
+        }
+        jackdaw_scene_types::node_id::SceneNodeId(2505322331397115261)
+        --
+        #Tree65
+        bevy_transform::components::transform::Transform {
+            translation: glam::Vec3 {
+                x: -24.652108624125106,
+                y: 0.5522930794153105,
+                z: 13.946590473469584,
+            },
+        }
+        pixel_art::sprite::PixelSprite {
+            image: "sprites/tree_2.png",
+            size: core::option::Option::Some(glam::UVec2 { x: 32, y: 80 }),
+        }
+        jackdaw_scene_types::node_id::SceneNodeId(2505322331397115260)
+        --
+        #Tree66
+        bevy_transform::components::transform::Transform {
+            translation: glam::Vec3 {
+                x: -27.15181779114357,
+                y: 0.4038370759752432,
+                z: 36.26897463058833,
+            },
+        }
+        pixel_art::sprite::PixelSprite {
+            image: "sprites/tree_2.png",
+            size: core::option::Option::Some(glam::UVec2 { x: 32, y: 80 }),
+        }
+        jackdaw_scene_types::node_id::SceneNodeId(2505322331397115259)
+        --
+        #Tree67
+        bevy_transform::components::transform::Transform {
+            translation: glam::Vec3 {
+                x: -24.148318847237277,
+                y: 0.6089824803931876,
+                z: 6.880338540932101,
+            },
+        }
+        pixel_art::sprite::PixelSprite {
+            image: "sprites/tree_2.png",
+            size: core::option::Option::Some(glam::UVec2 { x: 32, y: 80 }),
+        }
+        jackdaw_scene_types::node_id::SceneNodeId(2505322331397115258)
+        --
+        #Tree68
+        bevy_transform::components::transform::Transform {
+            translation: glam::Vec3 {
+                x: -26.57092214472685,
+                y: 0.497501863658659,
+                z: 25.339529002470343,
+            },
+        }
+        pixel_art::sprite::PixelSprite {
+            image: "sprites/tree_2.png",
+            size: core::option::Option::Some(glam::UVec2 { x: 32, y: 80 }),
+        }
+        jackdaw_scene_types::node_id::SceneNodeId(2505322331397115257)
+        --
+        #Tree69
+        bevy_transform::components::transform::Transform {
+            translation: glam::Vec3 {
+                x: -27.144458680850263,
+                y: 0.05446997807958809,
+                z: 48.612532092055105,
+            },
+        }
+        pixel_art::sprite::PixelSprite {
+            image: "sprites/tree_2.png",
+            size: core::option::Option::Some(glam::UVec2 { x: 32, y: 80 }),
+        }
+        jackdaw_scene_types::node_id::SceneNodeId(2505322331397115256)
+        --
+        #Tree70
+        bevy_transform::components::transform::Transform {
+            translation: glam::Vec3 {
+                x: -22.4544173199113,
+                y: 0.6258480185164821,
+                z: 2.900133316506711,
+            },
+        }
+        pixel_art::sprite::PixelSprite {
+            image: "sprites/tree_2.png",
+            size: core::option::Option::Some(glam::UVec2 { x: 32, y: 80 }),
+        }
+        jackdaw_scene_types::node_id::SceneNodeId(2505322331397115255)
+        --
+        #Tree71
+        bevy_transform::components::transform::Transform {
+            translation: glam::Vec3 {
+                x: -20.872349077783326,
+                y: 0.5918236485379147,
+                z: 11.3082785005694,
+            },
+        }
+        pixel_art::sprite::PixelSprite {
+            image: "sprites/tree_2.png",
+            size: core::option::Option::Some(glam::UVec2 { x: 32, y: 80 }),
+        }
+        jackdaw_scene_types::node_id::SceneNodeId(2505322331397115254)
+        --
+        #Tree72
+        bevy_transform::components::transform::Transform {
+            translation: glam::Vec3 {
+                x: -27.40252906750365,
+                y: 0.4768714995787864,
+                z: 30.101941062755344,
+            },
+        }
+        pixel_art::sprite::PixelSprite {
+            image: "sprites/tree_2.png",
+            size: core::option::Option::Some(glam::UVec2 { x: 32, y: 80 }),
+        }
+        jackdaw_scene_types::node_id::SceneNodeId(2505322331397115253)
+        --
+        #Tree73
+        bevy_transform::components::transform::Transform {
+            translation: glam::Vec3 {
+                x: -20.609131353452568,
+                y: 0.4845201684471174,
+                z: 29.971802656528112,
+            },
+        }
+        pixel_art::sprite::PixelSprite {
+            image: "sprites/tree_2.png",
+            size: core::option::Option::Some(glam::UVec2 { x: 32, y: 80 }),
+        }
+        jackdaw_scene_types::node_id::SceneNodeId(2505322331397115252)
+        --
+        #Tree74
+        bevy_transform::components::transform::Transform {
+            translation: glam::Vec3 {
+                x: -29.03218737055502,
+                y: 0.21160856885943602,
+                z: 45.025760540803844,
+            },
+        }
+        pixel_art::sprite::PixelSprite {
+            image: "sprites/tree_2.png",
+            size: core::option::Option::Some(glam::UVec2 { x: 32, y: 80 }),
+        }
+        jackdaw_scene_types::node_id::SceneNodeId(2505322331397115251)
+        --
+        #Tree75
+        bevy_transform::components::transform::Transform {
+            translation: glam::Vec3 {
+                x: -26.493486904563554,
+                y: 0.27283621545626957,
+                z: 42.590922150244324,
+            },
+        }
+        pixel_art::sprite::PixelSprite {
+            image: "sprites/tree_2.png",
+            size: core::option::Option::Some(glam::UVec2 { x: 32, y: 80 }),
+        }
+        jackdaw_scene_types::node_id::SceneNodeId(2505322331397115250)
+        --
+        #Tree76
+        bevy_transform::components::transform::Transform {
+            translation: glam::Vec3 {
+                x: -21.673331418169482,
+                y: 0.5448990148129109,
+                z: 17.031064836969833,
+            },
+        }
+        pixel_art::sprite::PixelSprite {
+            image: "sprites/tree_2.png",
+            size: core::option::Option::Some(glam::UVec2 { x: 32, y: 80 }),
+        }
+        jackdaw_scene_types::node_id::SceneNodeId(2505322331397115249)
+        --
+        #Tree77
+        bevy_transform::components::transform::Transform {
+            translation: glam::Vec3 {
+                x: -22.918436647409465,
+                y: 0.4147879763774682,
+                z: 35.469387356261166,
+            },
+        }
+        pixel_art::sprite::PixelSprite {
+            image: "sprites/tree_2.png",
+            size: core::option::Option::Some(glam::UVec2 { x: 32, y: 80 }),
+        }
+        jackdaw_scene_types::node_id::SceneNodeId(2505322331397115248)
+        --
+        #Tree78
+        bevy_transform::components::transform::Transform {
+            translation: glam::Vec3 {
+                x: -23.115047729189484,
+                y: 0.4963394651933797,
+                z: 25.69121951752726,
+            },
+        }
+        pixel_art::sprite::PixelSprite {
+            image: "sprites/tree_2.png",
+            size: core::option::Option::Some(glam::UVec2 { x: 32, y: 80 }),
+        }
+        jackdaw_scene_types::node_id::SceneNodeId(2505322331397115247)
+        --
+        #Tree79
+        bevy_transform::components::transform::Transform {
+            translation: glam::Vec3 {
+                x: -20.340455943961985,
+                y: 0.501054921800522,
+                z: 23.193436537238185,
+            },
+        }
+        pixel_art::sprite::PixelSprite {
+            image: "sprites/tree_6.png",
+            size: core::option::Option::Some(glam::UVec2 { x: 32, y: 80 }),
+        }
+        jackdaw_scene_types::node_id::SceneNodeId(2505322331397115246)
+        --
+        #Tree80
+        bevy_transform::components::transform::Transform {
+            translation: glam::Vec3 {
+                x: -28.259130962593986,
+                y: 0.4382591722255995,
+                z: 33.05049825838064,
+            },
+        }
+        pixel_art::sprite::PixelSprite {
+            image: "sprites/tree_6.png",
+            size: core::option::Option::Some(glam::UVec2 { x: 32, y: 80 }),
+        }
+        jackdaw_scene_types::node_id::SceneNodeId(2505322331397115245)
+        --
+        #Tree81
+        bevy_transform::components::transform::Transform {
+            translation: glam::Vec3 {
+                x: -28.022578578662063,
+                y: 0.5546068467694951,
+                z: 15.029995527425712,
+            },
+        }
+        pixel_art::sprite::PixelSprite {
+            image: "sprites/tree_6.png",
+            size: core::option::Option::Some(glam::UVec2 { x: 32, y: 80 }),
+        }
+        jackdaw_scene_types::node_id::SceneNodeId(2505322331397115244)
+        --
+        #Tree82
+        bevy_transform::components::transform::Transform {
+            translation: glam::Vec3 {
+                x: -23.343977533267406,
+                y: 0.06860734401179513,
+                z: 47.54696606501207,
+            },
+        }
+        pixel_art::sprite::PixelSprite {
+            image: "sprites/tree_6.png",
+            size: core::option::Option::Some(glam::UVec2 { x: 32, y: 80 }),
+        }
+        jackdaw_scene_types::node_id::SceneNodeId(2505322331397115243)
+        --
+        #Tree83
+        bevy_transform::components::transform::Transform {
+            translation: glam::Vec3 {
+                x: -26.69064166803193,
+                y: 0.6192577601447855,
+                z: 4.9030597385151395,
+            },
+        }
+        pixel_art::sprite::PixelSprite {
+            image: "sprites/tree_6.png",
+            size: core::option::Option::Some(glam::UVec2 { x: 32, y: 80 }),
+        }
+        jackdaw_scene_types::node_id::SceneNodeId(2505322331397115242)
+        --
+        #Tree84
+        bevy_transform::components::transform::Transform {
+            translation: glam::Vec3 {
+                x: -29.832709679489554,
+                y: 0.33599967264630415,
+                z: 41.65440567466675,
+            },
+        }
+        pixel_art::sprite::PixelSprite {
+            image: "sprites/tree_6.png",
+            size: core::option::Option::Some(glam::UVec2 { x: 32, y: 80 }),
+        }
+        jackdaw_scene_types::node_id::SceneNodeId(2505322331397115241)
+        --
+        #Tree85
+        bevy_transform::components::transform::Transform {
+            translation: glam::Vec3 {
+                x: -20.33124538044052,
+                y: 0.607058713188545,
+                z: 8.286557716944202,
+            },
+        }
+        pixel_art::sprite::PixelSprite {
+            image: "sprites/tree_6.png",
+            size: core::option::Option::Some(glam::UVec2 { x: 32, y: 80 }),
+        }
+        jackdaw_scene_types::node_id::SceneNodeId(2505322331397115240)
+        --
+        #Tree86
+        bevy_transform::components::transform::Transform {
+            translation: glam::Vec3 {
+                x: -24.599016646126103,
+                y: 0.43148214876933366,
+                z: 33.012934946675784,
+            },
+        }
+        pixel_art::sprite::PixelSprite {
+            image: "sprites/tree_6.png",
+            size: core::option::Option::Some(glam::UVec2 { x: 32, y: 80 }),
+        }
+        jackdaw_scene_types::node_id::SceneNodeId(2505322331397115239)
+        --
+        #Tree87
+        bevy_transform::components::transform::Transform {
+            translation: glam::Vec3 {
+                x: -23.32661627836825,
+                y: 0.6357982722778885,
+                z: 0.07195330361983565,
+            },
+        }
+        pixel_art::sprite::PixelSprite {
+            image: "sprites/tree_6.png",
+            size: core::option::Option::Some(glam::UVec2 { x: 32, y: 80 }),
+        }
+        jackdaw_scene_types::node_id::SceneNodeId(2505322331397115238)
+        --
+        #Tree88
+        bevy_transform::components::transform::Transform {
+            translation: glam::Vec3 {
+                x: -27.476796260077734,
+                y: 0.6088349350959597,
+                z: 8.03019938772529,
+            },
+        }
+        pixel_art::sprite::PixelSprite {
+            image: "sprites/tree_6.png",
+            size: core::option::Option::Some(glam::UVec2 { x: 32, y: 80 }),
+        }
+        jackdaw_scene_types::node_id::SceneNodeId(2505322331397115237)
+        --
+        #Tree89
+        bevy_transform::components::transform::Transform {
+            translation: glam::Vec3 {
+                x: -28.331100932303485,
+                y: 0.5424373989495308,
+                z: 17.88886983368201,
+            },
+        }
+        pixel_art::sprite::PixelSprite {
+            image: "sprites/tree_6.png",
+            size: core::option::Option::Some(glam::UVec2 { x: 32, y: 80 }),
+        }
+        jackdaw_scene_types::node_id::SceneNodeId(2505322331397115236)
+        --
+        #Tree90
+        bevy_transform::components::transform::Transform {
+            translation: glam::Vec3 {
+                x: -29.399950597257998,
+                y: 0.49135443576402693,
+                z: 27.38056978465856,
+            },
+        }
+        pixel_art::sprite::PixelSprite {
+            image: "sprites/tree_6.png",
+            size: core::option::Option::Some(glam::UVec2 { x: 32, y: 80 }),
+        }
+        jackdaw_scene_types::node_id::SceneNodeId(2505322331397115235)
+        --
+        #Tree91
+        bevy_transform::components::transform::Transform {
+            translation: glam::Vec3 {
+                x: -27.57568004387379,
+                y: 0.5812826071262585,
+                z: 12.079731953118355,
+            },
+        }
+        pixel_art::sprite::PixelSprite {
+            image: "sprites/tree_1.png",
+            size: core::option::Option::Some(glam::UVec2 { x: 32, y: 80 }),
+        }
+        jackdaw_scene_types::node_id::SceneNodeId(2505322331397115234)
+        --
+        #Tree92
+        bevy_transform::components::transform::Transform {
+            translation: glam::Vec3 {
+                x: -20.247036675157005,
+                y: 0.488593481544326,
+                z: 26.98562679623066,
+            },
+        }
+        pixel_art::sprite::PixelSprite {
+            image: "sprites/tree_1.png",
+            size: core::option::Option::Some(glam::UVec2 { x: 32, y: 80 }),
+        }
+        jackdaw_scene_types::node_id::SceneNodeId(2505322331397115233)
+        --
+        #Tree93
+        bevy_transform::components::transform::Transform {
+            translation: glam::Vec3 {
+                x: -20.294010989969593,
+                y: 0.6175380227146565,
+                z: 4.984462834027056,
+            },
+        }
+        pixel_art::sprite::PixelSprite {
+            image: "sprites/tree_1.png",
+            size: core::option::Option::Some(glam::UVec2 { x: 32, y: 80 }),
+        }
+        jackdaw_scene_types::node_id::SceneNodeId(2505322331397115232)
+        --
+        #Tree94
+        bevy_transform::components::transform::Transform {
+            translation: glam::Vec3 {
+                x: -22.401477735551936,
+                y: 0.33406936765540785,
+                z: 41.73326602274318,
+            },
+        }
+        pixel_art::sprite::PixelSprite {
+            image: "sprites/tree_1.png",
+            size: core::option::Option::Some(glam::UVec2 { x: 32, y: 80 }),
+        }
+        jackdaw_scene_types::node_id::SceneNodeId(2505322331397115231)
+        --
+        #Tree95
+        bevy_transform::components::transform::Transform {
+            translation: glam::Vec3 {
+                x: -20.123029806294483,
+                y: 0.5652847298301733,
+                z: 14.240234574132316,
+            },
+        }
+        pixel_art::sprite::PixelSprite {
+            image: "sprites/tree_1.png",
+            size: core::option::Option::Some(glam::UVec2 { x: 32, y: 80 }),
+        }
+        jackdaw_scene_types::node_id::SceneNodeId(2505322331397115230)
+        --
+        #Tree96
+        bevy_transform::components::transform::Transform {
+            translation: glam::Vec3 {
+                x: -27.909050787524123,
+                y: 0.6398806921791067,
+                z: -4.235672296878661,
+            },
+        }
+        pixel_art::sprite::PixelSprite {
+            image: "sprites/tree_1.png",
+            size: core::option::Option::Some(glam::UVec2 { x: 32, y: 80 }),
+        }
+        jackdaw_scene_types::node_id::SceneNodeId(2505322331397115229)
+        --
+        #Tree97
+        bevy_transform::components::transform::Transform {
+            translation: glam::Vec3 {
+                x: -21.059134925435757,
+                y: 0.4484060665483902,
+                z: 33.06700446241406,
+            },
+        }
+        pixel_art::sprite::PixelSprite {
+            image: "sprites/tree_1.png",
+            size: core::option::Option::Some(glam::UVec2 { x: 32, y: 80 }),
+        }
+        jackdaw_scene_types::node_id::SceneNodeId(2505322331397115228)
     ]
 ]

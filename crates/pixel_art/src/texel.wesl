@@ -2,7 +2,7 @@
 
 @if(DISTANCE_FOG) import bevy_pbr::render::{mesh_view_bindings::{view, fog}, mesh_view_types::FOG_MODE_LINEAR};
 
-const FOG_STEPS: f32 = 16.0;
+const FOG_STEPS: f32 = 32.0;
 
 fn dither_rank(cell: vec2<i32>) -> f32 {
     var bayer = array<u32, 16>(0u, 8u, 2u, 10u, 12u, 4u, 14u, 6u, 3u, 11u, 1u, 9u, 15u, 7u, 13u, 5u);
@@ -11,12 +11,12 @@ fn dither_rank(cell: vec2<i32>) -> f32 {
 }
 
 @if(!DISTANCE_FOG)
-fn stepped_fog_position(at: vec3<f32>, texel: vec2<i32>) -> vec3<f32> {
+fn stepped_fog_position(at: vec3<f32>, texel: vec2<i32>, texels_per_pixel: f32) -> vec3<f32> {
     return at;
 }
 
 @if(DISTANCE_FOG)
-fn stepped_fog_position(at: vec3<f32>, texel: vec2<i32>) -> vec3<f32> {
+fn stepped_fog_position(at: vec3<f32>, texel: vec2<i32>, texels_per_pixel: f32) -> vec3<f32> {
     if fog.mode != FOG_MODE_LINEAR {
         return at;
     }
@@ -24,8 +24,10 @@ fn stepped_fog_position(at: vec3<f32>, texel: vec2<i32>) -> vec3<f32> {
     let end = fog.be.y;
     let eye = view.world_position.xyz;
     let distance = length(at - eye);
-    let level = saturate((distance - start) / max(end - start, 1e-4));
-    let stepped = floor(level * FOG_STEPS + dither_rank(texel)) / FOG_STEPS;
+    let along = saturate((distance - start) / max(end - start, 1e-4));
+    let level = along * along;
+    let dithered = floor(level * FOG_STEPS + dither_rank(texel)) / FOG_STEPS;
+    let stepped = mix(dithered, level, smoothstep(0.5, 1.0, texels_per_pixel));
     let rounded = start + stepped * (end - start);
     return eye + (at - eye) * (rounded / max(distance, 1e-4));
 }

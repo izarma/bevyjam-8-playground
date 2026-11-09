@@ -2,51 +2,46 @@ use std::collections::HashMap;
 
 use bevy::prelude::*;
 use jackdaw_scene_types::node_id::SceneNodeId;
-use pixel_art::PixelSprite;
 use plants::{Biome, Growing, HerbSpot, Plant};
+use rand::seq::IndexedRandom;
 
 use crate::{
     GameState, GameplayScene,
     gameplay::clock::{Clock, START_HOUR},
 };
 
-pub(super) const REGROW_HOURS: f32 = 12.0;
+const SPROUT_HOURS: f32 = 12.0;
+const MOST_GROWING: usize = 2;
 
 pub(super) fn plugin(app: &mut App) {
     app.add_systems(OnEnter(GameState::Gameplay), spawn_fields)
         .add_systems(
             Update,
-            (sow, regrow)
+            (sprout, sow)
                 .chain()
                 .run_if(in_state(GameplayScene::Outdoors)),
         );
 }
 
-#[derive(Component)]
-pub(super) struct Harvested;
-
-#[derive(Component)]
-struct Sown;
-
+#[derive(Default)]
 struct Field {
-    herb: Plant,
-    ready: f32,
+    growing: Vec<(SceneNodeId, Plant)>,
+    sprouted: u32,
 }
 
 #[derive(Component, Default)]
 pub(super) struct Fields(HashMap<SceneNodeId, Field>);
 
 impl Fields {
-    pub(super) fn ready(&self, spot: SceneNodeId) -> Option<f32> {
-        self.0.get(&spot).map(|field| field.ready)
-    }
-
-    pub(super) fn picked(&mut self, spot: SceneNodeId, hours: f32) {
-        if let Some(field) = self.0.get_mut(&spot) {
-            field.ready = hours + REGROW_HOURS;
+    pub(super) fn picked(&mut self, spot: SceneNodeId) {
+        for field in self.0.values_mut() {
+            field.growing.retain(|&(growing, _)| growing != spot);
         }
     }
 }
+
+#[derive(Component)]
+struct Sown;
 
 fn spawn_fields(mut commands: Commands) {
     commands.spawn((
@@ -56,74 +51,60 @@ fn spawn_fields(mut commands: Commands) {
     ));
 }
 
-fn sow(
-    mut commands: Commands,
+fn sprout(
     mut fields: Single<&mut Fields>,
     clock: Single<&Clock>,
-    spots: Query<(Entity, &SceneNodeId, &ChildOf), (With<HerbSpot>, Without<Sown>)>,
-    biomes: Query<&Biome>,
-    asset_server: Res<AssetServer>,
+    biomes: Query<(&SceneNodeId, &Biome, &Children)>,
+    spots: Query<&SceneNodeId, With<HerbSpot>>,
 ) {
-    let mut unsown = HashMap::<Entity, Vec<SceneNodeId>>::new();
-    for (_, &id, parent) in &spots {
-        if !fields.0.contains_key(&id) {
-            unsown.entry(parent.parent()).or_default().push(id);
+    let due = ((clock.hours - START_HOUR) / SPROUT_HOURS).floor() as u32 + 1;
+    let mut rng = rand::rng();
+    for (&biome, Biome { herbs }, children) in &biomes {
+        let field = fields.0.entry(biome).or_default();
+        while field.sprouted < due {
+            field.sprouted += 1;
+            if field.growing.len() >= MOST_GROWING {
+                continue;
+            }
+            let free: Vec<SceneNodeId> = spots
+                .iter_many(children)
+                .flatten()
+                .copied()
+                .filter(|&spot| field.growing.iter().all(|&(growing, _)| growing != spot))
+                .collect();
+            if let (Some(&spot), Some(&herb)) = (free.choose(&mut rng), herbs.choose(&mut rng)) {
+                field.growing.push((spot, herb));
+            }
         }
     }
-    for (biome, ids) in unsown {
-        let Ok(biome) = biomes.get(biome) else {
-            continue;
-        };
-        let herbs = biome.deal(ids.len());
-        fields
-            .0
-            .extend(ids.into_iter().zip(herbs).map(|(id, herb)| {
-                (
-                    id,
-                    Field {
-                        herb,
-                        ready: START_HOUR,
-                    },
-                )
-            }));
-    }
+}
 
-    for (spot, id, _) in &spots {
-        let Some(field) = fields.0.get(id) else {
+fn sow(
+    mut commands: Commands,
+    fields: Single<&Fields>,
+    spots: Query<(Entity, &SceneNodeId), (With<HerbSpot>, Without<Sown>)>,
+    asset_server: Res<AssetServer>,
+) {
+    for (spot, id) in &spots {
+        let Some(&(_, herb)) = fields
+            .0
+            .values()
+            .flat_map(|field| &field.growing)
+            .find(|&&(growing, _)| growing == *id)
+        else {
             continue;
         };
-        let mut sprite = field.herb.sprite(&asset_server);
-        let mut plant = commands.spawn((
-            Name::new(format!("{:?}", field.herb)),
-            Growing(field.herb),
+        commands.spawn((
+            Name::new(format!("{herb:?}")),
+            Growing(herb),
+            herb.sprite(&asset_server),
             Transform::default(),
             ChildOf(spot),
         ));
-        if field.ready > clock.hours {
-            sprite.cell = field.herb.harvested_cell();
-            plant.insert(Harvested);
-        }
-        plant.insert(sprite);
         commands.entity(spot).insert(Sown);
     }
 }
 
-fn regrow(
-    mut commands: Commands,
-    clock: Single<&Clock>,
-    fields: Single<&Fields>,
-    mut plants: Query<(Entity, &Growing, &ChildOf, &mut PixelSprite), With<Harvested>>,
-    spots: Query<&SceneNodeId>,
-) {
-    for (plant, &Growing(herb), spot, mut sprite) in &mut plants {
-        let ready = spots
-            .get(spot.parent())
-            .ok()
-            .and_then(|id| fields.0.get(id))
-            .is_some_and(|field| field.ready <= clock.hours);
-        if ready {
-            sprite.cell = herb.column();
-            commands.entity(plant).remove::<Harvested>();
-        }
-    }
+pub(super) fn unsow(commands: &mut Commands, spot: Entity) {
+    commands.entity(spot).remove::<Sown>();
 }

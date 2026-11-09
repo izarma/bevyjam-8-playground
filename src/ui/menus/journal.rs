@@ -19,38 +19,28 @@
 //!
 
 use bevy::prelude::*;
-use bevy::ui::{UiGlobalTransform, UiSystems};
-use bevy::ui_widgets::{ControlOrientation, ScrollArea, Scrollbar, ScrollbarThumb};
-use bevy::window::PrimaryWindow;
-use plants::Plant;
 
 use crate::{
     gameplay::{
-        Ailing, Ailment, Brew, BrewHistory, Died, Health, Mark, Met, Visitor,
+        Ailing, Ailment, BrewHistory, Died, Health, Met, Visitor,
         clock::Clock,
         herbs::{self, Element},
     },
     loading::NPCAssets,
     ui::{
+        brews::{self, BrewList},
         font,
         health::{ailment_countdown, ailment_mark, bar_width, health_bar_color},
         interaction::InteractionPalette,
         menus::Menu,
-        palette::{
-            BUTTON_HOVERED_TINT, BUTTON_PRESSED_TINT, CAUTION, GAIN_TEXT, HEADER_TEXT, LABEL_TEXT,
-            LOSS_TEXT,
-        },
-        scale::{TEXEL, texels},
+        palette::{BUTTON_HOVERED_TINT, BUTTON_PRESSED_TINT, HEADER_TEXT, LABEL_TEXT, LOSS_TEXT},
+        scale::texels,
         widget,
     },
 };
 
 pub(super) fn plugin(app: &mut App) {
     app.add_systems(OnEnter(Menu::Journal), spawn_journal_menu);
-    app.add_systems(
-        PostUpdate,
-        (update_history_scrollbar, place_brew_tooltip).in_set(UiSystems::PostLayout),
-    );
 }
 
 // All sizes are in texels;
@@ -84,10 +74,6 @@ const DESCRIPTION_PANEL_WIDTH: u16 = TOP_ROW_WIDTH;
 
 // Brew history panel.
 const HISTORY_PANEL_WIDTH: u16 = 128;
-const BREW_SLOT_SIZE: u16 = 24;
-const BREW_SLOT_GAP: u16 = 2;
-const SCROLLBAR_WIDTH: u16 = 4;
-const SCROLLBAR_MIN_THUMB: f32 = 8.0;
 
 const LINE_HEIGHT: u16 = 16;
 
@@ -151,7 +137,10 @@ fn spawn_journal_menu(
             ];
             body.push(Box::new(content_row(content)));
         }
-        None => body.push(Box::new(heading(None))),
+        None => {
+            body.push(Box::new(heading(None)));
+            body.push(Box::new(empty_page()));
+        }
     }
 
     commands.spawn_scene(journal_root(body));
@@ -226,6 +215,22 @@ fn ailment_texts(ailment: Option<(Ailment, f32)>) -> (String, String) {
     })
 }
 
+fn empty_page() -> impl Scene {
+    bsn! {
+        Node {
+            width: texels(TAB_PANEL_SIZE + CONTENT_GAP + TOP_ROW_WIDTH),
+            height: texels(CONTENT_HEIGHT),
+            justify_content: JustifyContent::Center,
+            align_items: AlignItems::Center,
+        }
+        Pickable::IGNORE
+        Children [
+            @widget::label("Visitors you meet will be logged here.")
+            Pickable::IGNORE
+        ]
+    }
+}
+
 fn journal_root(body: Vec<Box<dyn Scene>>) -> impl Scene {
     bsn! {
         @widget::ui_root("Journal")
@@ -240,87 +245,8 @@ fn journal_root(body: Vec<Box<dyn Scene>>) -> impl Scene {
             }
             @widget::panel()
             Children [ { body } ]
-            --
-            JournalTooltip
-            Node {
-                position_type: PositionType::Absolute,
-            }
-            Visibility::Hidden
-            GlobalZIndex(3)
-            Pickable::IGNORE
         ]
     }
-}
-
-#[derive(Component, Clone, Default)]
-struct JournalTooltip {
-    slot: Option<Rect>,
-    placed: bool,
-}
-
-#[derive(Component, Clone, Default)]
-struct BrewHerb(Plant);
-
-fn show_brew_tooltip(
-    over: On<PointerOver>,
-    mut commands: Commands,
-    herbs: Query<(&BrewHerb, &ComputedNode, &UiGlobalTransform)>,
-    tooltip: Single<(Entity, &mut JournalTooltip, &mut Visibility)>,
-) {
-    let Ok((&BrewHerb(plant), node, at)) = herbs.get(over.entity) else {
-        return;
-    };
-    let (entity, mut tooltip, mut shown) = tooltip.into_inner();
-    let scale = node.inverse_scale_factor();
-    tooltip.slot = Some(Rect::from_center_size(
-        at.translation * scale,
-        node.size() * scale,
-    ));
-    tooltip.placed = false;
-    *shown = Visibility::Hidden;
-    commands.entity(entity).despawn_children();
-    commands
-        .spawn_scene(herbs::card(plant))
-        .insert(ChildOf(entity));
-}
-
-fn hide_brew_tooltip(_: On<PointerOut>, tooltip: Single<(&mut JournalTooltip, &mut Visibility)>) {
-    let (mut tooltip, mut shown) = tooltip.into_inner();
-    tooltip.slot = None;
-    *shown = Visibility::Hidden;
-}
-
-fn place_brew_tooltip(
-    window: Single<&Window, With<PrimaryWindow>>,
-    tooltip: Single<(
-        &mut JournalTooltip,
-        &mut Node,
-        &ComputedNode,
-        &mut Visibility,
-    )>,
-) {
-    let (mut tooltip, mut node, size, mut shown) = tooltip.into_inner();
-    let Some(slot) = tooltip.slot else {
-        return;
-    };
-    if tooltip.placed {
-        shown.set_if_neq(Visibility::Inherited);
-        return;
-    }
-    if size.size().x <= 0.0 {
-        return;
-    }
-    let scale = size.inverse_scale_factor();
-    let width = size.size().x * scale;
-    let gap = 2.0 * TEXEL;
-    let left = if slot.max.x + gap + width <= window.physical_width() as f32 * scale {
-        slot.max.x + gap
-    } else {
-        slot.min.x - gap - width
-    };
-    node.left = px(left);
-    node.top = px(slot.min.y);
-    tooltip.placed = true;
 }
 
 /// for portraits with headroom
@@ -382,12 +308,6 @@ struct JournalName;
 struct JournalDescription;
 
 #[derive(Component, Clone, Default)]
-struct JournalHistoryRoot;
-
-#[derive(Component, Clone, Default)]
-struct JournalHistoryScrollbar;
-
-#[derive(Component, Clone, Default)]
 struct JournalTabSelected;
 
 #[derive(Component, Clone, Copy, Default)]
@@ -408,8 +328,7 @@ fn select_journal_tab(
         Query<&mut Text, With<JournalAilmentCountdown>>,
         Query<(&mut Text, &JournalAilmentMark)>,
     )>,
-    roots: Query<Entity, With<JournalHistoryRoot>>,
-    mut scrolls: Query<&mut ScrollPosition, With<JournalHistoryRoot>>,
+    mut lists: Query<(Entity, &mut ScrollPosition), With<BrewList>>,
     mut faces: Query<(&JournalTabSelected, &ChildOf, &mut Visibility)>,
     mut fills: Query<(&JournalHealthFill, &mut Node, &mut BackgroundColor)>,
 ) {
@@ -461,16 +380,10 @@ fn select_journal_tab(
 
     // Rebuild the brew history list.
     if let Ok(JournalHistory(history)) = histories.get(click.entity)
-        && let Ok(root) = roots.single()
+        && let Ok((list, mut scroll)) = lists.single_mut()
     {
-        commands.entity(root).despawn_children();
-        for entry in history_entries(history) {
-            commands.spawn_scene(entry).insert(ChildOf(root));
-        }
-        // New history starts scrolled back to the top.
-        if let Ok(mut scroll) = scrolls.single_mut() {
-            scroll.0 = Vec2::ZERO;
-        }
+        brews::refill(&mut commands, list, history);
+        scroll.0 = Vec2::ZERO;
     }
 
     // Only the clicked tab keeps its highlight face.
@@ -480,33 +393,6 @@ fn select_journal_tab(
         } else {
             Visibility::Hidden
         };
-    }
-}
-
-/// Show the brew history scrollbar only when the list actually overflows.
-fn update_history_scrollbar(
-    scrollbars: Query<(Entity, &Scrollbar), With<JournalHistoryScrollbar>>,
-    scroll_areas: Query<&ComputedNode>,
-    mut visibility: Query<&mut Visibility>,
-) {
-    for (entity, scrollbar) in &scrollbars {
-        let Ok(computed) = scroll_areas.get(scrollbar.target) else {
-            continue;
-        };
-
-        // `content_size` and `size` are both in physical pixels, so we can compare them directly.
-        let needed = computed.content_size().y > computed.size().y + 0.5;
-        let wanted = if needed {
-            Visibility::Inherited
-        } else {
-            Visibility::Hidden
-        };
-
-        if let Ok(mut vis) = visibility.get_mut(entity)
-            && *vis != wanted
-        {
-            *vis = wanted;
-        }
     }
 }
 
@@ -692,136 +578,12 @@ fn description_panel(name: &'static str, text: &'static str) -> impl Scene {
 }
 
 fn history_panel(history: &BrewHistory) -> impl Scene {
-    let entries = history_entries(history);
     bsn! {
+        @brews::panel(history)
         Node {
             width: texels(HISTORY_PANEL_WIDTH),
             height: texels(PORTRAIT_SLOT_HEIGHT),
-            flex_direction: FlexDirection::Column,
-            align_items: AlignItems::Stretch,
-            row_gap: texels(1),
-            padding: UiRect::all(texels(4)),
-            overflow: Overflow::clip(),
         }
-        @widget::panel()
-        Pickable::IGNORE
-        Children [
-            Text("Brews")
-            @font::text(1)
-            TextColor(HEADER_TEXT)
-            Pickable::IGNORE
-            --
-            // Scroll area beside its scrollbar.
-            Node {
-                display: Display::Grid,
-                flex_grow: 1.0,
-                grid_template_columns: vec![
-                    RepeatedGridTrack::flex(1, 1.0),
-                    RepeatedGridTrack::auto(1),
-                ],
-                grid_template_rows: vec![RepeatedGridTrack::flex(1, 1.0)],
-                column_gap: texels(1),
-                padding: UiRect{
-                    right: texels(3),
-                    bottom: texels(3),
-                },
-                align_items: AlignItems::Stretch,
-            }
-            Pickable::IGNORE
-            Children [
-                // The scrollable brew list.
-                #JournalHistoryScroll
-                Node {
-                    flex_direction: FlexDirection::Column,
-                    align_items: AlignItems::Center,
-                    row_gap: texels(BREW_SLOT_GAP),
-                    overflow: Overflow::scroll_y(),
-                }
-                ScrollArea
-                JournalHistoryRoot
-                Children [ { entries } ]
-                --
-                // The scrollbar track and draggable thumb.
-                Node {
-                    min_width: texels(SCROLLBAR_WIDTH),
-                }
-                BackgroundColor(BUTTON_PRESSED_TINT)
-                JournalHistoryScrollbar
-                Scrollbar {
-                    target: #JournalHistoryScroll,
-                    orientation: ControlOrientation::Vertical,
-                    min_thumb_length: SCROLLBAR_MIN_THUMB,
-                }
-                Children [
-                    ScrollbarThumb {
-                        border_radius: BorderRadius::all(texels(1)),
-                        border: UiRect::ZERO,
-                    }
-                    BackgroundColor(BUTTON_HOVERED_TINT)
-                ]
-            ]
-        ]
-    }
-}
-
-fn history_entries(history: &BrewHistory) -> Vec<Box<dyn Scene>> {
-    history.brews.iter().map(brew_entry).collect()
-}
-
-fn brew_entry(brew: &Brew) -> Box<dyn Scene> {
-    let slots: Vec<Box<dyn Scene>> = brew
-        .mix
-        .iter()
-        .zip(brew.marks.iter())
-        .map(|(&plant, &mark)| brew_slot(plant, mark))
-        .collect();
-    Box::new(bsn! {
-        Node {
-            column_gap: texels(BREW_SLOT_GAP),
-        }
-        Pickable::IGNORE
-        Children [ { slots } ]
-    })
-}
-
-fn brew_slot(plant: Option<Plant>, mark: Mark) -> Box<dyn Scene> {
-    let mut children: Vec<Box<dyn Scene>> = vec![Box::new(bsn! {
-        @widget::panel_face_color(mark_color(mark))
-    })];
-    let Some(plant) = plant else {
-        return Box::new(bsn! {
-            @brew_slot_frame()
-            Pickable::IGNORE
-            Children [ { children } ]
-        });
-    };
-    children.push(Box::new(herbs::icon(plant)));
-    Box::new(bsn! {
-        @brew_slot_frame()
-        BrewHerb(plant)
-        @on(show_brew_tooltip)
-        @on(hide_brew_tooltip)
-        Children [ { children } ]
-    })
-}
-
-fn brew_slot_frame() -> impl Scene {
-    bsn! {
-        Node {
-            width: texels(BREW_SLOT_SIZE),
-            height: texels(BREW_SLOT_SIZE),
-            justify_content: JustifyContent::Center,
-            align_items: AlignItems::Center,
-        }
-        @widget::panel()
-    }
-}
-
-fn mark_color(mark: Mark) -> Color {
-    match mark {
-        Mark::Absent => LOSS_TEXT,
-        Mark::Misplaced => CAUTION,
-        Mark::Correct => GAIN_TEXT,
     }
 }
 

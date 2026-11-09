@@ -6,7 +6,7 @@ use pixel_art::PixelSprite;
 use plants::Growing;
 
 use super::{
-    biomes::{Fields, Harvested},
+    biomes::{Fields, unsow},
     player::Harvest,
 };
 use crate::{
@@ -17,7 +17,6 @@ use crate::{
 };
 
 mod popup;
-mod regrow;
 mod wipe;
 mod yields;
 
@@ -27,7 +26,7 @@ const OVERLAY_ALPHA: f32 = 0.6;
 const HOURS_PER_HARVEST: f32 = 2.0;
 
 pub(super) fn plugin(app: &mut App) {
-    app.add_plugins((popup::plugin, regrow::plugin, wipe::plugin, yields::plugin))
+    app.add_plugins((popup::plugin, wipe::plugin, yields::plugin))
         .add_systems(
             Update,
             find_in_reach.run_if(in_state(GameplayScene::Outdoors)),
@@ -103,7 +102,7 @@ fn find_in_reach(
 fn start_harvest(
     _: On<Start<Harvest>>,
     mut commands: Commands,
-    plants: Query<(Entity, &Growing, &PixelSprite), (With<InReach>, Without<Harvested>)>,
+    plants: Query<(Entity, &Growing, &PixelSprite), With<InReach>>,
     images: Res<Assets<Image>>,
 ) {
     let Some((plant, &Growing(kind), sprite)) = plants.iter().next() else {
@@ -147,10 +146,9 @@ fn collect(
     won: On<Won>,
     mut commands: Commands,
     overlays: Query<&Overlay>,
-    mut plants: Query<(&Growing, &GlobalTransform, &ChildOf, &mut PixelSprite)>,
+    plants: Query<(&Growing, &GlobalTransform, &ChildOf, &PixelSprite)>,
     spots: Query<&SceneNodeId>,
     mut fields: Single<&mut Fields>,
-    clock: Single<&Clock>,
     mut inventory: Single<&mut Inventory>,
     mut billboards: Billboards,
     assets: Res<HarvestingAssets>,
@@ -160,18 +158,18 @@ fn collect(
     let Ok(overlay) = overlays.get(won.entity) else {
         return;
     };
-    let Ok((&Growing(plant), at, spot, mut sprite)) = plants.get_mut(overlay.plant) else {
+    let Ok((&Growing(plant), at, spot, sprite)) = plants.get(overlay.plant) else {
         return;
     };
     if let Ok(&spot) = spots.get(spot.parent()) {
-        fields.picked(spot, clock.hours);
+        fields.picked(spot);
     }
+    unsow(&mut commands, spot.parent());
 
-    if let Some(above) = billboards.above(&sprite, at) {
+    if let Some(above) = billboards.above(sprite, at) {
         popup::spawn(&mut billboards, above, plant);
     }
-    sprite.cell = plant.harvested_cell();
-    commands.entity(overlay.plant).insert(Harvested);
+    commands.entity(overlay.plant).despawn();
     let count = inventory.plants.entry(plant).or_default();
     *count += 1;
     audio.play(assets.pickup.clone()).with_volume(6.0);
