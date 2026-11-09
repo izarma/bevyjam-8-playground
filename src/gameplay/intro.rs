@@ -28,8 +28,8 @@ const POEM_DIM: f32 = 0.6;
 // Release the intro camera once the guardian is within this distance of its slot.
 const INTRO_ARRIVAL: f32 = 0.4;
 
-const INTRO_WALK_X: f32 = -3.202_003_479_003_906;
-const INTRO_WALK_Z: f32 = -2.410_432_815_551_758;
+const INTRO_WALK_X: f32 = -3.202_003_5;
+const INTRO_WALK_Z: f32 = -2.410_432_8;
 const INTRO_WALK_ARRIVAL: f32 = 0.15;
 
 const CAM_X_MIN: f32 = -15.0;
