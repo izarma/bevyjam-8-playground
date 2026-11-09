@@ -23,6 +23,12 @@ title: Declarations
 <<declare $npc_dying = "">>
 ===
 
+title: Door
+---
+Door: *Knock Knock*
+???: Aruna are you there?
+===
+
 title: Guardian
 ---
 <<if not $treated_guardian>>

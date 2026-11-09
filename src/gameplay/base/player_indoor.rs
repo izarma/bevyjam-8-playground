@@ -9,13 +9,14 @@ use crate::{
     GameplayScene, InControl, PausableSystems,
     camera::SceneCamera,
     gameplay::{
-        CharacterName, Player, PlayerAnimation, SpeakerSprite,
+        CharacterName, Intro, Player, PlayerAnimation, SpeakerSprite,
         animation::PlayerAnimationSystems,
         base::{BODY_HEIGHT, ground_below, indoor_body},
         entrance::{Entrance, through_door},
     },
     loading::{PLAYER_FRAME, PlayerAssets},
     loading_screen::{Arrived, Travel},
+    ui::{billboard::Billboards, font, palette::CAUTION},
 };
 
 use super::npc::InDialogue;
@@ -41,12 +42,14 @@ pub(super) struct Touch;
 pub(super) fn plugin(app: &mut App) {
     app.add_observer(spawn_player_base)
         .add_observer(enter_base)
+        .add_observer(spawn_exit_marker)
         .add_input_context::<IndoorPlayer>()
         .sync_context_to_state::<IndoorPlayer, InControl>()
         .add_systems(
             Update,
             (
                 sync_camera,
+                bob_exit_marker,
                 (
                     exit_to_outdoors,
                     update_player_animation.in_set(PlayerAnimationSystems::UpdateState),
@@ -83,12 +86,26 @@ const EXIT_X: f32 = 20.0;
 /// How far back from the exit the player is turned around when they can't leave yet.
 const TURNED_BACK: f32 = 1.0;
 
+const EXIT_MARKER_HEIGHT: f32 = 2.2;
+const EXIT_MARKER_CANVAS: UVec2 = UVec2::new(24, 24);
+const EXIT_MARKER_BOB_SPEED: f32 = 4.0;
+const EXIT_MARKER_BOB_AMPLITUDE: f32 = 0.15;
+
+#[derive(Component)]
+struct ExitMarker {
+    base: Vec3,
+}
+
 fn sync_camera(
+    intro: Res<Intro>,
     player: Query<&Transform, (With<IndoorPlayer>, Without<Camera3d>)>,
     npc: Option<Single<&Transform, (With<InDialogue>, Without<Camera3d>)>>,
     mut cameras: Query<&mut Transform, SceneCamera>,
     time: Res<Time>,
 ) {
+    if intro.controlling_camera() {
+        return;
+    }
     let Ok(player) = player.single() else {
         return;
     };
@@ -110,7 +127,7 @@ fn sync_camera(
     let t = 1.0 - (-CAM_ZOOM_SPEED * time.delta_secs()).exp();
 
     for mut camera in &mut cameras {
-        camera.translation.x = x;
+        camera.translation.x = camera.translation.x.lerp(x, t);
         camera.translation.y = camera.translation.y.lerp(target_y, t);
         camera.translation.z = camera.translation.z.lerp(target_z, t);
     }
@@ -140,6 +157,55 @@ fn exit_to_outdoors(
     if let Err(error) = runner.try_start_node("LeaveBeforeTending") {
         error!("Failed to start the leave-before-tending dialogue: {error}");
         runner.stop();
+    }
+}
+
+fn spawn_exit_marker(
+    entrance: On<Insert<Entrance>>,
+    scene: Option<Res<State<GameplayScene>>>,
+    transforms: Query<&GlobalTransform>,
+    mut billboards: Billboards,
+) {
+    // The outdoors scene also has an `Entrance`; only mark the lab's exit.
+    if !scene.is_some_and(|scene| *scene.get() == GameplayScene::Base) {
+        return;
+    }
+    let Ok(at) = transforms.get(entrance.entity) else {
+        return;
+    };
+    let base = Vec3::new(
+        EXIT_X,
+        at.translation().y + EXIT_MARKER_HEIGHT,
+        at.translation().z,
+    );
+    billboards
+        .spawn(EXIT_MARKER_CANVAS, base, exit_marker(), GameplayScene::Base)
+        .insert((Name::new("Exit Marker"), ExitMarker { base }));
+}
+
+fn exit_marker() -> impl Scene {
+    bsn! {
+        #ExitMarker
+        Node {
+            width: percent(100),
+            height: percent(100),
+            justify_content: JustifyContent::Center,
+            align_items: AlignItems::Center,
+        }
+        Pickable::IGNORE
+        Children [
+            Text("▼")
+            @font::text(1)
+            TextColor(CAUTION)
+            Pickable::IGNORE
+        ]
+    }
+}
+
+fn bob_exit_marker(time: Res<Time>, mut markers: Query<(&ExitMarker, &mut Transform)>) {
+    let offset = (time.elapsed_secs() * EXIT_MARKER_BOB_SPEED).sin() * EXIT_MARKER_BOB_AMPLITUDE;
+    for (marker, mut transform) in &mut markers {
+        transform.translation = marker.base + Vec3::Y * offset;
     }
 }
 
