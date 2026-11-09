@@ -16,10 +16,10 @@ pub(crate) use animation::{
 };
 pub(crate) use dialogue::{Concoction, DialogueTarget};
 pub(crate) use outdoors::HarvestScratch;
-pub(crate) use remedy::Mark;
+pub(crate) use remedy::{Mark, Remedy};
 pub(crate) use visitors::{
-    Ailing, Ailment, BALANCED, Brew, BrewHistory, Died, Health, InLineup, MAX_HEALTH, MIN_HEALTH,
-    Met, Returning, ShopClosed, ShopOpened, Visitor,
+    Ailing, Ailment, BALANCED, Brew, BrewHistory, Cured, Died, Health, InLineup, MAX_HEALTH,
+    MIN_HEALTH, Met, Returning, ShopClosed, ShopOpened, Visitor,
 };
 // for the dev tools
 #[cfg(debug_assertions)]
