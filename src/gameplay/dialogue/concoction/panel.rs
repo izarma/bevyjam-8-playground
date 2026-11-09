@@ -5,8 +5,8 @@ use plants::Plant;
 use super::{Concoction, DROP, LIFT, SETTLE, SHAKE, STAMP_AT};
 use crate::{
     gameplay::{
-        dialogue::{YarnSpinnerDialogueViewSystemSet, view::DialogueRoot},
         BrewHistory,
+        dialogue::{YarnSpinnerDialogueViewSystemSet, view::DialogueRoot},
         herbs::{self, HeldCount},
         inventory::Inventory,
         remedy::{Mark, Remedy, SLOTS},
@@ -16,9 +16,7 @@ use crate::{
         brews::{self, BrewListOf},
         font,
         interaction::InteractionPalette,
-        palette::{
-            BUTTON_DISABLED_TINT, BUTTON_HOVERED_TINT, BUTTON_PRESSED_TINT, HEADER_TEXT,
-        },
+        palette::{BUTTON_DISABLED_TINT, BUTTON_HOVERED_TINT, BUTTON_PRESSED_TINT, HEADER_TEXT},
         scale::{TEXEL, texels},
         widget,
     },

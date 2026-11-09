@@ -92,7 +92,10 @@ fn show_interaction_prompt(
     in_control: Option<Res<State<InControl>>>,
     runners: Query<&DialogueRunner>,
     mut prompts: Query<(&InteractionPrompt, &mut Fade)>,
-    targets: Query<(&GlobalTransform, Has<Gong>, Option<&Children>), Or<(With<BodyOf>, With<Gong>)>>,
+    targets: Query<
+        (&GlobalTransform, Has<Gong>, Option<&Children>),
+        Or<(With<BodyOf>, With<Gong>)>,
+    >,
     sprites: Query<(&PixelSprite, &GlobalTransform)>,
     mut billboards: Billboards,
 ) {

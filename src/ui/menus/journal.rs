@@ -33,10 +33,7 @@ use crate::{
         health::{ailment_countdown, ailment_mark, bar_width, health_bar_color},
         interaction::InteractionPalette,
         menus::Menu,
-        palette::{
-            BUTTON_HOVERED_TINT, BUTTON_PRESSED_TINT, HEADER_TEXT, LABEL_TEXT,
-            LOSS_TEXT,
-        },
+        palette::{BUTTON_HOVERED_TINT, BUTTON_PRESSED_TINT, HEADER_TEXT, LABEL_TEXT, LOSS_TEXT},
         scale::texels,
         widget,
     },

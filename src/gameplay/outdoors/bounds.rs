@@ -31,7 +31,11 @@ fn build_walls(
             }
             continue;
         };
-        let wall = (collider, RigidBody::Static, Transform::from_translation(offset));
+        let wall = (
+            collider,
+            RigidBody::Static,
+            Transform::from_translation(offset),
+        );
         match standing {
             Some(entity) => {
                 commands.entity(entity).insert(wall);
