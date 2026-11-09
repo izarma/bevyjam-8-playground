@@ -15,7 +15,7 @@ pub(crate) struct GraphicsSettings {
 impl Default for GraphicsSettings {
     fn default() -> Self {
         Self {
-            render_scale: 100,
+            render_scale: 50,
             depth_of_field: true,
             fog: true,
         }

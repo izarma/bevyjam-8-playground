@@ -247,10 +247,12 @@ fn corners(sprite: &PixelSprite, rect: URect) -> (Vec2, Vec2) {
 }
 
 // returns a quad sized to `sprite`
+const FRAME_INSET: f32 = 0.01;
+
 fn quad(sprite: &PixelSprite, rect: URect, size: UVec2) -> Mesh {
     let (low, high) = corners(sprite, rect);
-    let uv_min = rect.min.as_vec2() / size.as_vec2();
-    let uv_max = rect.max.as_vec2() / size.as_vec2();
+    let uv_min = (rect.min.as_vec2() + FRAME_INSET) / size.as_vec2();
+    let uv_max = (rect.max.as_vec2() - FRAME_INSET) / size.as_vec2();
     let (left, right) = if sprite.flip_x {
         (uv_max.x, uv_min.x)
     } else {
