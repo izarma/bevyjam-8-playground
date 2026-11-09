@@ -1,4 +1,4 @@
-use bevy::prelude::*;
+use bevy::{prelude::*, ui::UiGlobalTransform, window::PrimaryWindow};
 use plants::Plant;
 
 use crate::ui::{
@@ -151,21 +151,6 @@ pub(crate) fn element_icon(element: Element) -> impl Scene {
     }
 }
 
-/// frames icon
-pub(crate) fn element_icon_slot(element: Element) -> impl Scene {
-    bsn! {
-        Node {
-            width: texels(24),
-            height: texels(24),
-            justify_content: JustifyContent::Center,
-            align_items: AlignItems::Center,
-        }
-        @widget::panel()
-        Pickable::IGNORE
-        Children [ { vec![element_icon(element)] } ]
-    }
-}
-
 const SLOT: u16 = 24;
 
 #[derive(Component, Clone, Default)]
@@ -245,10 +230,32 @@ struct Tooltip;
 
 fn show_tooltip(
     over: On<PointerOver>,
-    children: Query<&Children>,
-    mut tooltips: Query<&mut Visibility, With<Tooltip>>,
+    window: Single<&Window, With<PrimaryWindow>>,
+    slots: Query<(&Children, &ComputedNode, &UiGlobalTransform)>,
+    mut tooltips: Query<(&mut Visibility, &mut Node, &ComputedNode), With<Tooltip>>,
 ) {
-    set_tooltip(over.entity, Visibility::Inherited, &children, &mut tooltips);
+    let Ok((children, slot, at)) = slots.get(over.entity) else {
+        return;
+    };
+    let slot_right = at.translation.x + slot.size().x / 2.0;
+    for child in children {
+        let Ok((mut visibility, mut node, tooltip)) = tooltips.get_mut(*child) else {
+            continue;
+        };
+        let gap = 2.0 * TEXEL / tooltip.inverse_scale_factor();
+        let fits = slot_right + gap + tooltip.size().x <= window.physical_width() as f32;
+        (node.left, node.right) = if fits {
+            (percent(100), Val::Auto)
+        } else {
+            (Val::Auto, percent(100))
+        };
+        node.margin = if fits {
+            UiRect::left(texels(2))
+        } else {
+            UiRect::right(texels(2))
+        };
+        *visibility = Visibility::Inherited;
+    }
 }
 
 fn hide_tooltip(
@@ -256,18 +263,9 @@ fn hide_tooltip(
     children: Query<&Children>,
     mut tooltips: Query<&mut Visibility, With<Tooltip>>,
 ) {
-    set_tooltip(out.entity, Visibility::Hidden, &children, &mut tooltips);
-}
-
-fn set_tooltip(
-    slot: Entity,
-    visibility: Visibility,
-    children: &Query<&Children>,
-    tooltips: &mut Query<&mut Visibility, With<Tooltip>>,
-) {
-    for child in children.get(slot).into_iter().flatten() {
+    for child in children.get(out.entity).into_iter().flatten() {
         if let Ok(mut tooltip) = tooltips.get_mut(*child) {
-            *tooltip = visibility;
+            *tooltip = Visibility::Hidden;
         }
     }
 }
@@ -285,7 +283,7 @@ pub(crate) fn card(plant: Plant) -> impl Scene {
                 }
                 Pickable::IGNORE
                 Children [
-                    { vec![element_icon_slot(element)] }
+                    { vec![element_icon(element)] }
                     --
                     Text({ format!("{amount:+}") })
                     @font::text(1)

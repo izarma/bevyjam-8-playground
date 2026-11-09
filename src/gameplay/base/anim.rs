@@ -1,11 +1,10 @@
-use std::f32::consts::PI;
 use std::time::Duration;
 
 use avian3d::prelude::LinearVelocity;
 use bevy::prelude::*;
 use bevy_ahoy::prelude::CharacterController;
-use bevy_sprite3d::Sprite3d;
 use bevy_yarnspinner::prelude::DialogueRunner;
+use pixel_art::PixelSprite;
 
 use super::npc::InDialogue;
 use crate::{
@@ -172,44 +171,25 @@ fn select_animation_state(
 pub(super) fn indoor_visual_bundle(
     image: &Handle<Image>,
     frame: UVec2,
-    texture_atlas_layouts: &mut Assets<TextureAtlasLayout>,
-) -> (IndoorCharAnimation, Sprite, Sprite3d) {
+) -> (IndoorCharAnimation, PixelSprite) {
     let animation = IndoorCharAnimation::default();
-    let sprite = Sprite {
+    let sprite = PixelSprite {
         image: image.clone(),
-        texture_atlas: Some(TextureAtlas {
-            layout: texture_atlas_layouts
-                .add(TextureAtlasLayout::from_grid(frame, 6, 2, None, None)),
-            index: animation.frame_index(),
-        }),
+        size: Some(frame),
+        cell: animation.frame_index() as u32,
         ..default()
     };
-    let sprite3d = Sprite3d {
-        pixels_per_metre: pixel_art::TEXELS_PER_METER,
-        double_sided: true,
-        ..default()
-    };
-    (animation, sprite, sprite3d)
+    (animation, sprite)
 }
 
-fn animate(
-    time: Res<Time>,
-    mut query: Query<(&mut IndoorCharAnimation, &mut Sprite, &mut Transform)>,
-) {
-    for (mut animation, mut sprite, mut transform) in &mut query {
+fn animate(time: Res<Time>, mut query: Query<(&mut IndoorCharAnimation, &mut PixelSprite)>) {
+    for (mut animation, mut sprite) in &mut query {
         animation.tick(time.delta());
-        let index = animation.frame_index();
-        if sprite
-            .texture_atlas
-            .as_ref()
-            .is_some_and(|atlas| atlas.index != index)
-            && let Some(atlas) = sprite.texture_atlas.as_mut()
-        {
-            atlas.index = index;
-        }
-        let rotation = Quat::from_rotation_y(if animation.flipped() { PI } else { 0.0 });
-        if transform.rotation != rotation {
-            transform.rotation = rotation;
+        let cell = animation.frame_index() as u32;
+        let flip_x = animation.flipped();
+        if sprite.cell != cell || sprite.flip_x != flip_x {
+            sprite.cell = cell;
+            sprite.flip_x = flip_x;
         }
     }
 }

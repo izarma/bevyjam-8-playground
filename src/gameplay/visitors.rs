@@ -19,6 +19,8 @@ pub(crate) const UNWELL: u8 = 2;
 // unwell visitors come to the lab between these hours
 pub(crate) const DAY_START: f32 = 6.0;
 pub(crate) const DAY_END: f32 = 20.0;
+// visitors newly arrive no later than this
+const ARRIVE_BY: f32 = 12.0;
 
 pub(super) fn plugin(app: &mut App) {
     app.add_systems(OnEnter(GameState::Gameplay), spawn_visitors)
@@ -71,6 +73,8 @@ impl Health {
             as u8;
     }
 
+    // for the dev tools
+    #[cfg(debug_assertions)]
     pub(crate) fn offset(&mut self, delta: i8) {
         for element in Element::ALL {
             self.shift(element, delta);
@@ -291,7 +295,7 @@ fn spawn_visitors(mut commands: Commands) {
             START_HOUR
         } else {
             let day = days.next().expect("a day for everyone but the guardian");
-            day as f32 * 24.0 + rng.random_range(DAY_START..DAY_END)
+            day as f32 * 24.0 + rng.random_range(DAY_START..ARRIVE_BY)
         };
         // the guardian is sick before the game starts
         let days_ill = if guardian { GUARDIAN_DAYS_ILL } else { UNWELL };

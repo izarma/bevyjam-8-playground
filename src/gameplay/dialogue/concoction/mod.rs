@@ -36,15 +36,19 @@ const SLOT_SECONDS: f32 = 1.3;
 struct Anticipation;
 
 pub(super) fn plugin(app: &mut App) {
-    app.add_audio_channel::<Anticipation>()
-        .add_plugins(panel::plugin)
-        .add_observer(release_dialogue)
-        .add_systems(
-            Update,
-            brew.in_set(YarnSpinnerDialogueViewSystemSet)
-                .before(panel::PanelSystems)
-                .run_if(any_with_component::<Concoction>),
-        );
+    crate::audio::add_mixed_channel::<Anticipation>(
+        app,
+        crate::audio::Mix::Sound,
+        AudioTrack::new(),
+    )
+    .add_plugins(panel::plugin)
+    .add_observer(release_dialogue)
+    .add_systems(
+        Update,
+        brew.in_set(YarnSpinnerDialogueViewSystemSet)
+            .before(panel::PanelSystems)
+            .run_if(any_with_component::<Concoction>),
+    );
 }
 
 #[derive(Component)]

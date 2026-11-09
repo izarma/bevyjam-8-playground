@@ -75,7 +75,6 @@ fn sync_lineup(
     visitors: Query<(Entity, &Visitor, Option<&InLineup>, Option<&Body>)>,
     mut bodies: Query<(&Transform, &mut NpcTarget)>,
     assets: Res<NPCAssets>,
-    mut texture_atlas_layouts: ResMut<Assets<TextureAtlasLayout>>,
 ) {
     let (lab, shown) = *lab;
     let door = door.translation();
@@ -96,10 +95,9 @@ fn sync_lineup(
             (Some(place), None) => {
                 let start = if shown { door } else { place };
                 let (image, frame) = assets.sprite(visitor.name());
-                let (animation, sprite, sprite3d) =
-                    indoor_visual_bundle(image, frame, &mut texture_atlas_layouts);
+                let (animation, sprite) = indoor_visual_bundle(image, frame);
                 let (collider, mut controller) = indoor_body(NPC_SPEED);
-                let sprite_at = ground_below(&controller) + BODY_HEIGHT / 2.0;
+                let sprite_at = ground_below(&controller);
                 // NPCs pass through each other
                 let others = !LayerMask::from(Layer::Npc);
                 controller.filter.mask = others;
@@ -112,12 +110,7 @@ fn sync_lineup(
                     CollisionLayers::new(Layer::Npc, others),
                     controller,
                     DespawnOnExit(GameplayScene::Base),
-                    children![(
-                        Transform::from_xyz(0.0, sprite_at, 0.0),
-                        animation,
-                        sprite,
-                        sprite3d
-                    )],
+                    children![(Transform::from_xyz(0.0, sprite_at, 0.0), animation, sprite,)],
                 ));
             }
             (Some(place), Some(body)) => {

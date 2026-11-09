@@ -46,6 +46,10 @@ pub struct PixelSky {
     pub sunset_color: Color,
 
     pub stars: f32,
+
+    /// toward the sun, caller's responsibility
+    #[reflect(ignore)]
+    pub sun: Vec3,
 }
 
 impl Default for PixelSky {
@@ -70,6 +74,7 @@ impl Default for PixelSky {
             sunset: 0.9,
             sunset_color: Color::srgb(1.0, 0.91, 0.784),
             stars: 0.0,
+            sun: Vec3::new(0.39, 0.66, 0.64).normalize(),
         }
     }
 }
@@ -90,6 +95,7 @@ struct PixelSkySettings {
     moon_color: Vec4,
     glow_color: Vec4,
     sunset_color: Vec4,
+    sun: Vec4,
     texels_per_degree: f32,
     bands: f32,
     dither: f32,
@@ -116,6 +122,7 @@ impl PixelSky {
                 moon_color: linear(self.moon_color),
                 glow_color: linear(self.glow_color),
                 sunset_color: linear(self.sunset_color),
+                sun: self.sun.extend(0.0),
                 texels_per_degree: self.texels_per_degree.max(0.1),
                 bands: self.bands.max(2) as f32,
                 dither: self.dither,

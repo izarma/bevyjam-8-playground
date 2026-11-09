@@ -1127,7 +1127,6 @@ dependencies = [
  "bevy_asset_loader",
  "bevy_enhanced_input",
  "bevy_kira_audio",
- "bevy_sprite3d",
  "bevy_yarnspinner",
  "embed-resource",
  "getrandom 0.4.2",
@@ -1905,15 +1904,6 @@ dependencies = [
  "radsort",
  "tracing",
  "wgpu-types",
-]
-
-[[package]]
-name = "bevy_sprite3d"
-version = "10.1.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b9fa58843a93fa2fdc970c36dbfbaec183019e49cbc8c90c41ebdfa8134a2878"
-dependencies = [
- "bevy",
 ]
 
 [[package]]
@@ -4153,7 +4143,7 @@ checksum = "8f42a60cbdf9a97f5d2305f08a87dc4e09308d1276d28c869c684d7777685682"
 [[package]]
 name = "jackdaw_avian_integration"
 version = "0.20.0"
-source = "git+https://github.com/Piefayth/jackdaw?branch=pixel-terrain-0.20.0#49576fdf9c68699cac691f9264446e6e8111e6e5"
+source = "git+https://github.com/Piefayth/jackdaw?branch=pixel-terrain-0.20.0#b140c7342dfacc2fe4711bca556ece29a0fbcbdf"
 dependencies = [
  "avian3d",
  "bevy",
@@ -4166,7 +4156,7 @@ dependencies = [
 [[package]]
 name = "jackdaw_bind"
 version = "0.20.0"
-source = "git+https://github.com/Piefayth/jackdaw?branch=pixel-terrain-0.20.0#49576fdf9c68699cac691f9264446e6e8111e6e5"
+source = "git+https://github.com/Piefayth/jackdaw?branch=pixel-terrain-0.20.0#b140c7342dfacc2fe4711bca556ece29a0fbcbdf"
 dependencies = [
  "bevy",
  "thiserror 2.0.18",
@@ -4175,7 +4165,7 @@ dependencies = [
 [[package]]
 name = "jackdaw_bsn"
 version = "0.20.0"
-source = "git+https://github.com/Piefayth/jackdaw?branch=pixel-terrain-0.20.0#49576fdf9c68699cac691f9264446e6e8111e6e5"
+source = "git+https://github.com/Piefayth/jackdaw?branch=pixel-terrain-0.20.0#b140c7342dfacc2fe4711bca556ece29a0fbcbdf"
 dependencies = [
  "bevy",
  "bevy_reflect",
@@ -4190,7 +4180,7 @@ dependencies = [
 [[package]]
 name = "jackdaw_camera_rig"
 version = "0.20.0"
-source = "git+https://github.com/Piefayth/jackdaw?branch=pixel-terrain-0.20.0#49576fdf9c68699cac691f9264446e6e8111e6e5"
+source = "git+https://github.com/Piefayth/jackdaw?branch=pixel-terrain-0.20.0#b140c7342dfacc2fe4711bca556ece29a0fbcbdf"
 dependencies = [
  "bevy",
  "jackdaw_scene_types",
@@ -4199,7 +4189,7 @@ dependencies = [
 [[package]]
 name = "jackdaw_geometry"
 version = "0.20.0"
-source = "git+https://github.com/Piefayth/jackdaw?branch=pixel-terrain-0.20.0#49576fdf9c68699cac691f9264446e6e8111e6e5"
+source = "git+https://github.com/Piefayth/jackdaw?branch=pixel-terrain-0.20.0#b140c7342dfacc2fe4711bca556ece29a0fbcbdf"
 dependencies = [
  "bevy",
  "bitflags 2.13.0",
@@ -4213,7 +4203,7 @@ dependencies = [
 [[package]]
 name = "jackdaw_pie_protocol"
 version = "0.20.0"
-source = "git+https://github.com/Piefayth/jackdaw?branch=pixel-terrain-0.20.0#49576fdf9c68699cac691f9264446e6e8111e6e5"
+source = "git+https://github.com/Piefayth/jackdaw?branch=pixel-terrain-0.20.0#b140c7342dfacc2fe4711bca556ece29a0fbcbdf"
 dependencies = [
  "bevy",
  "ipc-channel",
@@ -4224,7 +4214,7 @@ dependencies = [
 [[package]]
 name = "jackdaw_prefab"
 version = "0.20.0"
-source = "git+https://github.com/Piefayth/jackdaw?branch=pixel-terrain-0.20.0#49576fdf9c68699cac691f9264446e6e8111e6e5"
+source = "git+https://github.com/Piefayth/jackdaw?branch=pixel-terrain-0.20.0#b140c7342dfacc2fe4711bca556ece29a0fbcbdf"
 dependencies = [
  "bevy",
  "jackdaw_bsn",
@@ -4235,7 +4225,7 @@ dependencies = [
 [[package]]
 name = "jackdaw_runtime"
 version = "0.20.0"
-source = "git+https://github.com/Piefayth/jackdaw?branch=pixel-terrain-0.20.0#49576fdf9c68699cac691f9264446e6e8111e6e5"
+source = "git+https://github.com/Piefayth/jackdaw?branch=pixel-terrain-0.20.0#b140c7342dfacc2fe4711bca556ece29a0fbcbdf"
 dependencies = [
  "bevy",
  "jackdaw_bind",
@@ -4257,7 +4247,7 @@ dependencies = [
 [[package]]
 name = "jackdaw_scene_types"
 version = "0.20.0"
-source = "git+https://github.com/Piefayth/jackdaw?branch=pixel-terrain-0.20.0#49576fdf9c68699cac691f9264446e6e8111e6e5"
+source = "git+https://github.com/Piefayth/jackdaw?branch=pixel-terrain-0.20.0#b140c7342dfacc2fe4711bca556ece29a0fbcbdf"
 dependencies = [
  "bevy",
  "dunce",
@@ -4273,7 +4263,7 @@ dependencies = [
 [[package]]
 name = "jackdaw_schema"
 version = "0.20.0"
-source = "git+https://github.com/Piefayth/jackdaw?branch=pixel-terrain-0.20.0#49576fdf9c68699cac691f9264446e6e8111e6e5"
+source = "git+https://github.com/Piefayth/jackdaw?branch=pixel-terrain-0.20.0#b140c7342dfacc2fe4711bca556ece29a0fbcbdf"
 dependencies = [
  "bevy",
  "jackdaw_scene_types",
@@ -4284,7 +4274,7 @@ dependencies = [
 [[package]]
 name = "jackdaw_surface"
 version = "0.20.0"
-source = "git+https://github.com/Piefayth/jackdaw?branch=pixel-terrain-0.20.0#49576fdf9c68699cac691f9264446e6e8111e6e5"
+source = "git+https://github.com/Piefayth/jackdaw?branch=pixel-terrain-0.20.0#b140c7342dfacc2fe4711bca556ece29a0fbcbdf"
 dependencies = [
  "bevy",
  "half",
@@ -4294,7 +4284,7 @@ dependencies = [
 [[package]]
 name = "jackdaw_terrain"
 version = "0.20.0"
-source = "git+https://github.com/Piefayth/jackdaw?branch=pixel-terrain-0.20.0#49576fdf9c68699cac691f9264446e6e8111e6e5"
+source = "git+https://github.com/Piefayth/jackdaw?branch=pixel-terrain-0.20.0#b140c7342dfacc2fe4711bca556ece29a0fbcbdf"
 dependencies = [
  "bevy",
  "bevy_math",
@@ -4306,7 +4296,7 @@ dependencies = [
 [[package]]
 name = "jackdaw_widgets_runtime"
 version = "0.20.0"
-source = "git+https://github.com/Piefayth/jackdaw?branch=pixel-terrain-0.20.0#49576fdf9c68699cac691f9264446e6e8111e6e5"
+source = "git+https://github.com/Piefayth/jackdaw?branch=pixel-terrain-0.20.0#b140c7342dfacc2fe4711bca556ece29a0fbcbdf"
 dependencies = [
  "bevy",
 ]

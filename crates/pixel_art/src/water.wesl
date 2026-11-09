@@ -9,7 +9,7 @@ import bevy_pbr::render::{
     view_transformations::{ndc_to_frag_coord, position_ndc_to_world, position_world_to_ndc},
 };
 @if(DEPTH_PREPASS) import bevy_pbr::prepass::utils::prepass_depth;
-import pixel_art::texel::texel_sharp;
+import pixel_art::texel::{stepped_fog_position, texel_sharp};
 import pixel_art::lighting::matte_lighting;
 import bevy_render::maths::PI;
 @if(STANDARD_MATERIAL_SPECULAR_TRANSMISSION)
@@ -189,7 +189,11 @@ fn fragment(in: VertexOutput, @builtin(front_facing) is_front: bool) -> Fragment
     }
     // foam is too churned up to catch the sun
     out.color += vec4<f32>(sun_glint(center, lighting, in.position.xy) * (1.0 - foam), 0.0);
-    // fogged as one square too
-    out.color = pbr_functions::main_pass_post_lighting_processing(lighting, out.color);
+    var fogged = lighting;
+    fogged.world_position = vec4<f32>(
+        stepped_fog_position(lighting.world_position.xyz, vec2<i32>(floor(center * water.texels_per_meter))),
+        1.0,
+    );
+    out.color = pbr_functions::main_pass_post_lighting_processing(fogged, out.color);
     return out;
 }

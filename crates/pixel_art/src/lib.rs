@@ -11,7 +11,7 @@ mod sky;
 mod sprite;
 mod water;
 
-pub use model::PixelModel;
+pub use model::{PixelModel, UnswappedModels};
 pub use sky::PixelSky;
 pub use sprite::{PixelSprite, PixelSpriteMaterial};
 pub use water::PixelWater;

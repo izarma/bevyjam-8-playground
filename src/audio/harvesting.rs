@@ -29,7 +29,7 @@ pub(super) fn plugin(app: &mut App) {
             .attack_duration(Duration::from_millis(5))
             .release_duration(Duration::from_millis(100)),
     );
-    app.add_audio_channel_with_track::<Scratching>(track)
+    super::add_mixed_channel::<Scratching>(app, super::Mix::Sound, track)
         .init_resource::<ScratchPlayback>()
         .add_observer(record_scratch)
         .add_systems(PostUpdate, update_playback);
