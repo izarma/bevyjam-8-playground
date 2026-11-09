@@ -50,9 +50,9 @@ bevy_ecs::hierarchy::Children [
     jackdaw_scene_types::node_id::SceneNodeId(8480734209342456169)
     bevy_transform::components::transform::Transform {
         translation: glam::Vec3 {
-            x: -3.2020034790039063,
+            x: -11.867820739746094,
             y: 0.0,
-            z: -2.410432815551758,
+            z: -3.1908018589019775,
         },
         rotation: glam::Quat {
             x: 0.0,
@@ -529,9 +529,9 @@ bevy_ecs::hierarchy::Children [
     #Cauldron
     bevy_transform::components::transform::Transform {
         translation: glam::Vec3 {
-            x: -3.3321309089660645,
+            x: -13.916643142700195,
             y: 0.0,
-            z: -1.48011314868927,
+            z: -3.7578229904174805,
         },
     }
     jackdaw_scene_types::node_id::SceneNodeId(9111000000000000004)

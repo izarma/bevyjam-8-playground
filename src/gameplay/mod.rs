@@ -5,6 +5,7 @@ pub(crate) mod clock;
 mod dialogue;
 pub(crate) mod entrance;
 pub(crate) mod herbs;
+mod intro;
 pub(crate) mod inventory;
 mod outdoors;
 mod remedy;
@@ -16,6 +17,7 @@ pub(crate) use animation::{
     Facing, PlayerAnimation, PlayerAnimationSystems, apply_player_animation, tick_player_animation,
 };
 pub(crate) use dialogue::{Concoction, DialogueTarget};
+pub(crate) use intro::Intro;
 pub(crate) use outdoors::HarvestScratch;
 pub(crate) use remedy::{Mark, Remedy};
 pub(crate) use visitors::{
@@ -39,6 +41,7 @@ pub(super) fn plugin(app: &mut App) {
         time_of_day::plugin,
         visitors::plugin,
         dialogue::plugin,
+        intro::plugin,
         outdoors::plugin,
         upgrades::plugin,
     ));
