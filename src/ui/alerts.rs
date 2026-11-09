@@ -2,9 +2,10 @@ use bevy::prelude::*;
 
 use crate::{
     GameplayScene,
-    gameplay::{InLineup, Visitor},
+    gameplay::{InLineup, Met, Returning, ShopClosed, ShopOpened, Visitor},
     loading::NPCAssets,
     ui::{
+        font,
         menus::journal::{TAB_PANEL_SIZE, TAB_SIZE, centered_crop, portrait_top, tab_icon},
         scale::{TEXEL, texels},
         widget,
@@ -20,10 +21,10 @@ pub(super) fn plugin(app: &mut App) {
     app.add_systems(OnEnter(GameplayScene::Outdoors), spawn_arrival_list)
         .add_systems(
             Update,
-            shake_arrivals.run_if(in_state(GameplayScene::Outdoors)),
+            (sync_arrivals, show_notice, shake_arrivals).run_if(in_state(GameplayScene::Outdoors)),
         )
-        .add_observer(arrive)
-        .add_observer(depart);
+        .add_observer(announce_opening)
+        .add_observer(announce_closing);
 }
 
 /// Root of the row of arrival icons shown while outdoors.
@@ -33,6 +34,14 @@ struct ArrivalList;
 /// Marks a single arrival icon and remembers which visitor it represents.
 #[derive(Component)]
 struct ArrivalIcon(Entity);
+
+const NOTICE_SECONDS: f32 = 3.0;
+const FADE_SECONDS: f32 = 1.0;
+
+#[derive(Component, Clone, Default)]
+struct Notice {
+    left: f32,
+}
 
 /// Drives the one-shot attention shake.
 #[derive(Component)]
@@ -58,46 +67,82 @@ fn arrival_list() -> impl Scene {
         }
         Pickable::IGNORE
         DespawnOnExit::<GameplayScene>(GameplayScene::Outdoors)
+        Children [
+            Notice
+            Text("")
+            @font::text(1)
+            TextColor(Color::WHITE)
+            TextShadow {
+                offset: Vec2::splat(TEXEL),
+                color: Color::BLACK,
+            }
+            Node {
+                display: Display::None,
+            }
+            Pickable::IGNORE
+        ]
     }
 }
 
-fn arrive(
-    added: On<Add<InLineup>>,
+fn sync_arrivals(
     mut commands: Commands,
-    scene: Res<State<GameplayScene>>,
-    lists: Query<Entity, With<ArrivalList>>,
-    visitors: Query<&Visitor>,
+    list: Single<Entity, With<ArrivalList>>,
+    waiting: Query<(Entity, &Visitor, Ref<Returning>), (With<InLineup>, Without<Met>)>,
+    icons: Query<(Entity, &ArrivalIcon)>,
     assets: Res<NPCAssets>,
 ) {
-    if *scene.get() != GameplayScene::Outdoors {
-        return;
-    }
-    let Some(list) = lists.iter().next() else {
-        return;
-    };
-    let Ok(visitor) = visitors.get(added.entity) else {
-        return;
-    };
-
-    let (image, frame) = assets.sprite(visitor.name());
-    let image = image.clone();
-    let rect = centered_crop(frame, TAB_SIZE, TAB_SIZE, portrait_top(visitor.name()));
-    commands.spawn_scene(arrival_icon(image, rect)).insert((
-        ChildOf(list),
-        ArrivalIcon(added.entity),
-        Shake { elapsed: 0.0 },
-    ));
-}
-
-fn depart(
-    removed: On<Remove<InLineup>>,
-    mut commands: Commands,
-    icons: Query<(Entity, &ArrivalIcon)>,
-) {
-    for (icon, marker) in &icons {
-        if marker.0 == removed.entity {
+    for (icon, shown) in &icons {
+        if !waiting.contains(shown.0) {
             commands.entity(icon).despawn();
         }
+    }
+    for (visitor, who, new) in &waiting {
+        if icons.iter().any(|(_, shown)| shown.0 == visitor) {
+            continue;
+        }
+        let (image, frame) = assets.sprite(who.name());
+        let rect = centered_crop(frame, TAB_SIZE, TAB_SIZE, portrait_top(who.name()));
+        let mut icon = commands.spawn_scene(arrival_icon(image.clone(), rect));
+        icon.insert((ChildOf(*list), ArrivalIcon(visitor)));
+        if new.is_added() {
+            icon.insert(Shake { elapsed: 0.0 });
+        }
+    }
+}
+
+fn announce(notices: &mut Query<(&mut Notice, &mut Text)>, message: String) {
+    for (mut notice, mut text) in notices {
+        notice.left = NOTICE_SECONDS + FADE_SECONDS;
+        text.0 = message.clone();
+    }
+}
+
+fn announce_opening(_: On<ShopOpened>, mut notices: Query<(&mut Notice, &mut Text)>) {
+    announce(&mut notices, "Your shop is open for the day.".into());
+}
+
+fn announce_closing(_: On<ShopClosed>, mut notices: Query<(&mut Notice, &mut Text)>) {
+    announce(&mut notices, "Your shop has closed for the day.".into());
+}
+
+fn show_notice(
+    time: Res<Time>,
+    notice: Single<(&mut Notice, &mut Node, &mut TextColor, &mut TextShadow)>,
+) {
+    let (mut notice, mut node, mut color, mut shadow) = notice.into_inner();
+    notice.left = (notice.left - time.delta_secs()).max(0.0);
+    let display = if notice.left > 0.0 {
+        Display::Flex
+    } else {
+        Display::None
+    };
+    if node.display != display {
+        node.display = display;
+    }
+    let alpha = (notice.left / FADE_SECONDS).min(1.0);
+    if color.0.alpha() != alpha {
+        color.0.set_alpha(alpha);
+        shadow.color.set_alpha(alpha);
     }
 }
 

@@ -2,6 +2,8 @@ use bevy::prelude::*;
 use plants::Plant;
 use rand::{Rng, seq::IndexedRandom};
 
+use crate::gameplay::herbs;
+
 // how many herbs are used to make the remedy?
 pub(crate) const SLOTS: usize = 3;
 
@@ -11,7 +13,10 @@ pub(crate) struct Remedy(pub(crate) [Plant; SLOTS]);
 
 impl Remedy {
     pub(crate) fn roll(rng: &mut impl Rng) -> Self {
-        let herbs = Plant::ALL.sample_array::<_, SLOTS>(rng);
+        let herbs = herbs::shifting()
+            .map(|(herb, _)| herb)
+            .collect::<Vec<_>>()
+            .sample_array::<_, SLOTS>(rng);
         Remedy(herbs.expect("there are more herbs than slots"))
     }
 }

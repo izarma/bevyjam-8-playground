@@ -153,7 +153,7 @@ fn spawn_dialogue_ui(
             align_items: AlignItems::Center,
             justify_content: JustifyContent::FlexEnd,
             row_gap: texels(2),
-            padding: UiRect::top(texels(14)),
+            padding: UiRect::top(texels(4)),
         }
         GlobalZIndex(0)
         Pickable::IGNORE
@@ -165,10 +165,7 @@ fn spawn_dialogue_ui(
                 flex_direction: FlexDirection::Row,
                 justify_content: JustifyContent::SpaceBetween,
                 align_items: AlignItems::FlexEnd,
-                margin: UiRect {
-                    top: texels(2),
-                    bottom: texels(6),
-                },
+                margin: UiRect::bottom(texels(2)),
             }
             Pickable::IGNORE
             Children [
@@ -187,7 +184,8 @@ fn spawn_dialogue_ui(
             #DialogueBox
             Node {
                 width: percent(90),
-                height: percent(25),
+                height: texels(56),
+                flex_shrink: 0.0,
                 padding: UiRect::new(texels(8), texels(8), texels(4), texels(4)),
             }
             @widget::panel()

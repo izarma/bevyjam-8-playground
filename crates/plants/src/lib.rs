@@ -22,6 +22,7 @@ pub enum Plant {
     Licorice,
     RedMushroom,
     Grapes,
+    BlueHibiscus,
 }
 
 // `Plant::ALL` is in the same order that these are left to right
@@ -32,7 +33,7 @@ const HARVESTED: u32 = 1;
 const PICKED: u32 = 2;
 
 impl Plant {
-    pub const ALL: [Plant; 10] = [
+    pub const ALL: [Plant; 11] = [
         Plant::Basil,
         Plant::Chili,
         Plant::Lemongrass,
@@ -43,6 +44,7 @@ impl Plant {
         Plant::Licorice,
         Plant::RedMushroom,
         Plant::Grapes,
+        Plant::BlueHibiscus,
     ];
 
     pub fn column(self) -> u32 {

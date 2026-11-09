@@ -1,6 +1,10 @@
 use bevy::prelude::*;
+use bevy_kira_audio::prelude::{Audio, AudioControl};
 use plants::Plant;
-use rand::{RngExt, seq::SliceRandom};
+use rand::{
+    RngExt,
+    seq::{IteratorRandom, SliceRandom},
+};
 
 use crate::{
     GameResult, GameState,
@@ -9,6 +13,7 @@ use crate::{
         herbs::{self, Element},
         remedy::{Mark, Remedy, SLOTS},
     },
+    loading::UIAssets,
     loading_screen::Travel,
 };
 
@@ -27,7 +32,13 @@ pub(super) fn plugin(app: &mut App) {
         .add_observer(cure)
         .add_systems(
             Update,
-            (progress_ailments, record_deaths, update_lineup, end_game)
+            (
+                progress_ailments,
+                record_deaths,
+                update_lineup,
+                open_and_close_shop,
+                end_game,
+            )
                 .chain()
                 .run_if(in_state(GameState::Gameplay)),
         );
@@ -87,8 +98,18 @@ impl Health {
     }
 
     pub(crate) fn dose(&mut self, plant: Plant) {
-        for (element, delta) in herbs::effect(plant).shifts() {
-            self.shift(element, delta);
+        match herbs::shift(plant) {
+            Some(shift) => {
+                for (element, delta) in shift.shifts() {
+                    self.shift(element, delta);
+                }
+            }
+            None => {
+                for element in Element::ALL {
+                    let toward = BALANCED.cmp(&self.get(element)) as i8;
+                    self.shift(element, toward);
+                }
+            }
         }
     }
 
@@ -182,8 +203,8 @@ pub(crate) struct Gift(pub(crate) [Plant; 3]);
 impl Gift {
     fn roll(signature: Plant, sick: Health, remedy: &Remedy, rng: &mut impl rand::Rng) -> Self {
         let in_cure = remedy.0.into_iter().filter(|&herb| herb != signature);
-        let outside = Plant::ALL
-            .into_iter()
+        let outside = herbs::shifting()
+            .map(|(herb, _)| herb)
             .filter(|herb| *herb != signature && !remedy.0.contains(herb))
             .collect::<Vec<_>>();
         let mut pairs = in_cure
@@ -231,12 +252,11 @@ pub(crate) enum Ailment {
 }
 
 impl Ailment {
-    fn undone_by(plant: Plant) -> Ailment {
-        let effect = herbs::effect(plant);
-        if effect.by > 0 {
-            Ailment::Deficiency(effect.element)
+    fn undone_by(shift: herbs::Shift) -> Ailment {
+        if shift.by > 0 {
+            Ailment::Deficiency(shift.element)
         } else {
-            Ailment::Excess(effect.element)
+            Ailment::Excess(shift.element)
         }
     }
 
@@ -284,6 +304,11 @@ pub(crate) struct Ailing {
 pub(crate) struct InLineup(pub(crate) usize);
 
 fn spawn_visitors(mut commands: Commands) {
+    commands.spawn((
+        Name::new("Shop"),
+        Shop { open: true },
+        DespawnOnExit(GameState::Gameplay),
+    ));
     let mut rng = rand::rng();
     // the guardian is there ont he first day, everyone else turns up unwell on their own day
     let mut days = (1..NAMES.len()).collect::<Vec<_>>();
@@ -299,8 +324,10 @@ fn spawn_visitors(mut commands: Commands) {
         };
         // the guardian is sick before the game starts
         let days_ill = if guardian { GUARDIAN_DAYS_ILL } else { UNWELL };
-        let signature = Plant::ALL[rng.random_range(0..Plant::ALL.len())];
-        let ailment = Ailment::undone_by(signature);
+        let (signature, shift) = herbs::shifting()
+            .choose(&mut rng)
+            .expect("herbs that shift an element");
+        let ailment = Ailment::undone_by(shift);
         let remedy = Remedy::roll(&mut rng);
         let mut visitor = commands.spawn((
             Visitor(index),
@@ -317,7 +344,7 @@ fn spawn_visitors(mut commands: Commands) {
             for _ in 0..days_ill {
                 ailment.worsen(&mut sick);
             }
-            visitor.insert(Gift::roll(signature, sick, &remedy, &mut rng));
+            visitor.insert((Gift::roll(signature, sick, &remedy, &mut rng), Returning));
         }
         visitor.insert(remedy);
     }
@@ -347,24 +374,48 @@ fn record_deaths(
 }
 
 // unwell visitors come in during the day, taking the first free spot
+#[derive(Component)]
+pub(crate) struct Returning;
+
+#[derive(Event)]
+pub(crate) struct ShopOpened;
+
+#[derive(Event)]
+pub(crate) struct ShopClosed;
+
 fn update_lineup(
     mut commands: Commands,
     clock: Single<&Clock>,
-    visitors: Query<(Entity, &Health, Has<Died>, Option<&InLineup>), With<Visitor>>,
+    visitors: Query<
+        (
+            Entity,
+            &Health,
+            Has<Died>,
+            Has<Cured>,
+            Has<Returning>,
+            Option<&InLineup>,
+        ),
+        With<Visitor>,
+    >,
+    assets: Res<UIAssets>,
+    audio: Res<Audio>,
 ) {
-    let hour = clock.hours % 24.0;
-    let daytime = (DAY_START..DAY_END).contains(&hour);
+    let daytime = shop_open(&clock);
     let mut taken = visitors
         .iter()
         .filter_map(|(.., spot)| spot.map(|spot| spot.0))
         .collect::<Vec<_>>();
-    for (visitor, health, died, spot) in &visitors {
-        let here = daytime && !died && health.unwell();
+    for (visitor, health, died, cured, returning, spot) in &visitors {
+        let here = daytime && !died && !cured && (returning || health.unwell());
         match (here, spot) {
             (true, None) => {
                 let free = (0..).find(|spot| !taken.contains(spot)).unwrap_or_default();
                 taken.push(free);
                 commands.entity(visitor).insert(InLineup(free));
+                if !returning {
+                    commands.entity(visitor).insert(Returning);
+                    audio.play(assets.bell.clone());
+                }
             }
             (false, Some(spot)) => {
                 taken.retain(|&taken| taken != spot.0);
@@ -372,6 +423,36 @@ fn update_lineup(
             }
             _ => {}
         }
+    }
+}
+
+fn shop_open(clock: &Clock) -> bool {
+    (DAY_START..DAY_END).contains(&(clock.hours % 24.0))
+}
+
+#[derive(Component)]
+struct Shop {
+    open: bool,
+}
+
+fn open_and_close_shop(
+    mut commands: Commands,
+    clock: Single<&Clock>,
+    mut shop: Single<&mut Shop>,
+    assets: Res<UIAssets>,
+    audio: Res<Audio>,
+) {
+    let open = shop_open(&clock);
+    if shop.open == open {
+        return;
+    }
+    shop.open = open;
+    if open {
+        audio.play(assets.bell.clone());
+        commands.trigger(ShopOpened);
+    } else {
+        audio.play(assets.gong.clone());
+        commands.trigger(ShopClosed);
     }
 }
 

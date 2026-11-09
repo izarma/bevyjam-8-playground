@@ -19,7 +19,7 @@ pub(crate) use outdoors::HarvestScratch;
 pub(crate) use remedy::Mark;
 pub(crate) use visitors::{
     Ailing, Ailment, BALANCED, Brew, BrewHistory, Died, Health, InLineup, MAX_HEALTH, MIN_HEALTH,
-    Met, Visitor,
+    Met, Returning, ShopClosed, ShopOpened, Visitor,
 };
 // for the dev tools
 #[cfg(debug_assertions)]

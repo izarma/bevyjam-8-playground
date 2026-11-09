@@ -65,19 +65,16 @@ pub(super) fn health_panel(health: Health, ailment: Option<(Ailment, f32)>) -> i
         Node {
             flex_direction: FlexDirection::Column,
             align_items: AlignItems::Stretch,
-            row_gap: texels(1),
-            padding: UiRect::all(texels(4)),
+            row_gap: texels(2),
         }
-        @widget::panel()
         Pickable::IGNORE
         Children [
             Node {
                 justify_content: JustifyContent::SpaceBetween,
                 column_gap: texels(6),
-                margin: UiRect {
-                    bottom: texels(2),
-                },
+                padding: UiRect::all(texels(4)),
             }
+            @widget::panel()
             Pickable::IGNORE
             Children [
                 #DialogueHealthTitle
@@ -94,7 +91,14 @@ pub(super) fn health_panel(health: Health, ailment: Option<(Ailment, f32)>) -> i
                 Pickable::IGNORE
             ]
             --
-            { health_rows(health, ailment.map(|(ailment, _)| ailment)) }
+            Node {
+                flex_direction: FlexDirection::Column,
+                row_gap: texels(1),
+                padding: UiRect::all(texels(4)),
+            }
+            @widget::panel()
+            Pickable::IGNORE
+            Children [ { health_rows(health, ailment.map(|(ailment, _)| ailment)) } ]
         ]
     }
 }

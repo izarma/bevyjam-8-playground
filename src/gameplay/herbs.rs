@@ -70,23 +70,30 @@ pub(crate) fn name(plant: Plant) -> &'static str {
         Plant::Licorice => "Licorice",
         Plant::RedMushroom => "Red Mushroom",
         Plant::Grapes => "Grapes",
+        Plant::BlueHibiscus => "Blue Hibiscus",
     }
 }
 
 // +2 an element and -1 the next (a tonic), or -2 and +1 (a cooling herb)
 #[derive(Clone, Copy)]
-pub(crate) struct Effect {
+pub(crate) struct Shift {
     pub(crate) element: Element,
     pub(crate) by: i8,
 }
 
-impl Effect {
+impl Shift {
     pub(crate) fn shifts(self) -> [(Element, i8); 2] {
         [(self.element, self.by), (self.element.next(), -self.by / 2)]
     }
 }
 
-pub(crate) fn effect(plant: Plant) -> Effect {
+pub(crate) fn shifting() -> impl Iterator<Item = (Plant, Shift)> {
+    Plant::ALL
+        .into_iter()
+        .filter_map(|plant| shift(plant).map(|shift| (plant, shift)))
+}
+
+pub(crate) fn shift(plant: Plant) -> Option<Shift> {
     let (element, by) = match plant {
         Plant::Basil => (Element::Wood, 2),
         Plant::Chili => (Element::Fire, 2),
@@ -98,8 +105,9 @@ pub(crate) fn effect(plant: Plant) -> Effect {
         Plant::Licorice => (Element::Earth, -2),
         Plant::RedMushroom => (Element::Metal, -2),
         Plant::Grapes => (Element::Water, -2),
+        Plant::BlueHibiscus => return None,
     };
-    Effect { element, by }
+    Some(Shift { element, by })
 }
 
 pub(crate) fn icon_rect(plant: Plant) -> Rect {
@@ -278,27 +286,50 @@ fn hide_tooltip(
 
 // never pickable, so it can't block what's under it
 pub(crate) fn card(plant: Plant) -> impl Scene {
-    let rows: Vec<Box<dyn Scene>> = effect(plant)
-        .shifts()
-        .into_iter()
-        .map(|(element, amount)| -> Box<dyn Scene> {
-            let color = if amount > 0 { GAIN_TEXT } else { LOSS_TEXT };
-            Box::new(bsn! {
-                Node {
-                    column_gap: texels(4),
-                }
-                Pickable::IGNORE
-                Children [
-                    { vec![element_icon(element)] }
-                    --
-                    Text({ format!("{amount:+}") })
-                    @font::text(1)
-                    TextColor(color)
+    let rows: Vec<Box<dyn Scene>> = match shift(plant) {
+        Some(shift) => shift
+            .shifts()
+            .into_iter()
+            .map(|(element, amount)| -> Box<dyn Scene> {
+                let color = if amount > 0 { GAIN_TEXT } else { LOSS_TEXT };
+                Box::new(bsn! {
+                    Node {
+                        column_gap: texels(4),
+                    }
                     Pickable::IGNORE
-                ]
+                    Children [
+                        { vec![element_icon(element)] }
+                        --
+                        Text({ format!("{amount:+}") })
+                        @font::text(1)
+                        TextColor(color)
+                        Pickable::IGNORE
+                    ]
+                })
             })
-        })
-        .collect();
+            .collect(),
+        None => {
+            let icons: Vec<Box<dyn Scene>> = Element::ALL
+                .into_iter()
+                .map(|element| -> Box<dyn Scene> { Box::new(element_icon(element)) })
+                .collect();
+            vec![
+                Box::new(bsn! {
+                    Node {
+                        column_gap: texels(1),
+                    }
+                    Pickable::IGNORE
+                    Children [ { icons } ]
+                }),
+                Box::new(bsn! {
+                    Text("1 toward balance")
+                    @font::text(1)
+                    TextColor(GAIN_TEXT)
+                    Pickable::IGNORE
+                }),
+            ]
+        }
+    };
 
     bsn! {
         #HerbCard
