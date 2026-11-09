@@ -6,7 +6,10 @@ use super::{Concoction, DROP, LIFT, SETTLE, SHAKE, STAMP_AT};
 use crate::{
     gameplay::{
         BrewHistory,
-        dialogue::{YarnSpinnerDialogueViewSystemSet, view::DialogueRoot},
+        dialogue::{
+            YarnSpinnerDialogueViewSystemSet,
+            herb_drag::{HerbPicker, Ingredient, ingredient},
+        },
         herbs::{self, HeldCount},
         inventory::Inventory,
         remedy::{Mark, Remedy, SLOTS},
@@ -91,7 +94,7 @@ pub(super) fn spawn<'a>(
                     height: { herbs::grid_height(HERB_ROWS) },
                     align_items: AlignItems::FlexStart,
                 }
-                Children [ @herbs::grid(held, ingredient) ]
+                Children [ @herbs::grid(held, ingredient::<Concoction>) ]
                 --
                 @brews::panel(history)
                 BrewListOf(visitor)
@@ -141,82 +144,6 @@ fn mix_slot(index: usize) -> impl Scene {
             MixIcon
             Visibility::Hidden
         ]
-    }
-}
-
-#[derive(Component, Clone, Default)]
-struct Ingredient(Plant);
-
-fn ingredient(plant: Plant, count: u32) -> Box<dyn Scene> {
-    Box::new(bsn! {
-        @herbs::slot(plant, count)
-        Ingredient(plant)
-        InteractionPalette {
-            none: Color::WHITE,
-            hovered: BUTTON_HOVERED_TINT,
-            pressed: BUTTON_PRESSED_TINT,
-        }
-        @on(start_drag)
-        @on(drag)
-        @on(end_drag)
-    })
-}
-
-#[derive(Component, Clone, Default)]
-struct DragGhost;
-
-fn ghost_position(pointer: Vec2, ui_scale: &UiScale) -> (Val, Val) {
-    let at = pointer / ui_scale.0 - Vec2::splat(8.0 * TEXEL);
-    (px(at.x), px(at.y))
-}
-
-fn start_drag(
-    start: On<PointerDragStart>,
-    mut commands: Commands,
-    ingredients: Query<&Ingredient>,
-    concoction: Single<&Concoction>,
-    inventory: Single<&Inventory>,
-    root: Single<Entity, With<DialogueRoot>>,
-    ui_scale: Res<UiScale>,
-) {
-    let Ok(&Ingredient(plant)) = ingredients.get(start.entity) else {
-        return;
-    };
-    if !concoction.mixing() || concoction.available(&inventory, plant) == 0 {
-        return;
-    }
-    let (left, top) = ghost_position(start.pointer.position, &ui_scale);
-    let root = *root;
-    commands.spawn_scene(bsn! {
-        #DragGhost
-        DragGhost
-        ChildOf(root)
-        Node {
-            position_type: PositionType::Absolute,
-            left: left,
-            top: top,
-        }
-        GlobalZIndex(4)
-        Pickable::IGNORE
-        Children [ @herbs::icon(plant) ]
-    });
-}
-
-fn drag(
-    drag: On<PointerDrag>,
-    mut ghosts: Query<&mut Node, With<DragGhost>>,
-    ui_scale: Res<UiScale>,
-) {
-    let (left, top) = ghost_position(drag.pointer.position, &ui_scale);
-    for mut node in &mut ghosts {
-        node.left = left;
-        node.top = top;
-    }
-}
-
-fn end_drag(_: On<PointerDragEnd>, mut commands: Commands, ghosts: Query<Entity, With<DragGhost>>) {
-    for ghost in &ghosts {
-        commands.entity(ghost).despawn();
     }
 }
 
@@ -368,6 +295,16 @@ fn disable_brew(
         if let Ok(mut image) = faces.get_mut(face) {
             image.color = BUTTON_DISABLED_TINT;
             commands.entity(face).insert(InteractionDisabled);
+        }
+    }
+}
+
+impl HerbPicker for Concoction {
+    fn available(&self, inventory: &Inventory, plant: Plant) -> u32 {
+        if self.mixing() {
+            Concoction::available(self, inventory, plant)
+        } else {
+            0
         }
     }
 }

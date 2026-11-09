@@ -63,6 +63,23 @@ bevy_ecs::hierarchy::Children [
     }
     bevy_game::gameplay::base::player_indoor::IndoorPlayerSpawn
     --
+    #"Trader Spot"
+    bevy_transform::components::transform::Transform {
+        translation: glam::Vec3 {
+            x: -12.929377555847168,
+            y: 0.0,
+            z: -2.410432815551758,
+        },
+        rotation: glam::Quat {
+            x: 0.0,
+            y: -0.7071067690849304,
+            z: 0.0,
+            w: 0.7071067690849304,
+        },
+    }
+    jackdaw_scene_types::node_id::SceneNodeId(6138420365140952821)
+    bevy_game::gameplay::base::npc::TraderSpot
+    --
     #"Lab Entrance"
     bevy_transform::components::transform::Transform {
         translation: glam::Vec3 {

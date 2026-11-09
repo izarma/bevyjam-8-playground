@@ -9,6 +9,7 @@ pub(crate) mod inventory;
 mod outdoors;
 mod remedy;
 mod time_of_day;
+pub(crate) mod upgrades;
 mod visitors;
 
 pub(crate) use animation::{
@@ -39,6 +40,7 @@ pub(super) fn plugin(app: &mut App) {
         visitors::plugin,
         dialogue::plugin,
         outdoors::plugin,
+        upgrades::plugin,
     ));
 }
 

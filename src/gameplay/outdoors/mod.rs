@@ -9,6 +9,7 @@ mod camera_effects;
 mod door;
 mod harvest;
 mod player;
+mod radar;
 
 pub(crate) use harvest::HarvestScratch;
 
@@ -20,6 +21,7 @@ pub(super) fn plugin(app: &mut App) {
         door::plugin,
         biomes::plugin,
         bounds::plugin,
+        radar::plugin,
     ))
     .add_systems(OnEnter(GameplayScene::Outdoors), spawn_example_scene);
 }

@@ -15,7 +15,7 @@ use super::{
 };
 use crate::{
     GameplayScene,
-    gameplay::{Health, clock::Clock, visitors::Ailing},
+    gameplay::{Health, clock::Clock, upgrades::Trader, visitors::Ailing},
     ui::{
         font,
         input_prompt::{KEY_ESCAPE, KEY_LEFT, prompt},
@@ -128,7 +128,7 @@ fn spawn_dialogue_ui(
     _: On<DialogueStarted>,
     mut commands: Commands,
     target: Res<DialogueTarget>,
-    visitors: Query<(&Health, Option<&Ailing>)>,
+    visitors: Query<(&Health, Option<&Ailing>), Without<Trader>>,
     clock: Single<&Clock>,
 ) {
     commands.init_resource::<Typewriter>();

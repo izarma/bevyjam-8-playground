@@ -11,7 +11,9 @@ use super::{
 };
 use crate::{
     GameplayScene, InControl, PausableSystems,
-    gameplay::{DialogueTarget, Player, PlayerAnimation, PlayerAnimationSystems, Visitor},
+    gameplay::{
+        DialogueTarget, Player, PlayerAnimation, PlayerAnimationSystems, Visitor, upgrades::Trader,
+    },
     loading::UIAssets,
     ui::{
         billboard::{Billboards, Fade},
@@ -185,7 +187,7 @@ fn start_interaction(
     targets: Query<(Entity, Has<Gong>), With<InReach>>,
     in_dialogue: Query<Entity, With<InDialogue>>,
     bodies: Query<&BodyOf>,
-    visitors: Query<&Visitor>,
+    visitors: Query<(&Visitor, Has<Trader>)>,
     mut runner: Query<&mut DialogueRunner>,
     mut target: ResMut<DialogueTarget>,
     mut commands: Commands,
@@ -209,7 +211,11 @@ fn start_interaction(
         error!("Refusing to start dialogue with {npc:?}: no body to talk to");
         return;
     };
-    let Some(node) = visitors.get(body.0).ok().map(Visitor::node) else {
+    let Some(node) = visitors
+        .get(body.0)
+        .ok()
+        .map(|(visitor, trader)| if trader { "Trader" } else { visitor.node() })
+    else {
         error!("Refusing to start dialogue with {npc:?}: no visitor to talk to");
         return;
     };

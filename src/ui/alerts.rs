@@ -26,7 +26,8 @@ pub(super) fn plugin(app: &mut App) {
         )
         .add_systems(Update, show_notice.run_if(in_state(GameState::Gameplay)))
         .add_observer(announce_opening)
-        .add_observer(announce_closing);
+        .add_observer(announce_closing)
+        .add_observer(announce_message);
 }
 
 /// Root of the row of arrival icons shown while outdoors.
@@ -131,6 +132,13 @@ fn announce(notices: &mut Query<(&mut Notice, &mut Text)>, message: String) {
         notice.left = NOTICE_SECONDS + FADE_SECONDS;
         text.0 = message.clone();
     }
+}
+
+#[derive(Event)]
+pub(crate) struct Announce(pub(crate) String);
+
+fn announce_message(message: On<Announce>, mut notices: Query<(&mut Notice, &mut Text)>) {
+    announce(&mut notices, message.0.clone());
 }
 
 fn announce_opening(_: On<ShopOpened>, mut notices: Query<(&mut Notice, &mut Text)>) {

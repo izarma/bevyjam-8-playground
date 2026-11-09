@@ -4,6 +4,7 @@ use bevy_kira_audio::prelude::*;
 use jackdaw_scene_types::node_id::SceneNodeId;
 use pixel_art::PixelSprite;
 use plants::Growing;
+use rand::RngExt;
 
 use super::{
     biomes::{Fields, unsow},
@@ -11,7 +12,7 @@ use super::{
 };
 use crate::{
     GameplayScene, Harvesting,
-    gameplay::{Player, clock::Clock, inventory::Inventory},
+    gameplay::{Player, clock::Clock, inventory::Inventory, upgrades::Rewards},
     loading::HarvestingAssets,
     ui::billboard::Billboards,
 };
@@ -43,7 +44,7 @@ pub(super) fn plugin(app: &mut App) {
 
 // the nearest plant, picked or not
 #[derive(Component)]
-struct InReach;
+pub(super) struct InReach;
 
 #[derive(EntityEvent)]
 struct Won {
@@ -150,6 +151,7 @@ fn collect(
     spots: Query<&SceneNodeId>,
     mut fields: Single<&mut Fields>,
     mut inventory: Single<&mut Inventory>,
+    rewards: Res<Rewards>,
     mut billboards: Billboards,
     assets: Res<HarvestingAssets>,
     audio: Res<Audio>,
@@ -171,7 +173,7 @@ fn collect(
     }
     commands.entity(overlay.plant).despawn();
     let count = inventory.plants.entry(plant).or_default();
-    *count += 1;
+    *count += 1 + u32::from(rand::rng().random_bool(rewards.double_chance()));
     audio.play(assets.pickup.clone()).with_volume(6.0);
     info!("harvested {plant:?}, carrying {count}");
 }
