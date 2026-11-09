@@ -42,6 +42,8 @@ pub struct AmbienceAssets {
 pub struct UIAssets {
     #[asset(path = "audio/sfx/gong.ogg")]
     pub gong: Handle<AudioSource>,
+    #[asset(path = "audio/sfx/arriving.ogg")]
+    pub bell: Handle<AudioSource>,
     #[asset(
         paths(
             "audio/sfx/transition_1.ogg",

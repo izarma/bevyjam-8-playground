@@ -14,9 +14,8 @@ use crate::{
     loading::ConcoctionAssets,
     ui::{
         brews::{self, BrewListOf},
-        font,
         interaction::InteractionPalette,
-        palette::{BUTTON_DISABLED_TINT, BUTTON_HOVERED_TINT, BUTTON_PRESSED_TINT, HEADER_TEXT},
+        palette::{BUTTON_DISABLED_TINT, BUTTON_HOVERED_TINT, BUTTON_PRESSED_TINT},
         scale::{TEXEL, texels},
         widget,
     },
@@ -69,11 +68,6 @@ pub(super) fn spawn<'a>(
         }
         @widget::panel()
         Children [
-            Text("Concoction")
-            @font::text(1)
-            TextColor(HEADER_TEXT)
-            Pickable::IGNORE
-            --
             Node {
                 display: Display::Grid,
                 grid_template_columns: vec![RepeatedGridTrack::auto(2)],

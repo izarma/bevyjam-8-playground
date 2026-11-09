@@ -4,7 +4,7 @@ use jackdaw_runtime::TerrainHeights;
 use jackdaw_terrain::Heightmap;
 
 const BIG_DROP: f32 = 1.5;
-const DROP_REACH: f32 = 1.0;
+const DROP_REACH: f32 = 0.5;
 const WALL_HEIGHT: f32 = 6.0;
 const BURIED: f32 = 1.0;
 
