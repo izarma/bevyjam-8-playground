@@ -52,6 +52,10 @@ pub(super) fn plugin(app: &mut App) {
     );
     app.add_systems(
         Update,
+        pass_hour.run_if(in_state(GameState::Gameplay).and_then(input_just_pressed(KeyCode::F8))),
+    );
+    app.add_systems(
+        Update,
         force_spawn_npcs
             .run_if(in_state(GameState::Gameplay).and_then(input_just_pressed(KeyCode::F7))),
     );
@@ -96,6 +100,11 @@ fn adjust_npc_health(target: Res<DialogueTarget>, mut visitors: Query<&mut Healt
     };
     health.offset(delta);
     println!("Health editor: all stats {delta:+}");
+}
+
+fn pass_hour(mut clock: Single<&mut Clock>) {
+    clock.bank += 1.0;
+    println!("Passed an hour");
 }
 
 fn prepare_remedy(

@@ -1,6 +1,8 @@
 mod concoction;
+mod herb_drag;
 mod speaker;
 mod status;
+mod trade;
 mod view;
 
 pub(crate) use concoction::Concoction;
@@ -33,6 +35,7 @@ pub(super) fn plugin(app: &mut App) {
         view::plugin,
         speaker::plugin,
         concoction::plugin,
+        trade::plugin,
     ))
     .init_resource::<DialogueTarget>()
     .add_message::<SpeakerChangeEvent>()
@@ -75,7 +78,9 @@ fn spawn_dialogue_runner(
     let give_guardian_herbs = commands.register_system(give_guardian_herbs);
     let refresh_visitor = commands.register_system(status::refresh_visitor);
     let mark_met = commands.register_system(status::mark_met);
+    let open_trade = commands.register_system(trade::open_trade);
     for system in [
+        open_trade.entity(),
         offer_concoction.entity(),
         give_guardian_herbs.entity(),
         refresh_visitor.entity(),
@@ -90,7 +95,8 @@ fn spawn_dialogue_runner(
         .add_command("offer_concoction", offer_concoction)
         .add_command("give_guardian_herbs", give_guardian_herbs)
         .add_command("refresh_visitor", refresh_visitor)
-        .add_command("mark_met", mark_met);
+        .add_command("mark_met", mark_met)
+        .add_command("open_trade", open_trade);
 
     let gifts = gift.0.into_iter().enumerate().map(|(index, herb)| {
         (

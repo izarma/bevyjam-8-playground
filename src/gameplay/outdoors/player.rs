@@ -33,6 +33,7 @@ const CAM_LOOK_OFFSET: Vec3 = Vec3::new(0.0, 1.0, 0.0);
 // how far the camera keeps from whatever it would clip into
 const CAM_CLEARANCE: f32 = 0.3;
 const CAM_RETURN_RATE: f32 = 4.0;
+const LOOK_REST_SECONDS: f32 = 0.4;
 
 const LANTERN_AT: Vec3 = Vec3::new(0.4, 0.0, 0.0);
 const LANTERN_COLOR: Color = Color::srgb(1.0, 0.72, 0.4);
@@ -53,8 +54,9 @@ pub(super) fn plugin(app: &mut App) {
         )
         .add_systems(
             OnEnter(InControl),
-            set_cursor_locked::<true>.run_if(in_state(GameplayScene::Outdoors)),
+            (set_cursor_locked::<true>, rest_look).run_if(in_state(GameplayScene::Outdoors)),
         )
+        .init_resource::<LookRest>()
         .add_systems(
             RunFixedMainLoop,
             (rotate_camera, apply_look)
@@ -210,6 +212,13 @@ fn spawn_outdoor_player(
                 Binding(GamepadButton::South)
             ]
             --
+            Action::<super::radar::Ping>::new()
+            Bindings [
+                Binding(KeyCode::KeyR)
+                --
+                Binding(GamepadButton::North)
+            ]
+            --
             Action::<Harvest>::new()
             Bindings [
                 Binding(KeyCode::KeyF)
@@ -219,11 +228,24 @@ fn spawn_outdoor_player(
         });
 }
 
+#[derive(Resource, Default)]
+struct LookRest(f32);
+
+fn rest_look(mut rest: ResMut<LookRest>) {
+    rest.0 = LOOK_REST_SECONDS;
+}
+
 fn rotate_camera(
     mouse_motion: Res<AccumulatedMouseMotion>,
     sensitivity: Res<CameraSensitivity>,
+    time: Res<Time<Real>>,
+    mut rest: ResMut<LookRest>,
     mut camera: Single<&mut Transform, SceneCamera>,
 ) {
+    if rest.0 > 0.0 {
+        rest.0 -= time.delta_secs();
+        return;
+    }
     let delta = mouse_motion.delta;
     if delta == Vec2::ZERO {
         return;

@@ -17,6 +17,10 @@ title: Declarations
 <<declare $visitor_ailment = "">>
 <<declare $visitor_wants = "">>
 
+<<declare $reward = "">>
+<<declare $trader_name = "">>
+<<declare $trader_stock = 0>>
+
 // Where the shared option hub should jump for the current visitor.
 <<declare $npc_chat = "">>
 <<declare $npc_cured = "">>
@@ -66,6 +70,7 @@ Guardian: ...
 title: GuardianCured
 ---
 Guardian: Ah. I can feel the plague losing its grasp from me.
+<<jump CureReward>>
 ===
 
 title: GuardianDying
@@ -103,6 +108,7 @@ Monk: The old texts call this {$visitor_ailment}. They say to {$visitor_wants}.
 title: MonkCured
 ---
 Monk: Amitabha. The heavens still hold compassion for the world.
+<<jump CureReward>>
 ===
 
 title: MonkDying
@@ -135,6 +141,7 @@ Bride: The physician called it {$visitor_ailment}. Then he said to {$visitor_wan
 title: BrideCured
 ---
 Bride: *Deep Bow* Thank you, Aruna unni.
+<<jump CureReward>>
 ===
 
 title: BrideDying
@@ -170,6 +177,7 @@ title: BeggarCured
 Beggar: Ha! I can feel my toes again. All three of them.
 Aruna: You have five.
 Beggar: A fortune!
+<<jump CureReward>>
 ===
 
 title: BeggarDying
@@ -202,6 +210,7 @@ Old Beauty: My talking mirror says {$visitor_ailment}, and that I should {$visit
 title: OldBeautyCured
 ---
 Old Beauty: Ah. The world looks a little brighter.
+<<jump CureReward>>
 ===
 
 title: OldBeautyDying
@@ -240,6 +249,7 @@ title: OrphanCured
 Orphan: Big Sis! My tummy doesn't hurt!
 Aruna: Good. Now go easy on the sweets.
 Orphan: Hehe, I will try!
+<<jump CureReward>>
 ===
 
 title: OrphanDying
@@ -271,5 +281,28 @@ Aruna: I have just the thing.
 <<else>>
     Aruna: Not enough. You still feel {$symptoms}.
     <<jump VisitOptions>>
+<<endif>>
+===
+
+title: Trader
+---
+<<refresh_visitor>>
+{$trader_name}: I owe you my health. Let me trade herbs with you.
+<<jump TraderOptions>>
+===
+
+title: TraderOptions
+---
+-> Trade
+    <<open_trade>>
+    <<jump TraderOptions>>
+-> Bye
+    <<stop>>
+===
+
+title: CureReward
+---
+<<if $reward != "">>
+    ({$reward})
 <<endif>>
 ===

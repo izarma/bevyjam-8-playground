@@ -3,21 +3,30 @@ use bevy_yarnspinner::prelude::{DialogueRunner, YarnValue};
 
 use super::DialogueTarget;
 use crate::gameplay::{
-    BALANCED, Health, Met,
+    BALANCED, Health, Met, Visitor,
     herbs::Element,
+    upgrades::Trader,
     visitors::{Ailing, Cured, Died, UNWELL},
 };
 
 /// For dialogues
 pub(super) fn refresh_visitor(
     target: Res<DialogueTarget>,
-    visitors: Query<(&Health, Has<Cured>, Has<Died>, Option<&Ailing>, Has<Met>)>,
+    visitors: Query<(
+        &Visitor,
+        &Health,
+        Has<Cured>,
+        Has<Died>,
+        Option<&Ailing>,
+        Has<Met>,
+        Option<&Trader>,
+    )>,
     mut runners: Query<&mut DialogueRunner>,
 ) {
     let Some(visitor) = target.0 else {
         return;
     };
-    let Ok((health, cured, dead, ailing, met)) = visitors.get(visitor) else {
+    let Ok((who, health, cured, dead, ailing, met, trader)) = visitors.get(visitor) else {
         return;
     };
     let Ok(mut runner) = runners.single_mut() else {
@@ -35,6 +44,11 @@ pub(super) fn refresh_visitor(
         ("$visitor_wants", YarnValue::String(wants)),
         ("$symptoms", YarnValue::String(symptoms(*health))),
         ("$met", YarnValue::Boolean(met)),
+        ("$trader_name", YarnValue::String(who.name().to_string())),
+        (
+            "$trader_stock",
+            YarnValue::Number(f32::from(trader.map_or(0, |trader| trader.stock))),
+        ),
     ];
     for (name, value) in variables {
         let _ = runner.variable_storage_mut().set(name.to_string(), value);
