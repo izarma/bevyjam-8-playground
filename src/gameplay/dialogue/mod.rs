@@ -1,5 +1,6 @@
 mod concoction;
 mod speaker;
+mod status;
 mod view;
 
 pub(crate) use concoction::Concoction;
@@ -72,7 +73,14 @@ fn spawn_dialogue_runner(
     let mut dialogue_runner = project.create_dialogue_runner(&mut commands);
     let offer_concoction = commands.register_system(concoction::offer_concoction);
     let give_guardian_herbs = commands.register_system(give_guardian_herbs);
-    for system in [offer_concoction.entity(), give_guardian_herbs.entity()] {
+    let refresh_visitor = commands.register_system(status::refresh_visitor);
+    let mark_met = commands.register_system(status::mark_met);
+    for system in [
+        offer_concoction.entity(),
+        give_guardian_herbs.entity(),
+        refresh_visitor.entity(),
+        mark_met.entity(),
+    ] {
         commands
             .entity(system)
             .insert(DespawnOnExit(GameState::Gameplay));
@@ -80,7 +88,9 @@ fn spawn_dialogue_runner(
     dialogue_runner
         .commands_mut()
         .add_command("offer_concoction", offer_concoction)
-        .add_command("give_guardian_herbs", give_guardian_herbs);
+        .add_command("give_guardian_herbs", give_guardian_herbs)
+        .add_command("refresh_visitor", refresh_visitor)
+        .add_command("mark_met", mark_met);
 
     let gifts = gift.0.into_iter().enumerate().map(|(index, herb)| {
         (

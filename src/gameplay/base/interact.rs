@@ -11,7 +11,7 @@ use super::{
 };
 use crate::{
     GameplayScene, InControl, PausableSystems,
-    gameplay::{DialogueTarget, Met, Player, PlayerAnimation, PlayerAnimationSystems, Visitor},
+    gameplay::{DialogueTarget, Player, PlayerAnimation, PlayerAnimationSystems, Visitor},
     loading::UIAssets,
     ui::{
         billboard::{Billboards, Fade},
@@ -230,7 +230,6 @@ fn start_interaction(
                 }
             }
             commands.entity(npc).insert(InDialogue);
-            commands.entity(body.0).insert(Met);
         }
         Err(error) => {
             // the player can just interact again.

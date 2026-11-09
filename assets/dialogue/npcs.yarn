@@ -1,20 +1,39 @@
-title: Guardian
+title: Declarations
 ---
+// whether the current visitor has already exchanged greetings
+<<declare $met = false>>
+
+// guardian tutorial
 <<declare $treated_guardian = false>>
 <<declare $gifted_guardian = false>>
 <<declare $gift_1 = "">>
 <<declare $gift_2 = "">>
 <<declare $gift_3 = "">>
 <<declare $guardian_wants = "">>
+
+<<declare $symptoms = "out of sorts">>
+<<declare $visitor_cured = false>>
+<<declare $visitor_dead = false>>
+<<declare $visitor_ailment = "">>
+<<declare $visitor_wants = "">>
+
+// Where the shared option hub should jump for the current visitor.
+<<declare $npc_chat = "">>
+<<declare $npc_cured = "">>
+<<declare $npc_dying = "">>
+===
+
+title: Guardian
+---
 <<if not $treated_guardian>>
     <<jump GuardianFirstBrew>>
 <<endif>>
+<<refresh_visitor>>
+<<set $npc_chat to "GuardianChat">>
+<<set $npc_cured to "GuardianCured">>
+<<set $npc_dying to "GuardianDying">>
 Guardian: Thank you for tending to me, Aruna.
--> Chat
-    Guardian: ...
--> Offer Concoction
-    <<jump OfferConcoction>>
--> Bye
+<<jump VisitOptions>>
 ===
 
 title: GuardianFirstBrew
@@ -24,6 +43,7 @@ title: GuardianFirstBrew
     Guardian: Could you prepare these herbs to ease my symptoms?
     <<give_guardian_herbs>>
     <<set $gifted_guardian to true>>
+    <<mark_met>>
     (You receive 1 {$gift_1}, 1 {$gift_2} and 1 {$gift_3}. Drag them to the empty slots to brew.)
 <<else>>
     Guardian: The herbs, Aruna. Please.
@@ -37,6 +57,22 @@ title: GuardianFirstBrew
 <<endif>>
 ===
 
+title: GuardianChat
+---
+Guardian: ...
+<<jump VisitOptions>>
+===
+
+title: GuardianCured
+---
+Guardian: Ah. I can feel the plague losing its grasp from me.
+===
+
+title: GuardianDying
+---
+Guardian: Ah. So this is where my journey ends. Don't lose hope, Aruna.
+===
+
 title: LeaveBeforeTending
 ---
 It would be rude to leave before tending to your guest.
@@ -44,58 +80,196 @@ It would be rude to leave before tending to your guest.
 
 title: Monk
 ---
-Aruna: How are u today monk from rival school?
-Monk: I'm dying.
--> Chat
-    -> Some other cool option
--> Offer Concoction
-    <<jump OfferConcoction>>
--> Bye
+<<refresh_visitor>>
+<<set $npc_chat to "MonkChat">>
+<<set $npc_cured to "MonkCured">>
+<<set $npc_dying to "MonkDying">>
+<<if not $met>>
+    Monk: Amitabha. May you walk the seven steps of Buddha.
+    <<mark_met>>
+<<else>>
+    Monk: I seek thy help today, thy tonics and elixirs.
+<<endif>>
+Monk: I feel {$symptoms} today.
+<<jump VisitOptions>>
+===
+
+title: MonkChat
+---
+Monk: The old texts call this {$visitor_ailment}. They say to {$visitor_wants}.
+<<jump VisitOptions>>
+===
+
+title: MonkCured
+---
+Monk: Amitabha. The heavens still hold compassion for the world.
+===
+
+title: MonkDying
+---
+Monk: Amitabha. Do not hold onto grief, benefactor. We walked the same path, and my steps simply reached the gate a little sooner than yours.
 ===
 
 title: Bride
 ---
-Bride: buhh
--> Chat
-    Bride: ...
--> Offer Concoction
-    <<jump OfferConcoction>>
--> Bye
+<<refresh_visitor>>
+<<set $npc_chat to "BrideChat">>
+<<set $npc_cured to "BrideCured">>
+<<set $npc_dying to "BrideDying">>
+<<if not $met>>
+    Bride: Aannyeong haseyo Unni.
+    <<mark_met>>
+<<else>>
+    Bride: I am more unwell today. Can you help ease my suffering?
+<<endif>>
+Bride: I feel {$symptoms} today.
+<<jump VisitOptions>>
+===
+
+title: BrideChat
+---
+Bride: The physician called it {$visitor_ailment}. Then he said to {$visitor_wants}, bowed, and left.
+<<jump VisitOptions>>
+===
+
+title: BrideCured
+---
+Bride: *Deep Bow* Thank you, Aruna unni.
+===
+
+title: BrideDying
+---
+Bride: I will finally see you again, my beloved.
 ===
 
 title: Beggar
 ---
-Beggar: I have explosive diarrhea
--> Chat
-    Beggar: ...
--> Offer Concoction
-    <<jump OfferConcoction>>
--> Bye
+<<refresh_visitor>>
+<<set $npc_chat to "BeggarChat">>
+<<set $npc_cured to "BeggarCured">>
+<<set $npc_dying to "BeggarDying">>
+<<if not $met>>
+    Beggar: Hello, Sister. Alms for a tale of old glory?
+    <<mark_met>>
+<<else>>
+    Beggar: Salves for an old beggar?
+<<endif>>
+Beggar: I feel {$symptoms} today.
+<<jump VisitOptions>>
+===
+
+title: BeggarChat
+---
+Beggar: The woman with a strange orb called it {$visitor_ailment}. She said to {$visitor_wants}. Then she asked for payment.
+Aruna: Imagine that.
+<<jump VisitOptions>>
+===
+
+title: BeggarCured
+---
+Beggar: Ha! I can feel my toes again. All three of them.
+Aruna: You have five.
+Beggar: A fortune!
+===
+
+title: BeggarDying
+---
+Beggar: At least in death, I hope I can forgive myself.
 ===
 
 title: OldBeauty
 ---
-Old Beauty: me got space herpes
--> Chat
-    Old Beauty: ...
--> Offer Concoction
-    <<jump OfferConcoction>>
--> Bye
+<<refresh_visitor>>
+<<set $npc_chat to "OldBeautyChat">>
+<<set $npc_cured to "OldBeautyCured">>
+<<set $npc_dying to "OldBeautyDying">>
+<<if not $met>>
+    Old Beauty: Sister.
+    <<mark_met>>
+<<else>>
+    Old Beauty: The world looks worse today. Can you help?
+<<endif>>
+Old Beauty: I feel {$symptoms} today.
+<<jump VisitOptions>>
+===
+
+title: OldBeautyChat
+---
+Old Beauty: My talking mirror says {$visitor_ailment}, and that I should {$visitor_wants}. Rude thing.
+<<jump VisitOptions>>
+===
+
+title: OldBeautyCured
+---
+Old Beauty: Ah. The world looks a little brighter.
+===
+
+title: OldBeautyDying
+---
+Old Beauty: I can feel the Yama's cold embrace reaching for me.
 ===
 
 title: Orphan
 ---
-Orphan: i shit my pants
--> Chat
-    -> So did I!
--> Offer Concoction
-    <<jump OfferConcoction>>
--> Bye
+<<refresh_visitor>>
+<<set $npc_chat to "OrphanChat">>
+<<set $npc_cured to "OrphanCured">>
+<<set $npc_dying to "OrphanDying">>
+<<if not $met>>
+    Orphan: Big Sis, I miss you.
+    Aruna: I missed you too Little rice ball.
+    <<mark_met>>
+<<else>>
+    Orphan: Big Sis, my stomach hurts today. *sniff*
+    Aruna: Show me where?
+<<endif>>
+Orphan: I feel {$symptoms} today.
+<<jump VisitOptions>>
 ===
 
-title: OfferConcoction
+title: OrphanChat
+---
+Orphan: The nice lady said I have {$visitor_ailment}, and that someone should {$visitor_wants}.
+Orphan: I don't know what that means.
+Aruna: It means I have work to do.
+<<jump VisitOptions>>
+===
+
+title: OrphanCured
+---
+Orphan: Big Sis! My tummy doesn't hurt!
+Aruna: Good. Now go easy on the sweets.
+Orphan: Hehe, I will try!
+===
+
+title: OrphanDying
+---
+Orphan: Big Sis... I feel sleepy.
+Aruna: No. No, stay awake. Stay with me.
+===
+
+title: VisitOptions
+---
+-> Chat
+    <<jump {$npc_chat}>>
+-> Offer Concoction
+    <<jump VisitorOfferConcoction>>
+-> Bye
+    <<stop>>
+===
+
+title: VisitorOfferConcoction
 ---
 Aruna: I have just the thing.
 <<offer_concoction>>
-(Statement on how they feel afterwards.)
+<<refresh_visitor>>
+<<if $visitor_dead>>
+    Aruna: No—wait. Breathe. Please.
+    <<jump {$npc_dying}>>
+<<elseif $visitor_cured>>
+    <<jump {$npc_cured}>>
+<<else>>
+    Aruna: Not enough. You still feel {$symptoms}.
+    <<jump VisitOptions>>
+<<endif>>
 ===
