@@ -241,6 +241,7 @@ pub(super) fn offer_concoction(
     target: Res<DialogueTarget>,
     options: Query<Entity, With<DialogueOptionsNode>>,
     inventory: Query<&Inventory>,
+    histories: Query<&BrewHistory>,
 ) -> Arc<AtomicBool> {
     let (Some(visitor), Some(options), Some(inventory)) =
         (target.0, options.iter().next(), inventory.iter().next())
@@ -249,7 +250,9 @@ pub(super) fn offer_concoction(
         return Arc::new(AtomicBool::new(true));
     };
     let done = Arc::new(AtomicBool::new(false));
-    panel::spawn(&mut commands, options, inventory).insert(Concoction::new(visitor, done.clone()));
+    let history = histories.get(visitor).cloned().unwrap_or_default();
+    panel::spawn(&mut commands, options, inventory, visitor, &history)
+        .insert(Concoction::new(visitor, done.clone()));
     done
 }
 

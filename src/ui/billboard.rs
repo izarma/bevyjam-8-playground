@@ -56,10 +56,6 @@ impl Fade {
     pub(crate) fn stay(&mut self) {
         self.leaving = false;
     }
-
-    pub(crate) fn leaving(&self) -> bool {
-        self.leaving
-    }
 }
 
 #[derive(SystemParam)]

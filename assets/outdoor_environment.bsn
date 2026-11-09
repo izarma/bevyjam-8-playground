@@ -24,8 +24,8 @@ jackdaw_scene_types::environment::Environment {
     },
     fog: jackdaw_scene_types::environment::Fog {
         mode: jackdaw_scene_types::environment::FogMode::Linear,
-        start: 20.0,
-        end: 70.0,
+        start: 5.0,
+        end: 75.0,
         density: 0.029999999329447746,
     },
 }

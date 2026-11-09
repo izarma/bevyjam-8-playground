@@ -3,7 +3,7 @@ use bevy::prelude::*;
 use pixel_art::PixelSprite;
 use plants::{Growing, Plant};
 
-use super::{super::biomes::Harvested, InReach};
+use super::InReach;
 use crate::{
     GameplayScene, InControl,
     gameplay::herbs,
@@ -34,7 +34,7 @@ fn show_panel(
     in_reach: Option<Single<Entity, With<InReach>>>,
     in_control: Option<Res<State<InControl>>>,
     mut panels: Query<(&YieldPanel, &mut Fade)>,
-    plants: Query<(&Growing, &GlobalTransform, &PixelSprite), Without<Harvested>>,
+    plants: Query<(&Growing, &GlobalTransform, &PixelSprite)>,
     mut billboards: Billboards,
 ) {
     // hidden while a menu or minigame is up, and over picked plants

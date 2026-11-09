@@ -2,9 +2,9 @@ use bevy::prelude::*;
 use bevy_enhanced_input::prelude::*;
 use bevy_kira_audio::prelude::{Audio, AudioControl};
 use bevy_yarnspinner::prelude::DialogueRunner;
+use pixel_art::PixelSprite;
 
 use super::{
-    BODY_HEIGHT,
     anim::IndoorCharAnimation,
     npc::{BodyOf, InDialogue},
     player_indoor::Touch,
@@ -14,7 +14,7 @@ use crate::{
     gameplay::{DialogueTarget, Met, Player, PlayerAnimation, PlayerAnimationSystems, Visitor},
     loading::UIAssets,
     ui::{
-        billboard::Billboards,
+        billboard::{Billboards, Fade},
         font,
         input_prompt::{KEY_F, prompt},
         palette::LABEL_TEXT,
@@ -88,12 +88,12 @@ struct InteractionPrompt {
 const INTERACTION_CANVAS: UVec2 = UVec2::new(64, 26);
 
 fn show_interaction_prompt(
-    mut commands: Commands,
     in_reach: Option<Single<Entity, With<InReach>>>,
     in_control: Option<Res<State<InControl>>>,
     runners: Query<&DialogueRunner>,
-    prompts: Query<(Entity, &InteractionPrompt)>,
-    targets: Query<(&GlobalTransform, Has<Gong>), Or<(With<BodyOf>, With<Gong>)>>,
+    mut prompts: Query<(&InteractionPrompt, &mut Fade)>,
+    targets: Query<(&GlobalTransform, Has<Gong>, Option<&Children>), Or<(With<BodyOf>, With<Gong>)>>,
+    sprites: Query<(&PixelSprite, &GlobalTransform)>,
     mut billboards: Billboards,
 ) {
     // hidden while a menu is up or a dialogue is running
@@ -101,22 +101,36 @@ fn show_interaction_prompt(
     let target = in_reach
         .map(|npc| *npc)
         .filter(|_| in_control.is_some() && !talking);
-    for (prompt, shown) in &prompts {
-        if Some(shown.target) != target {
-            commands.entity(prompt).despawn();
+    let mut showing = false;
+    for (shown, mut fade) in &mut prompts {
+        if Some(shown.target) == target {
+            fade.stay();
+            showing = true;
+        } else {
+            fade.leave();
         }
     }
     let Some(npc) = target else {
         return;
     };
-    if prompts.iter().any(|(_, shown)| shown.target == npc) {
+    if showing {
         return;
     }
-    let Ok((at, gong)) = targets.get(npc) else {
+    let Ok((at, gong, children)) = targets.get(npc) else {
         return;
     };
-    let height = if gong { 2.2 } else { BODY_HEIGHT / 2.5 };
-    let above = at.translation() + Vec3::Y * height;
+    let above = if gong {
+        Some(at.translation() + Vec3::Y * 2.2)
+    } else {
+        children
+            .into_iter()
+            .flatten()
+            .find_map(|&child| sprites.get(child).ok())
+            .and_then(|(sprite, at)| billboards.above(sprite, at))
+    };
+    let Some(above) = above else {
+        return;
+    };
     billboards
         .spawn(
             INTERACTION_CANVAS,
@@ -137,6 +151,7 @@ fn interaction_panel(label: &'static str) -> impl Scene {
             width: percent(100),
             height: percent(100),
             justify_content: JustifyContent::Center,
+            align_items: AlignItems::FlexEnd,
         }
         Pickable::IGNORE
         Children [

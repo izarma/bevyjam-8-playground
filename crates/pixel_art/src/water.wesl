@@ -191,7 +191,11 @@ fn fragment(in: VertexOutput, @builtin(front_facing) is_front: bool) -> Fragment
     out.color += vec4<f32>(sun_glint(center, lighting, in.position.xy) * (1.0 - foam), 0.0);
     var fogged = lighting;
     fogged.world_position = vec4<f32>(
-        stepped_fog_position(lighting.world_position.xyz, vec2<i32>(floor(center * water.texels_per_meter))),
+        stepped_fog_position(
+            lighting.world_position.xyz,
+            vec2<i32>(floor(center * water.texels_per_meter)),
+            max(squares_per_pixel.x, squares_per_pixel.y),
+        ),
         1.0,
     );
     out.color = pbr_functions::main_pass_post_lighting_processing(fogged, out.color);

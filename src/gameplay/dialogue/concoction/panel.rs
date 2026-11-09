@@ -6,17 +6,18 @@ use super::{Concoction, DROP, LIFT, SETTLE, SHAKE, STAMP_AT};
 use crate::{
     gameplay::{
         dialogue::{YarnSpinnerDialogueViewSystemSet, view::DialogueRoot},
+        BrewHistory,
         herbs::{self, HeldCount},
         inventory::Inventory,
         remedy::{Mark, Remedy, SLOTS},
     },
     loading::ConcoctionAssets,
     ui::{
+        brews::{self, BrewListOf},
         font,
         interaction::InteractionPalette,
         palette::{
-            BUTTON_DISABLED_TINT, BUTTON_HOVERED_TINT, BUTTON_PRESSED_TINT, CAUTION, GAIN_TEXT,
-            HEADER_TEXT, LOSS_TEXT,
+            BUTTON_DISABLED_TINT, BUTTON_HOVERED_TINT, BUTTON_PRESSED_TINT, HEADER_TEXT,
         },
         scale::{TEXEL, texels},
         widget,
@@ -43,10 +44,15 @@ pub(super) fn plugin(app: &mut App) {
     );
 }
 
+const HERB_ROWS: u16 = 4;
+const HISTORY_WIDTH: u16 = 100;
+
 pub(super) fn spawn<'a>(
     commands: &'a mut Commands,
     options: Entity,
     inventory: &Inventory,
+    visitor: Entity,
+    history: &BrewHistory,
 ) -> EntityCommands<'a> {
     let held = inventory
         .plants
@@ -71,27 +77,39 @@ pub(super) fn spawn<'a>(
             Pickable::IGNORE
             --
             Node {
-                column_gap: texels(2),
-                align_items: AlignItems::Center,
+                display: Display::Grid,
+                grid_template_columns: vec![RepeatedGridTrack::auto(2)],
+                column_gap: texels(4),
+                row_gap: texels(4),
             }
             Children [
-                { mix_slots }
+                Node {
+                    column_gap: texels(2),
+                    align_items: AlignItems::Center,
+                }
+                Children [ { mix_slots } ]
                 --
                 @widget::button("Brew", brew)
                 BrewButton
+                Node {
+                    width: texels(HISTORY_WIDTH),
+                }
+                --
+                Node {
+                    height: { herbs::grid_height(HERB_ROWS) },
+                    align_items: AlignItems::FlexStart,
+                }
+                Children [ @herbs::grid(held, ingredient) ]
+                --
+                @brews::panel(history)
+                BrewListOf(visitor)
+                Node {
+                    width: texels(HISTORY_WIDTH),
+                    height: { herbs::grid_height(HERB_ROWS) },
+                }
             ]
-            --
-            @herbs::grid(held, ingredient)
         ]
     })
-}
-
-fn mark_color(mark: Mark) -> Color {
-    match mark {
-        Mark::Absent => LOSS_TEXT,
-        Mark::Misplaced => CAUTION,
-        Mark::Correct => GAIN_TEXT,
-    }
 }
 
 #[derive(Component, Clone, Default)]
@@ -313,7 +331,7 @@ fn show_mix(
             if let Ok((mut face, mut visibility)) = faces.get_mut(child) {
                 match marks[slot] {
                     Some(mark) => {
-                        face.color = mark_color(mark);
+                        face.color = brews::mark_color(mark);
                         *visibility = Visibility::Inherited;
                     }
                     None => *visibility = Visibility::Hidden,

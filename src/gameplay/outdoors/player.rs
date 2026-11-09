@@ -10,6 +10,7 @@ use bevy_ahoy::{CharacterLook, prelude::*};
 use bevy_enhanced_input::prelude::*;
 use pixel_art::PixelSprite;
 
+use super::bounds::DropWall;
 use crate::{
     GameplayScene, InControl, PausableSystems,
     camera::{CameraSensitivity, SceneCamera},
@@ -255,6 +256,7 @@ fn aim_camera(
 
 fn follow_player(
     player: Single<(Entity, &Transform), (With<ExamplePlayer>, Without<Camera3d>)>,
+    walls: Query<Entity, With<DropWall>>,
     mut camera: Single<&mut Transform, SceneCamera>,
     spatial: SpatialQuery,
     time: Res<Time>,
@@ -274,7 +276,7 @@ fn follow_player(
                 ignore_origin_penetration: true,
                 ..default()
             },
-            &SpatialQueryFilter::from_excluded_entities([player]),
+            &SpatialQueryFilter::from_excluded_entities(walls.iter().chain([player])),
         )
         .map_or(CAM_RADIUS, |hit| hit.distance);
     *distance = if clear < *distance {

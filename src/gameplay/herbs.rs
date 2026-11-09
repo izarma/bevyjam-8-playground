@@ -152,6 +152,12 @@ pub(crate) fn element_icon(element: Element) -> impl Scene {
 }
 
 const SLOT: u16 = 24;
+const GRID_COLUMN_GAP: u16 = 2;
+const GRID_ROW_GAP: u16 = 4;
+
+pub(crate) fn grid_height(rows: u16) -> Val {
+    texels(rows * SLOT + rows.saturating_sub(1) * GRID_ROW_GAP)
+}
 
 #[derive(Component, Clone, Default)]
 pub(crate) struct HeldCount(pub(crate) Plant);
@@ -216,8 +222,8 @@ pub(crate) fn grid(
         Node {
             display: Display::Grid,
             grid_template_columns: columns,
-            row_gap: texels(2),
-            column_gap: texels(2),
+            row_gap: texels(GRID_ROW_GAP),
+            column_gap: texels(GRID_COLUMN_GAP),
         }
         Children [ { slots } ]
     }

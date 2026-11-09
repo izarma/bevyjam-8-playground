@@ -230,7 +230,11 @@ fn fragment(in: VertexOutput, quad: Quad, @builtin(front_facing) is_front: bool)
         out.color = sprite_lighting(pbr_input, quad, local, sprite_spread(quad, ddx, ddy, local_ddx.xy, local_ddy.xy));
     }
     var fogged = pbr_input;
-    fogged.world_position = vec4<f32>(stepped_fog_position(seen, texel), 1.0);
+    fogged.world_position = vec4<f32>(stepped_fog_position(
+        seen,
+        texel,
+        max(length(ddx * size), length(ddy * size)),
+    ), 1.0);
     out.color = pbr_functions::main_pass_post_lighting_processing(fogged, out.color);
     return out;
 }

@@ -13,7 +13,7 @@ use bevy::{
     platform::collections::HashMap,
     prelude::*,
     render::render_resource::{
-        AsBindGroup, RenderPipelineDescriptor, SpecializedMeshPipelineError,
+        AsBindGroup, CompareFunction, RenderPipelineDescriptor, SpecializedMeshPipelineError,
     },
     shader::ShaderRef,
 };
@@ -78,17 +78,20 @@ pub struct PixelSpriteExtension {
     #[texture(100)]
     image: Handle<Image>,
     billboard: bool,
+    unlit: bool,
 }
 
 #[derive(Clone, Copy, PartialEq, Eq, Hash)]
 pub struct PixelSpriteKey {
     billboard: bool,
+    unlit: bool,
 }
 
 impl From<&PixelSpriteExtension> for PixelSpriteKey {
     fn from(extension: &PixelSpriteExtension) -> Self {
         Self {
             billboard: extension.billboard,
+            unlit: extension.unlit,
         }
     }
 }
@@ -117,6 +120,11 @@ impl MaterialExtension for PixelSpriteExtension {
             if let Some(fragment) = &mut descriptor.fragment {
                 fragment.shader_defs.push("BILLBOARD".into());
             }
+        }
+        if key.bind_group_data.unlit
+            && let Some(depth) = &mut descriptor.depth_stencil
+        {
+            depth.depth_compare = Some(CompareFunction::Always);
         }
         Ok(())
     }
@@ -210,6 +218,7 @@ fn sync_pixel_sprites(
                     extension: PixelSpriteExtension {
                         image: sprite.image.clone(),
                         billboard: sprite.billboard,
+                        unlit: sprite.unlit,
                     },
                 })
             })
