@@ -115,7 +115,7 @@ pub(super) fn plugin(app: &mut App) {
         .add_observer(play_healed)
         .add_observer(play_transition)
         .add_observer(reveal_outdoor_audio)
-        .add_systems(OnEnter(GameState::Title), start_title_ambience)
+        .add_observer(start_title_ambience)
         .add_systems(OnExit(GameState::Title), stop_title_music)
         .add_systems(
             PostUpdate,
@@ -149,10 +149,18 @@ fn play_dialogue_close(_: On<DialogueCompleted>, npc_assets: Res<NPCAssets>, aud
     audio.play(npc_assets.dialogue_close.clone());
 }
 
-fn start_title_ambience(assets: Res<AmbienceAssets>, music: Res<AudioChannel<Music>>) {
+fn start_title_ambience(
+    _: On<Revealed>,
+    state: Res<State<GameState>>,
+    assets: Res<AmbienceAssets>,
+    music: Res<AudioChannel<Music>>,
+) {
+    if *state.get() != GameState::Title {
+        return;
+    }
     music
         .play(assets.title.clone())
-        .linear_fade_in(Duration::from_secs(2))
+        .linear_fade_in(Duration::from_millis(500))
         .looped();
 }
 
