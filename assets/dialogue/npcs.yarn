@@ -26,7 +26,7 @@ title: Declarations
 title: Door
 ---
 Door: *Knock Knock*
-???: Aruna are you there?
+???: Aruna! are you there?
 ===
 
 title: Guardian
@@ -45,7 +45,9 @@ Guardian: Thank you for tending to me, Aruna.
 title: GuardianFirstBrew
 ---
 <<if not $gifted_guardian>>
-    Guardian: Aruna. The cure for what ails me eludes me, and every day I am weaker.
+    Aruna: Yes Master, what happened?
+    Guardian: There is a terrible illness spreading across the lands.
+    Guardian: The cure for what ails me eludes me, and every day I am weaker.
     Guardian: Could you prepare these herbs to ease my symptoms?
     <<give_guardian_herbs>>
     <<set $gifted_guardian to true>>
@@ -65,7 +67,7 @@ title: GuardianFirstBrew
 
 title: GuardianChat
 ---
-Guardian: ...
+Guardian: We must find the cause of this vile illness.
 <<jump VisitOptions>>
 ===
 

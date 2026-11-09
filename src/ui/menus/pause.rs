@@ -2,7 +2,12 @@ use bevy::prelude::*;
 
 use crate::{
     GameState, Pause,
-    ui::{menus::Menu, widget},
+    ui::{
+        input_prompt::{KEY_I, KEY_J, prompt},
+        menus::Menu,
+        scale::texels,
+        widget,
+    },
 };
 
 use super::{close_menu, open_settings_menu, quit_to_title};
@@ -48,6 +53,34 @@ fn spawn_pause_menu() -> impl Scene {
             @widget::button("Settings", open_settings_menu)
             --
             @widget::button("Quit to title", quit_to_title)
+            --
+            #Controls
+            Node {
+                align_items: AlignItems::Center,
+                column_gap: texels(6),
+                margin: UiRect::top(texels(2)),
+            }
+            Children [
+                @widget::label("Controls:")
+                --
+                @control_hint(KEY_I, "Inventory")
+                --
+                @control_hint(KEY_J, "Journal")
+            ]
+        ]
+    }
+}
+
+fn control_hint(key: u32, action: &'static str) -> impl Scene {
+    bsn! {
+        Node {
+            align_items: AlignItems::Center,
+            column_gap: texels(2),
+        }
+        Children [
+            @prompt(key)
+            --
+            @widget::label(action)
         ]
     }
 }

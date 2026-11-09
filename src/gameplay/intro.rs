@@ -94,6 +94,11 @@ impl Intro {
         )
     }
 
+    /// While true, the intro is playing and menus should stay closed.
+    pub(crate) fn playing(&self) -> bool {
+        !matches!(self.stage, IntroStage::Idle | IntroStage::Done)
+    }
+
     /// While true, the intro owns the camera and `sync_camera` should stand down.
     pub(crate) fn controlling_camera(&self) -> bool {
         matches!(
