@@ -97,6 +97,19 @@ impl Concoction {
         matches!(self.stage, Stage::Mixing)
     }
 
+    #[cfg(debug_assertions)]
+    pub(crate) fn prepare_remedy(&mut self, remedy: &Remedy, inventory: &mut Inventory) {
+        if !self.mixing() {
+            return;
+        }
+        self.mix = remedy.0.map(Some);
+        for plant in remedy.0 {
+            let needed = remedy.0.iter().filter(|&&herb| herb == plant).count() as u32;
+            let held = inventory.plants.entry(plant).or_default();
+            *held = (*held).max(needed);
+        }
+    }
+
     pub(super) fn herb(&self, slot: usize) -> Option<Plant> {
         self.mix[slot]
     }

@@ -244,6 +244,8 @@ pub struct ConcoctionAssets {
 
 #[derive(AssetCollection, Resource)]
 pub struct NPCAssets {
+    #[asset(path = "audio/sfx/healed.ogg")]
+    pub healed: Handle<AudioSource>,
     #[asset(path = "audio/sfx/dialogue_open.ogg")]
     pub dialogue_open: Handle<AudioSource>,
     #[asset(path = "audio/sfx/dialogue_continue.ogg")]

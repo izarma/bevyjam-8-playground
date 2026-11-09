@@ -6,7 +6,7 @@ use bevy_yarnspinner::events::{DialogueCompleted, DialogueStarted};
 
 use crate::{
     GameState, GameplayScene,
-    gameplay::clock::Clock,
+    gameplay::{Cured, clock::Clock},
     loading::{AmbienceAssets, NPCAssets, UIAssets},
     loading_screen::{Revealed, Travel},
 };
@@ -112,6 +112,7 @@ pub(super) fn plugin(app: &mut App) {
         .add_plugins((footsteps::plugin, harvesting::plugin))
         .add_observer(play_dialogue_open)
         .add_observer(play_dialogue_close)
+        .add_observer(play_healed)
         .add_observer(play_transition)
         .add_observer(reveal_outdoor_audio)
         .add_systems(OnEnter(GameState::Title), start_title_ambience)
@@ -138,6 +139,10 @@ fn play_transition(
 
 fn play_dialogue_open(_: On<DialogueStarted>, assets: Res<NPCAssets>, audio: Res<Audio>) {
     audio.play(assets.dialogue_open.clone()).with_volume(3.0);
+}
+
+fn play_healed(_: On<Add<Cured>>, assets: Res<NPCAssets>, audio: Res<Audio>) {
+    audio.play(assets.healed.clone());
 }
 
 fn play_dialogue_close(_: On<DialogueCompleted>, npc_assets: Res<NPCAssets>, audio: Res<Audio>) {

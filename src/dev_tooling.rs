@@ -6,7 +6,8 @@ use plants::Plant;
 use crate::{
     GameResult, GameState,
     gameplay::{
-        DAY_END, DAY_START, DialogueTarget, Health, Visitor, clock::Clock, inventory::Inventory,
+        Concoction, DAY_END, DAY_START, DialogueTarget, Health, Remedy, Visitor, clock::Clock,
+        inventory::Inventory,
     },
     loading_screen::Travel,
 };
@@ -46,7 +47,8 @@ pub(super) fn plugin(app: &mut App) {
     );
     app.add_systems(
         Update,
-        pass_hour.run_if(in_state(GameState::Gameplay).and_then(input_just_pressed(KeyCode::F6))),
+        prepare_remedy
+            .run_if(in_state(GameState::Gameplay).and_then(input_just_pressed(KeyCode::F6))),
     );
     app.add_systems(
         Update,
@@ -96,9 +98,18 @@ fn adjust_npc_health(target: Res<DialogueTarget>, mut visitors: Query<&mut Healt
     println!("Health editor: all stats {delta:+}");
 }
 
-fn pass_hour(mut clock: Single<&mut Clock>) {
-    clock.bank += 1.0;
-    println!("Passed an hour");
+fn prepare_remedy(
+    target: Res<DialogueTarget>,
+    remedies: Query<&Remedy>,
+    mut concoctions: Query<&mut Concoction>,
+    mut inventory: Single<&mut Inventory>,
+) {
+    if let Some(visitor) = target.0
+        && let Ok(remedy) = remedies.get(visitor)
+        && let Ok(mut concoction) = concoctions.single_mut()
+    {
+        concoction.prepare_remedy(remedy, &mut inventory);
+    }
 }
 
 fn force_spawn_npcs(
