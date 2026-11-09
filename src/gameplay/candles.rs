@@ -8,7 +8,9 @@ const CANDLE_RANGE: f32 = 3.0;
 const FLICKER: f32 = 0.15;
 
 pub(super) fn plugin(app: &mut App) {
-    app.add_observer(light_candle).add_systems(Update, flicker);
+    app.add_observer(light_candle)
+        .add_observer(start_flickering)
+        .add_systems(Update, flicker);
 }
 
 #[derive(Component, Reflect, Default)]
@@ -18,9 +20,23 @@ pub struct Candle {
     pub flame: Vec3,
 }
 
+#[derive(Component, Reflect, Default)]
+#[reflect(Component, Default)]
+pub struct Flickers;
+
 #[derive(Component)]
 struct Flicker {
     phase: f32,
+    base: f32,
+}
+
+fn start_flickering(add: On<Add<Flickers>>, lights: Query<&PointLight>, mut commands: Commands) {
+    if let Ok(light) = lights.get(add.entity) {
+        commands.entity(add.entity).insert(Flicker {
+            phase: rand::random_range(0.0..std::f32::consts::TAU),
+            base: light.intensity,
+        });
+    }
 }
 
 fn light_candle(add: On<Add<Candle>>, candles: Query<&Candle>, mut commands: Commands) {
@@ -39,6 +55,7 @@ fn light_candle(add: On<Add<Candle>>, candles: Query<&Candle>, mut commands: Com
         Transform::from_translation(candle.flame),
         Flicker {
             phase: rand::random_range(0.0..std::f32::consts::TAU),
+            base: CANDLE_INTENSITY,
         },
         ChildOf(add.entity),
     ));
@@ -51,6 +68,6 @@ fn flicker(time: Res<Time>, mut lights: Query<(&Flicker, &mut PointLight)>) {
         let wobble = 0.5 * (t * 7.3 + p).sin()
             + 0.3 * (t * 13.1 + p * 1.7).sin()
             + 0.2 * (t * 23.7 + p * 2.3).sin();
-        light.intensity = CANDLE_INTENSITY * (1.0 + FLICKER * wobble);
+        light.intensity = flicker.base * (1.0 + FLICKER * wobble);
     }
 }

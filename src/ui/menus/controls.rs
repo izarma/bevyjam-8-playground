@@ -3,7 +3,9 @@ use bevy::prelude::*;
 use bevy_enhanced_input::prelude::*;
 use bevy_yarnspinner::prelude::DialogueRunner;
 
-use crate::{GameState, Harvesting, Pause, gameplay::Concoction, ui::menus::Menu};
+use crate::{
+    GameState, Harvesting, Pause, gameplay::Concoction, loading_screen::Travel, ui::menus::Menu,
+};
 
 use super::pause::open_pause_menu;
 
@@ -83,7 +85,8 @@ fn back(
         Menu::None if in_game => open_pause_menu(&mut commands),
         Menu::Pause | Menu::Inventory | Menu::Journal => commands.set_state(Menu::None),
         Menu::Settings if in_game => commands.set_state(Menu::Pause),
-        Menu::Settings | Menu::Credits => commands.set_state(Menu::Main),
+        Menu::Settings => commands.set_state(Menu::Main),
+        Menu::GameOver => commands.trigger(Travel::Title),
         _ => {}
     }
 }

@@ -37,6 +37,10 @@ fn spawn_lab_scene(mut commands: Commands, asset_server: Res<AssetServer>) {
 #[derive(Component)]
 struct LabScene;
 
+pub(crate) fn npc_idle_sprite(image: &Handle<Image>, frame: UVec2) -> pixel_art::PixelSprite {
+    anim::indoor_visual_bundle(image, frame).1
+}
+
 const BODY_WIDTH_X: f32 = 0.8;
 pub(super) const BODY_HEIGHT: f32 = 2.0;
 const BODY_DEPTH_Z: f32 = 0.15;

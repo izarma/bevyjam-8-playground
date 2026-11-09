@@ -1,5 +1,6 @@
 mod animation;
 mod base;
+pub(crate) use base::npc_idle_sprite;
 mod candles;
 pub(crate) mod clock;
 mod dialogue;
@@ -20,7 +21,7 @@ pub(crate) use outdoors::HarvestScratch;
 pub(crate) use remedy::{Mark, Remedy};
 pub(crate) use visitors::{
     Ailing, Ailment, BALANCED, Brew, BrewHistory, Cured, Died, Health, InLineup, MAX_HEALTH,
-    MIN_HEALTH, Met, Returning, ShopClosed, ShopOpened, Visitor,
+    MIN_HEALTH, Met, Returning, ShopClosed, ShopOpened, VISITORS, Visitor,
 };
 // for the dev tools
 #[cfg(debug_assertions)]

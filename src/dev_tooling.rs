@@ -4,7 +4,7 @@ use bevy::{input::common_conditions::input_just_pressed, prelude::*};
 use plants::Plant;
 
 use crate::{
-    GameResult, GameState,
+    GameState, Survivors,
     gameplay::{
         Concoction, DAY_END, DAY_START, DialogueTarget, Health, Remedy, Visitor, clock::Clock,
         inventory::Inventory,
@@ -75,13 +75,13 @@ fn toggle_debug_ui(mut options: ResMut<GlobalUiDebugOptions>) {
     options.toggle();
 }
 
-fn win(mut commands: Commands) {
-    commands.insert_resource(GameResult::Won);
+fn win(mut commands: Commands, visitors: Query<&Visitor>) {
+    commands.insert_resource(Survivors(visitors.iter().map(Visitor::name).collect()));
     commands.trigger(Travel::GameOver);
 }
 
 fn lose(mut commands: Commands) {
-    commands.insert_resource(GameResult::Lost);
+    commands.insert_resource(Survivors::default());
     commands.trigger(Travel::GameOver);
 }
 

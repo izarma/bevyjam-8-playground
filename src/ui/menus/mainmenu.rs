@@ -29,8 +29,6 @@ fn spawn_main_menu(mut commands: Commands) {
             --
             @widget::button("Settings", open_settings_menu)
             --
-            @widget::button("Credits", open_credits_menu)
-            --
             { #[cfg(debug_assertions)] (true).then(|| { bsn! { @widget::button("Outdoor Scene", enter_example_scene) }}) }
             --
             { #[cfg(not(target_family = "wasm"))] (true).then(|| { bsn! { @widget::button("Exit", exit_app) }})}
@@ -45,10 +43,6 @@ fn enter_gameplay_state(_: On<PointerClick>, mut commands: Commands) {
 #[cfg(debug_assertions)]
 fn enter_example_scene(_: On<PointerClick>, mut commands: Commands) {
     commands.trigger(Travel::Outdoors);
-}
-
-fn open_credits_menu(_: On<PointerClick>, mut next_menu: ResMut<NextState<Menu>>) {
-    next_menu.set(Menu::Credits);
 }
 
 #[cfg(not(target_family = "wasm"))]

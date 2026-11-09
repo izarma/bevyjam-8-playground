@@ -3,11 +3,12 @@ use jackdaw_runtime::prelude::*;
 use pixel_art::PixelSprite;
 
 use crate::{
-    GameState,
+    GameState, Survivors,
     gameplay::{
-        Facing, PlayerAnimation, apply_player_animation, clock::Clock, tick_player_animation,
+        Facing, PlayerAnimation, apply_player_animation, clock::Clock, npc_idle_sprite,
+        tick_player_animation,
     },
-    loading::{PLAYER_FRAME, PlayerAssets},
+    loading::{NPCAssets, PLAYER_FRAME, PlayerAssets},
     ui::{font, palette::HEADER_TEXT, scale::texels},
 };
 
@@ -15,35 +16,92 @@ use crate::{
 #[reflect(Component, Default)]
 pub struct TitlePlayerSpawn;
 
+#[derive(Component, Reflect, Default)]
+#[reflect(Component, Default)]
+pub struct Campfire;
+
+#[derive(Component, Reflect, Default)]
+#[reflect(Component, Default)]
+pub struct EndingSpot(pub usize);
+
+#[derive(Component)]
+struct Gathered;
+
 pub(super) fn plugin(app: &mut App) {
     app.add_observer(spawn_title_player)
         .add_systems(
             OnEnter(GameState::Title),
             (spawn_title_scene, spawn_game_title),
         )
+        .add_systems(OnEnter(GameState::GameOver), spawn_ending_scene)
         .add_systems(
             Update,
             (tick_player_animation, apply_player_animation)
                 .chain()
-                .run_if(in_state(GameState::Title)),
+                .run_if(in_state(GameState::Title).or_else(in_state(GameState::GameOver))),
+        )
+        .add_systems(
+            Update,
+            (light_campfire, gather_survivors).run_if(in_state(GameState::GameOver)),
         );
 }
 
 const TITLE_HOUR: f32 = 16.75;
+const ENDING_HOUR: f32 = 21.0;
 
-fn spawn_title_scene(mut commands: Commands, asset_server: Res<AssetServer>) {
+fn spawn_title_scene(commands: Commands, asset_server: Res<AssetServer>) {
+    spawn_scene_at(commands, asset_server, GameState::Title, TITLE_HOUR);
+}
+
+fn spawn_ending_scene(commands: Commands, asset_server: Res<AssetServer>) {
+    spawn_scene_at(commands, asset_server, GameState::GameOver, ENDING_HOUR);
+}
+
+fn spawn_scene_at(
+    mut commands: Commands,
+    asset_server: Res<AssetServer>,
+    state: GameState,
+    hours: f32,
+) {
     commands.spawn((
         JackdawSceneRoot(asset_server.load("title.bsn")),
-        DespawnOnExit(GameState::Title),
+        DespawnOnExit(state.clone()),
     ));
     commands.spawn((
         Name::new("Title Clock"),
-        Clock {
-            hours: TITLE_HOUR,
-            ..default()
-        },
-        DespawnOnExit(GameState::Title),
+        Clock { hours, ..default() },
+        DespawnOnExit(state.clone()),
     ));
+}
+
+fn light_campfire(mut campfires: Query<&mut Visibility, With<Campfire>>) {
+    for mut visibility in &mut campfires {
+        visibility.set_if_neq(Visibility::Inherited);
+    }
+}
+
+fn gather_survivors(
+    mut commands: Commands,
+    spots: Query<(Entity, &EndingSpot), Without<Gathered>>,
+    survivors: Option<Res<Survivors>>,
+    assets: Res<NPCAssets>,
+) {
+    for (spot, &EndingSpot(index)) in &spots {
+        commands.entity(spot).insert(Gathered);
+        let Some(&name) = survivors
+            .as_ref()
+            .and_then(|survivors| survivors.0.get(index))
+        else {
+            continue;
+        };
+        let (image, frame) = assets.sprite(name);
+        commands.spawn((
+            Name::new(name),
+            npc_idle_sprite(image, frame),
+            Transform::default(),
+            ChildOf(spot),
+        ));
+    }
 }
 
 fn spawn_game_title(mut commands: Commands) {
@@ -69,6 +127,7 @@ fn spawn_game_title(mut commands: Commands) {
 fn spawn_title_player(
     spawn: On<Insert<TitlePlayerSpawn>>,
     mut commands: Commands,
+    state: Res<State<GameState>>,
     transforms: Query<&GlobalTransform>,
     player_assets: Res<PlayerAssets>,
 ) {
@@ -92,6 +151,6 @@ fn spawn_title_player(
         Transform::from_translation(feet.translation()),
         animation,
         sprite,
-        DespawnOnExit(GameState::Title),
+        DespawnOnExit(state.get().clone()),
     ));
 }

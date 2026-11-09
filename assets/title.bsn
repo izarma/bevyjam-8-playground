@@ -555,6 +555,118 @@ bevy_ecs::hierarchy::Children [
     }
     jackdaw::prefab::components::PrefabEntityId(0)
     --
+    #Campfire
+    bevy_transform::components::transform::Transform {
+        translation: glam::Vec3 {
+            x: -6.2,
+            y: -1.0,
+            z: 3.6,
+        },
+    }
+    jackdaw_scene_types::node_id::SceneNodeId(2026847926404610461)
+    bevy_camera::visibility::Visibility::Hidden
+    bevy_game::ui::menus::title::Campfire
+    bevy_ecs::hierarchy::Children [
+        #"Campfire Model"
+        bevy_transform::components::transform::Transform {
+            translation: glam::Vec3 {
+                x: 0.0,
+                y: 0.06,
+                z: 0.0,
+            },
+        }
+        jackdaw_scene_types::node_id::SceneNodeId(7839596180442651345)
+        jackdaw_scene_types::types::GltfSource {
+            path: "stick-bundle - Converted.glb",
+            scene_index: 0,
+        }
+        pixel_art::model::PixelModel
+        --
+        #"Campfire Light"
+        bevy_transform::components::transform::Transform {
+            translation: glam::Vec3 {
+                x: 0.11,
+                y: 1.23,
+                z: -0.19,
+            },
+        }
+        jackdaw_scene_types::node_id::SceneNodeId(3258728696626565719)
+        bevy_light::point_light::PointLight {
+            color: bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 1.0, green: 0.6553190350532532, blue: 0.20902681350708008, alpha: 1.0 }),
+            range: 10.0,
+            shadow_maps_enabled: false,
+            contact_shadows_enabled: false,
+            radius: 0.0,
+        }
+        bevy_game::gameplay::candles::Flickers
+    ]
+    --
+    #"Ending Spot 0"
+    bevy_transform::components::transform::Transform {
+        translation: glam::Vec3 {
+            x: -5.0,
+            y: -1.0,
+            z: 2.7,
+        },
+    }
+    jackdaw_scene_types::node_id::SceneNodeId(2287010195568088798)
+    bevy_game::ui::menus::title::EndingSpot(0)
+    --
+    #"Ending Spot 1"
+    bevy_transform::components::transform::Transform {
+        translation: glam::Vec3 {
+            x: -6.0,
+            y: -0.957,
+            z: 2.1,
+        },
+    }
+    jackdaw_scene_types::node_id::SceneNodeId(1945351111358374057)
+    bevy_game::ui::menus::title::EndingSpot(1)
+    --
+    #"Ending Spot 2"
+    bevy_transform::components::transform::Transform {
+        translation: glam::Vec3 {
+            x: -7.1,
+            y: -0.999,
+            z: 2.5,
+        },
+    }
+    jackdaw_scene_types::node_id::SceneNodeId(7831454145019129197)
+    bevy_game::ui::menus::title::EndingSpot(2)
+    --
+    #"Ending Spot 3"
+    bevy_transform::components::transform::Transform {
+        translation: glam::Vec3 {
+            x: -4.4,
+            y: -1.0,
+            z: 3.6,
+        },
+    }
+    jackdaw_scene_types::node_id::SceneNodeId(6030118478018109776)
+    bevy_game::ui::menus::title::EndingSpot(3)
+    --
+    #"Ending Spot 4"
+    bevy_transform::components::transform::Transform {
+        translation: glam::Vec3 {
+            x: -5.9,
+            y: -1.02,
+            z: 5.2,
+        },
+    }
+    jackdaw_scene_types::node_id::SceneNodeId(6446332115853614978)
+    bevy_game::ui::menus::title::EndingSpot(4)
+    --
+    #"Ending Spot 5"
+    bevy_transform::components::transform::Transform {
+        translation: glam::Vec3 {
+            x: -7.2,
+            y: -1.006,
+            z: 4.8,
+        },
+    }
+    jackdaw_scene_types::node_id::SceneNodeId(1293143515607798169)
+    bevy_game::ui::menus::title::EndingSpot(5)
+    --
     #"Title Player Spawn"
     jackdaw_scene_types::node_id::SceneNodeId(7012345678901234567)
     bevy_transform::components::transform::Transform {

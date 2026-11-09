@@ -45,11 +45,8 @@ pub(crate) enum GameplayScene {
 }
 
 /// The outcome of the last round of gameplay. Only available after the player won or lost once.
-#[derive(Resource, Clone, Copy, Eq, PartialEq, Debug)]
-enum GameResult {
-    Won,
-    Lost,
-}
+#[derive(Resource, Clone, Default, Debug)]
+pub(crate) struct Survivors(pub(crate) Vec<&'static str>);
 
 /// Whether or not the game is paused.
 #[derive(SubStates, Copy, Clone, Eq, PartialEq, Hash, Debug, Default)]

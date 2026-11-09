@@ -19,7 +19,6 @@ pub(super) fn plugin(app: &mut App) {
         mainmenu::plugin,
         title::plugin,
         pause::plugin,
-        credits::plugin,
         gameover::plugin,
         inventory::plugin,
         journal::plugin,
@@ -32,7 +31,6 @@ pub enum Menu {
     #[default]
     None,
     Main,
-    Credits,
     Settings,
     Pause,
     GameOver,
@@ -41,10 +39,6 @@ pub enum Menu {
 }
 
 pub(super) fn open_main_menu(mut next_menu: ResMut<NextState<Menu>>) {
-    next_menu.set(Menu::Main);
-}
-
-pub(super) fn open_main_menu_on_click(_: On<PointerClick>, mut next_menu: ResMut<NextState<Menu>>) {
     next_menu.set(Menu::Main);
 }
 
