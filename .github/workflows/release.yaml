@@ -225,6 +225,9 @@ jobs:
           if ! cargo install --list | grep -q '^trunk '; then
             cargo install --locked --force trunk
           fi
+      - name: Install wasm-bindgen
+        run: |
+          cargo install --locked wasm-bindgen-cli --version "$(cargo metadata --format-version 1 --locked | jq -r '.packages[] | select(.name == "wasm-bindgen") | .version')"
       - name: Add wasm target
         run: |
           rustup target add wasm32-unknown-unknown
