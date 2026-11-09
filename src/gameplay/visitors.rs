@@ -15,7 +15,7 @@ use crate::{
 // an ailment worsens once every this many hours
 const AILMENT_HOURS: f32 = 24.0;
 // how far off balanced any element has to be before someone feels unwell
-const UNWELL: u8 = 2;
+pub(crate) const UNWELL: u8 = 2;
 // unwell visitors come to the lab between these hours
 pub(crate) const DAY_START: f32 = 6.0;
 pub(crate) const DAY_END: f32 = 20.0;
@@ -133,11 +133,11 @@ const NAMES: [&str; 6] = [
 const NODES: [&str; 6] = ["Guardian", "Monk", "Bride", "Beggar", "OldBeauty", "Orphan"];
 
 const DESCRIPTIONS: [&str; 6] = [
-    "Weakens by the day and taught you the craft.",
-    "Monk of the west. Strong. Bereft of once material wealth.",
+    "Your mentor grows weaker by the day, now too frail to handle the flood of visitors.",
+    "Monk of the West. Strong. Bereft of his once great wealth",
     "Celebrated bride. Forgotten widow.",
-    "Once invaded kingdoms for glory, now takes pennies for a living",
-    "Once upon a time her beauty is unparalleled in all five directions. Now she's just old",
+    "Once he invaded kingdoms for glory; now takes pennies for a living.",
+    "Her beauty was once unparalleled under the heavens. Now she's just old.",
     "Unmothered, unfathered, uneducated.",
 ];
 // already at the house when the game starts, further gone than the others
