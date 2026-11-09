@@ -270,7 +270,11 @@ impl Ailment {
     // what a herb has to do to undo it, as the dialogue says it
     pub(crate) fn wants(self) -> String {
         match self {
-            Ailment::Deficiency(element) => format!("raise {}", element.name()),
+            Ailment::Deficiency(element) => format!(
+                "raise {} and lower {}",
+                element.name(),
+                element.next().name()
+            ),
             Ailment::Excess(element) => format!(
                 "lower {} and raise {}",
                 element.name(),
@@ -282,7 +286,7 @@ impl Ailment {
     // what each worsening does
     pub(crate) fn effects(self) -> Vec<(Element, i8)> {
         match self {
-            Ailment::Deficiency(element) => vec![(element, -1)],
+            Ailment::Deficiency(element) => vec![(element, -1), (element.next(), 1)],
             Ailment::Excess(element) => vec![(element, 1), (element.next(), -1)],
         }
     }

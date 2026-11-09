@@ -56,9 +56,9 @@ bevy_ecs::hierarchy::Children [
         },
         rotation: glam::Quat {
             x: 0.0,
-            y: 0.0,
-            z: 0.9300000071525574,
-            w: 1.0,
+            y: -0.70710677,
+            z: 0.0,
+            w: 0.70710677,
         },
     }
     bevy_game::gameplay::base::player_indoor::IndoorPlayerSpawn

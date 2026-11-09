@@ -243,7 +243,7 @@ jobs:
         run: |
           sudo apt-get install -y binaryen
           for f in dist/*.wasm; do
-            wasm-opt -O "$f" -o "$f.opt"
+            wasm-opt -O --enable-bulk-memory --enable-nontrapping-float-to-int --enable-sign-ext --enable-reference-types --enable-multivalue --enable-mutable-globals "$f" -o "$f.opt"
             mv "$f.opt" "$f"
           done
       - name: Zip release
